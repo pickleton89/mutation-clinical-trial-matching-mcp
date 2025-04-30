@@ -1,4 +1,3 @@
-from flow import qa_flow
 import sys
 from clinicaltrials.query import query_clinical_trials
 from clinicaltrials.parse import parse_clinical_trials
