@@ -46,12 +46,13 @@ def parse_clinical_trials(raw_results: Optional[dict]) -> List[Dict[str, Any]]:
                         print(f"Skipping non-dict location: {loc}")
                         continue
                     facility = loc.get('facility', {})
-                    if not isinstance(facility, dict):
-                        print(f"Skipping non-dict facility: {facility}")
-                        continue
-                    name = facility.get('name', '')
-                    if name:
-                        location_list.append(name)
+                    # Accept both dict and string facility types
+                    if isinstance(facility, dict):
+                        name = facility.get('name', '')
+                        if name:
+                            location_list.append(name)
+                    elif isinstance(facility, str):
+                        location_list.append(facility)
             url = f"https://clinicaltrials.gov/ct2/show/{nct_id}" if nct_id else ''
             trials.append({
                 'nct_id': nct_id,
