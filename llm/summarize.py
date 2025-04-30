@@ -19,7 +19,7 @@ def summarize_trials(trials: List[Dict]) -> str:
     Format trial data into a prompt and send to Claude via MCP for summarization.
 
     Args:
-        trials (List[Dict]): List of structured clinical trial dictionaries.
+        trials (List[Dict]): List of structured clinical trial dictionaries from clinicaltrials.gov API.
     """
     if not trials:
         return "No clinical trials found for the specified mutation."
@@ -33,37 +33,80 @@ def summarize_trials(trials: List[Dict]) -> str:
     trial_count = len(trials)
     summary += f"Found {trial_count} clinical trial{'s' if trial_count != 1 else ''} matching the mutation.\n\n"
 
-    # Group trials by phase if available
+    # Extract and organize phases
     phases = {}
     for trial in trials:
-        phase = trial.get("phase", "Unknown")
-        if phase not in phases:
-            phases[phase] = []
-        phases[phase].append(trial)
+        # Extract data from the nested structure
+        protocol = trial.get("protocolSection", {})
+        
+        # Get phase information
+        phase_info = protocol.get("phaseModule", {}).get("phase", "Unknown Phase")
+        if not phase_info:
+            phase_info = "Unknown Phase"
+        
+        # Initialize this phase if not already present
+        if phase_info not in phases:
+            phases[phase_info] = []
+        
+        # Add trial to the appropriate phase
+        phases[phase_info].append(trial)
 
     # Add summary by phase
     for phase, phase_trials in phases.items():
-        summary += f"## {phase} Phase Trials ({len(phase_trials)})\n\n"
+        summary += f"## {phase} Trials ({len(phase_trials)})\n\n"
 
         for trial in phase_trials:
-            summary += f"### {trial.get('title', 'Untitled Trial')}\n"
-            summary += f"- **NCT ID:** [{trial.get('nct_id', 'Unknown')}]({trial.get('url', '#')})\n"
-
-            if trial.get("brief_summary"):
-                summary += f"- **Summary:** {trial['brief_summary']}\n"
-
-            if trial.get("conditions"):
-                summary += f"- **Conditions:** {', '.join(trial['conditions'])}\n"
-
-            if trial.get("interventions"):
-                summary += f"- **Interventions:** {', '.join(trial['interventions'])}\n"
-
-            if trial.get("status"):
-                summary += f"- **Status:** {trial['status']}\n"
-
-            if trial.get("locations"):
-                summary += f"- **Locations:** {', '.join(trial['locations'])}\n"
-
+            # Extract core information
+            protocol = trial.get("protocolSection", {})
+            
+            # Get identification data
+            id_module = protocol.get("identificationModule", {})
+            title = id_module.get("briefTitle", "Untitled Trial")
+            nct_id = id_module.get("nctId", "Unknown")
+            
+            # Get status
+            status_module = protocol.get("statusModule", {})
+            status = status_module.get("overallStatus", "Unknown")
+            
+            # Get conditions
+            conditions_module = protocol.get("conditionsModule", {})
+            conditions = conditions_module.get("conditions", [])
+            
+            # Get interventions
+            interventions_module = protocol.get("armsInterventionsModule", {})
+            interventions = [intervention.get("name", "") for intervention in interventions_module.get("interventions", [])]
+            
+            # Get summary
+            description_module = protocol.get("descriptionModule", {})
+            brief_summary = description_module.get("briefSummary", "")
+            
+            # Get locations
+            contacts_module = protocol.get("contactsLocationsModule", {})
+            locations = [f"{location.get('facility', '')} ({location.get('city', '')}, {location.get('country', '')})" 
+                        for location in contacts_module.get("locations", [])[:3]]  # Limit to 3 locations
+            
+            # Format the trial information
+            summary += f"### {title}\n"
+            summary += f"- **NCT ID:** [{nct_id}](https://clinicaltrials.gov/study/{nct_id})\n"
+            
+            if brief_summary:
+                # Truncate summary if it's too long
+                if len(brief_summary) > 200:
+                    brief_summary = brief_summary[:197] + "..."
+                summary += f"- **Summary:** {brief_summary}\n"
+            
+            if conditions:
+                summary += f"- **Conditions:** {', '.join(conditions[:5])}\n"  # Limit to 5 conditions
+            
+            if interventions:
+                summary += f"- **Interventions:** {', '.join(interventions[:5])}\n"  # Limit to 5 interventions
+            
+            if status:
+                summary += f"- **Status:** {status}\n"
+            
+            if locations:
+                summary += f"- **Locations:** {', '.join(locations)}\n"
+            
             summary += "\n"
 
     return summary
