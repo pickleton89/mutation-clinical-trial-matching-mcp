@@ -4,14 +4,13 @@ Functions to summarize clinical trial results using Claude via MCP.
 
 from typing import List, Dict
 
+from utils.call_llm import call_llm
+
 def call_claude_via_mcp(prompt: str) -> str:
     """
-    Stub for MCP integration with Claude Desktop.
-    Replace this with your actual MCP call to send the prompt to Claude and get the summary.
+    Send the prompt to Claude via MCP (call_llm utility) and return the summary.
     """
-    # Example: send the prompt over MCP and return the response
-    # For now, just return a placeholder
-    return "[Claude summary would appear here]"
+    return call_llm(prompt)
 
 def summarize_trials(trials: List[Dict]) -> str:
     """
