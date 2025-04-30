@@ -20,13 +20,20 @@ def query_clinical_trials(mutation: str, min_rank: int = 1, max_rank: int = 10, 
     """
     base_url = "https://clinicaltrials.gov/api/v2/studies"
     params = {
-        "q": mutation,
-        "format": "json"
+        "format": "json",
+        "query.term": mutation,
+        "pageSize": max_rank - min_rank + 1
     }
     try:
-        response = requests.get(base_url, params=params, timeout=timeout)
+        headers = {"Accept": "application/json"}
+        response = requests.get(base_url, params=params, headers=headers, timeout=timeout)
         response.raise_for_status()
-        return response.json()
+        try:
+            return response.json()
+        except ValueError as json_err:
+            print("Non-JSON response from API:")
+            print(response.text)
+            return None
     except requests.RequestException as e:
         print(f"Error querying clinicaltrials.gov: {e}")
         return None
