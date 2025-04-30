@@ -28,16 +28,105 @@ async def handle_summarize_trials(mutation: str) -> str:
         
     return summary
 
+# Register methods with the server to handle specific requests
+async def handle_request(request):
+    """Process incoming JSON-RPC requests"""
+    method = request.get("method")
+    params = request.get("params", {})
+    req_id = request.get("id")
+    
+    print(f"Handling method: {method}", file=sys.stderr, flush=True)
+    
+    if method == "summarize_trials":
+        mutation = params.get("mutation", "")
+        result = await handle_summarize_trials(mutation)
+        return {"jsonrpc": "2.0", "id": req_id, "result": result}
+    elif method == "get_manifest":
+        return {
+            "jsonrpc": "2.0",
+            "id": req_id,
+            "result": {
+                "name": "Clinical Trials MCP",
+                "description": "Summarizes clinical trial data for mutations.",
+                "methods": [
+                    {
+                        "name": "summarize_trials",
+                        "description": "Summarizes clinical trials for a mutation.",
+                        "params": {
+                            "mutation": "string"
+                        }
+                    }
+                ]
+            }
+        }
+    else:
+        return {"jsonrpc": "2.0", "id": req_id, "error": {"code": -32601, "message": f"Method not found: {method}"}}
+
 # Main function to run the server
 async def main():
     print("MCP server starting with official SDK...", file=sys.stderr, flush=True)
+    
     async with stdio_server() as streams:
-        # Run server with stdio transport
-        await app.run(
-            streams[0],  # stdin
-            streams[1],  # stdout
-            app.create_initialization_options()
-        )
+        # Handle initialization request
+        init_data = await streams[0].readline()
+        if not init_data:
+            print("No initialization data received", file=sys.stderr, flush=True)
+            return
+            
+        try:
+            init_request = json.loads(init_data)
+            if init_request.get("method") == "initialize":
+                init_response = {
+                    "jsonrpc": "2.0",
+                    "id": init_request.get("id"),
+                    "result": {
+                        "serverInfo": {
+                            "name": "Clinical Trials MCP",
+                            "version": "1.0.0"
+                        },
+                        "capabilities": {
+                            "methods": ["summarize_trials", "get_manifest"]
+                        }
+                    }
+                }
+                
+                # Send initialization response
+                init_response_json = json.dumps(init_response)
+                print(f"Sending initialization response: {init_response_json}", file=sys.stderr, flush=True)
+                streams[1].write(init_response_json + '\n')
+                await streams[1].drain()
+                
+                # Process subsequent requests
+                while True:
+                    line = await streams[0].readline()
+                    if not line:
+                        # Sleep briefly to avoid busy-waiting
+                        await asyncio.sleep(0.1)
+                        continue
+                        
+                    try:
+                        request = json.loads(line)
+                        response = await handle_request(request)
+                        
+                        response_json = json.dumps(response)
+                        print(f"Sending: {response_json}", file=sys.stderr, flush=True)
+                        streams[1].write(response_json + '\n')
+                        await streams[1].drain()
+                    except json.JSONDecodeError:
+                        print("Invalid JSON received", file=sys.stderr, flush=True)
+                    except Exception as e:
+                        print(f"Error processing request: {e}", file=sys.stderr, flush=True)
+                        error_response = {
+                            "jsonrpc": "2.0",
+                            "id": request.get("id") if 'request' in locals() else None,
+                            "error": {"code": -32000, "message": str(e)}
+                        }
+                        streams[1].write(json.dumps(error_response) + '\n')
+                        await streams[1].drain()
+            else:
+                print(f"Unexpected first message: {init_request}", file=sys.stderr, flush=True)
+        except Exception as e:
+            print(f"Error during initialization: {e}", file=sys.stderr, flush=True)
 
 if __name__ == "__main__":
     try:
