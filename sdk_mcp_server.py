@@ -5,6 +5,7 @@ This implementation follows best practices for MCP servers.
 """
 import sys
 import asyncio
+import json
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
 
@@ -14,9 +15,8 @@ from llm.summarize import summarize_trials
 # Create the server
 app = Server("clinical-trials-mcp")
 
-# Define the methods supported by the server
-@app.method("summarize_trials")
-async def summarize_trials_method(mutation: str) -> str:
+# Handle methods explicitly in the request handler
+async def handle_summarize_trials(mutation: str) -> str:
     """Summarizes clinical trials for a mutation."""
     print(f"Querying for: {mutation}", file=sys.stderr, flush=True)
     
