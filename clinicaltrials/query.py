@@ -20,8 +20,7 @@ def query_clinical_trials(mutation: str, min_rank: int = 1, max_rank: int = 10, 
     """
     base_url = "https://clinicaltrials.gov/api/v2/studies"
     params = {
-        "query": mutation,
-        "pageSize": max_rank - min_rank + 1,
+        "q": mutation,
         "format": "json"
     }
     try:
