@@ -1,37 +1,48 @@
 import os
-import socket
+import requests
 import json
+from typing import Optional
+from dotenv import load_dotenv
 
-# Claude Desktop MCP socket path (default, override with CLAUDE_MCP_SOCKET env var if needed)
-MCP_SOCKET_PATH = os.environ.get("CLAUDE_MCP_SOCKET", "/tmp/claude-mcp.sock")
+# Load environment variables from .env file
+load_dotenv()
+
+# Get API key from environment variable
+ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
+
 
 def call_llm(prompt: str) -> str:
     """
-    Send a prompt to Claude Desktop via MCP socket and return the response.
+    Send a prompt to Claude via Anthropic API and return the response.
+
+    This function requires an Anthropic API key set as ANTHROPIC_API_KEY environment variable.
     """
-    # Construct MCP message (Claude Desktop expects JSON with a 'prompt' field)
-    mcp_request = json.dumps({"prompt": prompt})
-    response = ""
+    if not ANTHROPIC_API_KEY:
+        return "[ERROR: ANTHROPIC_API_KEY environment variable not set]"
+
     try:
-        with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as client:
-            client.connect(MCP_SOCKET_PATH)
-            client.sendall(mcp_request.encode("utf-8"))
-            chunks = []
-            while True:
-                chunk = client.recv(4096)
-                if not chunk:
-                    break
-                chunks.append(chunk)
-            response_data = b"".join(chunks).decode("utf-8")
-            # Claude Desktop may respond with JSON; parse if so
-            try:
-                resp_json = json.loads(response_data)
-                response = resp_json.get("completion", response_data)
-            except Exception:
-                response = response_data
+        headers = {
+            "x-api-key": ANTHROPIC_API_KEY,
+            "anthropic-version": "2023-06-01",
+            "content-type": "application/json",
+        }
+
+        data = {
+            "model": "claude-3-opus-20240229",
+            "max_tokens": 1000,
+            "messages": [{"role": "user", "content": prompt}],
+        }
+
+        response = requests.post(
+            "https://api.anthropic.com/v1/messages", headers=headers, json=data
+        )
+
+        response.raise_for_status()
+        response_data = response.json()
+        return response_data["content"][0]["text"]
     except Exception as e:
-        response = f"[MCP ERROR: {e}]"
-    return response
+        return f"[API ERROR: {str(e)}]"
+
 
 if __name__ == "__main__":
     prompt = "What is the meaning of life?"
