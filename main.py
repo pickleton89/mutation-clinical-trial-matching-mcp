@@ -19,12 +19,6 @@ def main():
         print("No results returned from clinicaltrials.gov.")
         sys.exit(1)
 
-    # Debug: print the raw API response to inspect structure
-    import json
-    print("\n===== RAW API RESPONSE =====\n")
-    print(json.dumps(raw_results, indent=2))
-    print("\n===========================\n")
-
     trials = parse_clinical_trials(raw_results)
     if not trials:
         print("No trials found for the given mutation.")
