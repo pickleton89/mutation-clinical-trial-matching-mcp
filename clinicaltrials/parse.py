@@ -20,10 +20,13 @@ def parse_clinical_trials(raw_results: Optional[dict]) -> List[Dict[str, Any]]:
     studies = raw_results.get('studies', [])
     for study in studies:
         if not isinstance(study, dict):
-            print(f"Skipping non-dict study entry: {study}")
+            print(f"Skipping non-dict study entry (type={type(study)}): {study}")
             continue
         try:
             section = study.get('protocolSection', {})
+            if not isinstance(section, dict):
+                print(f"Skipping study with non-dict protocolSection: {section}")
+                continue
             id_info = section.get('identificationModule', {})
             description = section.get('descriptionModule', {})
             conditions_mod = section.get('conditionsModule', {})
@@ -33,16 +36,22 @@ def parse_clinical_trials(raw_results: Optional[dict]) -> List[Dict[str, Any]]:
             brief_summary = description.get('briefSummary', '')
             condition_list = conditions_mod.get('conditions', [])
             intervention_meshes = intervention_mod.get('meshes', [])
-            intervention_names = [i.get('term', '') for i in intervention_meshes]
+            intervention_names = [i.get('term', '') for i in intervention_meshes if isinstance(i, dict)]
             # Extract locations if present
             locations_mod = section.get('contactsLocationsModule', {})
             location_list = []
-            # v2 API: locations are in contactsLocationsModule > locations (list)
-            for loc in locations_mod.get('locations', []):
-                facility = loc.get('facility', {})
-                name = facility.get('name', '')
-                if name:
-                    location_list.append(name)
+            if isinstance(locations_mod, dict):
+                for loc in locations_mod.get('locations', []):
+                    if not isinstance(loc, dict):
+                        print(f"Skipping non-dict location: {loc}")
+                        continue
+                    facility = loc.get('facility', {})
+                    if not isinstance(facility, dict):
+                        print(f"Skipping non-dict facility: {facility}")
+                        continue
+                    name = facility.get('name', '')
+                    if name:
+                        location_list.append(name)
             url = f"https://clinicaltrials.gov/ct2/show/{nct_id}" if nct_id else ''
             trials.append({
                 'nct_id': nct_id,
