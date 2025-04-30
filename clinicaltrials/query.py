@@ -1,0 +1,34 @@
+"""
+Functions to query clinicaltrials.gov for trials matching a mutation.
+"""
+
+import requests
+from typing import Optional, Dict, Any
+
+def query_clinical_trials(mutation: str, min_rank: int = 1, max_rank: int = 10, timeout: int = 10) -> Optional[Dict[str, Any]]:
+    """
+    Query clinicaltrials.gov for clinical trials related to a given mutation.
+
+    Args:
+        mutation (str): The mutation or keyword to search for (e.g., 'EGFR L858R').
+        min_rank (int): The minimum rank of results to return (default: 1).
+        max_rank (int): The maximum rank of results to return (default: 10).
+        timeout (int): Timeout for the HTTP request in seconds (default: 10).
+
+    Returns:
+        Optional[Dict[str, Any]]: Parsed JSON response from clinicaltrials.gov, or None if an error occurred.
+    """
+    base_url = "https://clinicaltrials.gov/api/query/full_studies"
+    params = {
+        "expr": mutation,
+        "min_rnk": min_rank,
+        "max_rnk": max_rank,
+        "fmt": "json"
+    }
+    try:
+        response = requests.get(base_url, params=params, timeout=timeout)
+        response.raise_for_status()
+        return response.json()
+    except requests.RequestException as e:
+        print(f"Error querying clinicaltrials.gov: {e}")
+        return None
