@@ -18,12 +18,11 @@ def query_clinical_trials(mutation: str, min_rank: int = 1, max_rank: int = 10, 
     Returns:
         Optional[Dict[str, Any]]: Parsed JSON response from clinicaltrials.gov, or None if an error occurred.
     """
-    base_url = "https://clinicaltrials.gov/api/query/full_studies"
+    base_url = "https://clinicaltrials.gov/api/v2/studies"
     params = {
-        "expr": mutation,
-        "min_rnk": min_rank,
-        "max_rnk": max_rank,
-        "fmt": "json"
+        "query": mutation,
+        "pageSize": max_rank - min_rank + 1,
+        "format": "json"
     }
     try:
         response = requests.get(base_url, params=params, timeout=timeout)
