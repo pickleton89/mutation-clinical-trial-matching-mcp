@@ -31,7 +31,15 @@ def parse_clinical_trials(raw_results: Optional[dict]) -> List[Dict[str, Any]]:
             condition_list = conditions_mod.get('conditions', [])
             intervention_meshes = intervention_mod.get('meshes', [])
             intervention_names = [i.get('term', '') for i in intervention_meshes]
-            # Locations are not always present in v2, so we omit for now
+            # Extract locations if present
+            locations_mod = section.get('contactsLocationsModule', {})
+            location_list = []
+            # v2 API: locations are in contactsLocationsModule > locations (list)
+            for loc in locations_mod.get('locations', []):
+                facility = loc.get('facility', {})
+                name = facility.get('name', '')
+                if name:
+                    location_list.append(name)
             url = f"https://clinicaltrials.gov/ct2/show/{nct_id}" if nct_id else ''
             trials.append({
                 'nct_id': nct_id,
@@ -39,7 +47,7 @@ def parse_clinical_trials(raw_results: Optional[dict]) -> List[Dict[str, Any]]:
                 'brief_summary': brief_summary,
                 'conditions': condition_list,
                 'interventions': intervention_names,
-                'locations': [],
+                'locations': location_list,
                 'url': url
             })
         except Exception as e:
