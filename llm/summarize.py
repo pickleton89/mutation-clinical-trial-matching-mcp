@@ -46,8 +46,8 @@ def summarize_trials(trials: List[Dict]) -> str:
         summary += f"## {phase} Phase Trials ({len(phase_trials)})\n\n"
 
         for trial in phase_trials:
-            summary += f"### {trial['title']}\n"
-            summary += f"- **NCT ID:** [{trial['nct_id']}]({trial['url']})\n"
+            summary += f"### {trial.get('title', 'Untitled Trial')}\n"
+            summary += f"- **NCT ID:** [{trial.get('nct_id', 'Unknown')}]({trial.get('url', '#')})\n"
 
             if trial.get("brief_summary"):
                 summary += f"- **Summary:** {trial['brief_summary']}\n"
