@@ -19,6 +19,9 @@ def parse_clinical_trials(raw_results: Optional[dict]) -> List[Dict[str, Any]]:
     trials = []
     studies = raw_results.get('studies', [])
     for study in studies:
+        if not isinstance(study, dict):
+            print(f"Skipping non-dict study entry: {study}")
+            continue
         try:
             section = study.get('protocolSection', {})
             id_info = section.get('identificationModule', {})
