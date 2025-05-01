@@ -89,9 +89,12 @@ async def main():
             # Read the next line from stdin
             line = await read_stdin()
             if not line:
-                # If stdin is closed, exit
-                print("Stdin closed, exiting", file=sys.stderr, flush=True)
-                break
+                # Don't exit when stdin is closed - Claude Desktop may close stdin after initialization
+                # Instead, log it and wait for new connections
+                print("Stdin appears closed. Waiting for new data...", file=sys.stderr, flush=True)
+                # Sleep to avoid CPU spinning
+                await asyncio.sleep(1)
+                continue
 
             line = line.strip()
             if not line:
