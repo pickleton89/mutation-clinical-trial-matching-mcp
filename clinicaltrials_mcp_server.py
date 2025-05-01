@@ -128,7 +128,7 @@ async def process_request(request_str):
                 "id": req_id,
                 "result": {
                     "serverInfo": {"name": "Clinical Trials MCP", "version": "1.0.0"},
-                    "capabilities": {"methods": ["summarize_trials", "get_manifest"]},
+                    "capabilities": {"methods": ["summarize_trials", "echo", "get_manifest"]},
                 },
             }
         elif method == "notifications/cancelled":
@@ -147,11 +147,24 @@ async def process_request(request_str):
                 "result": {
                     "name": "Clinical Trials MCP",
                     "description": "Summarizes clinical trial data for mutations.",
+                    "displayName": "Clinical Trials",
+                    "displayDescription": "Find clinical trials for specific genetic mutations",
+                    "publisher": "Jeff Kiefer",
+                    "version": "1.0.0",
                     "methods": [
                         {
                             "name": "summarize_trials",
                             "description": "Summarizes clinical trials for a mutation.",
+                            "displayName": "Find Clinical Trials",
+                            "displayDescription": "Search for clinical trials related to a specific genetic mutation",
                             "params": {"mutation": "string"},
+                        },
+                        {
+                            "name": "echo",
+                            "description": "Simple echo test method.",
+                            "displayName": "Echo Test",
+                            "displayDescription": "Test the connection by echoing a message back",
+                            "params": {"message": "string"},
                         }
                     ],
                 },
@@ -168,6 +181,11 @@ async def process_request(request_str):
                 summary = "No trials found or error in fetching trials."
 
             return {"jsonrpc": "2.0", "id": req_id, "result": summary}
+        elif method == "echo":
+            debug_log("Handling echo request")
+            message = request["params"].get("message", "No message provided")
+            print(f"Echo request: {message}", file=sys.stderr, flush=True)
+            return {"jsonrpc": "2.0", "id": req_id, "result": f"Echo: {message}"}
         else:
             debug_log(f"Unknown method: {method}")
             return {
