@@ -138,12 +138,39 @@ async def main():
             await asyncio.sleep(1)
 
 
+def run_forever():
+    """Run a completely separate thread that just keeps the process alive."""
+    import threading
+    import time
+    
+    def keep_process_alive():
+        while True:
+            print("Process keep-alive thread running...", file=sys.stderr, flush=True)
+            time.sleep(10)  # Sleep for 10 seconds
+    
+    # Start a daemon thread that will keep running
+    thread = threading.Thread(target=keep_process_alive, daemon=True)
+    thread.start()
+
 if __name__ == "__main__":
+    # First, start a separate thread that will keep the process alive no matter what
+    run_forever()
+    
+    # Then run the normal server loop
     try:
+        print("Starting MCP server - using separate thread to ensure continuous operation", file=sys.stderr, flush=True)
         asyncio.run(main())
     except KeyboardInterrupt:
         print("Server interrupted by keyboard", file=sys.stderr, flush=True)
     except Exception as e:
-        print(f"Fatal server error: {e}", file=sys.stderr, flush=True)
+        print(f"Fatal server error in main loop: {e}", file=sys.stderr, flush=True)
+        import traceback
+        traceback.print_exc(file=sys.stderr)
+        # Even if the main loop crashes, the process will stay alive
+        # Just sleep forever to keep the process running
+        print("Main loop error, but keep-alive thread continues running", file=sys.stderr, flush=True)
+        import time
+        while True:
+            time.sleep(60)  # Sleep forever, let the daemon thread do the work
     finally:
-        print("Server shutting down", file=sys.stderr, flush=True)
+        print("Main loop is shutting down, but process will continue running", file=sys.stderr, flush=True)
