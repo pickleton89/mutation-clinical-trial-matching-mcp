@@ -1,4 +1,4 @@
-# Clinical Trials MCP Server
+# Mutation Clinical Trial Matching MCP
 
 A Model Context Protocol (MCP) server that enables Claude Desktop to search for and summarize clinical trials related to genetic mutations.
 
@@ -38,7 +38,7 @@ This project is organized according to the Agentic Coding paradigm:
 
 4. **Node Design** (AI-led):
    - `llm/summarize.py`: Formats clinical trial data into readable summaries
-   - `mcp_demo_server.py`: Implements the MCP server interface
+   - `clinicaltrials_mcp_server.py`: Implements the MCP server interface
 
 5. **Implementation** (AI-led):
    - FastMCP SDK for handling the protocol details
@@ -47,7 +47,7 @@ This project is organized according to the Agentic Coding paradigm:
 
 ## Components
 
-### MCP Server (`mcp_demo_server.py`)
+### MCP Server (`clinicaltrials_mcp_server.py`)
 
 The main server that implements the Model Context Protocol interface, using the official Python SDK. It:
 
