@@ -121,3 +121,13 @@ If Claude Desktop disconnects from the MCP server:
 This project was built using the [PocketFlow-Template-Python](https://github.com/The-Pocket/PocketFlow-Template-Python) as a starting point. Special thanks to the original contributors of that project for providing the foundation and structure that made this implementation possible.
 
 The project follows the Agentic Coding methodology as outlined in the original template.
+
+## Development Process
+
+This project was developed using an AI-assisted coding approach, following the Agentic Coding principles where humans design and AI agents implement. The original program on main built on 2025-04-30. The implementation was created through pair programming with:
+
+- Windsurf
+   - ChatGPT 4.1
+   - Claude 3.7 Sonnet
+
+These AI assistants were instrumental in translating high-level design requirements into functional code, helping with API integration, and structuring the project according to best practices.
