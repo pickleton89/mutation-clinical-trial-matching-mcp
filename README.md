@@ -116,7 +116,7 @@ Processes and formats the clinical trials data:
 ## Troubleshooting
 
 If Claude Desktop disconnects from the MCP server:
-- Check logs at: `/Users/jeffkiefer/Library/Logs/Claude/mcp-server-clinicaltrials-mcp.log`
+- Check logs at: `~/Library/Logs/Claude/mcp-server-clinicaltrials-mcp.log`
 - Restart Claude Desktop
 - Verify the server is running correctly
 
