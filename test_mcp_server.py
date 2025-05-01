@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import json
 import subprocess
-import sys
+import os
 
 def send_jsonrpc_request(method, params=None, request_id=1):
     """Send a JSON-RPC request to the MCP server via stdin and get the response."""
@@ -37,10 +37,18 @@ def send_jsonrpc_request(method, params=None, request_id=1):
     process.stdin.write(message.encode())
     process.stdin.flush()
     
-    # Read the response headers
+    # Read the response headers with timeout
+    import time
+    start_time = time.time()
     headers = b""
-    while True:
+    
+    # Try to read headers for up to 5 seconds
+    while time.time() - start_time < 5:
         line = process.stdout.readline()
+        if not line:  # No data available
+            time.sleep(0.1)
+            continue
+            
         headers += line
         if line in (b"\r\n", b"\n"):
             break
