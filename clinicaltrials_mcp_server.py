@@ -13,37 +13,57 @@ async def read_stdin():
 
 
 # ---------- MCP stdio framing helpers ----------
-async def read_message():
-    """Read a single JSON-RPC message framed with Content-Length headers."""
-    loop = asyncio.get_running_loop()
-    headers = b""  # Accumulate header bytes
+def _read_message_sync():
+    """Blocking helper that reads a single framed JSON-RPC message from stdin."""
+    headers = b""
     while True:
-        line = await loop.run_in_executor(None, sys.stdin.buffer.readline)
+        line = sys.stdin.buffer.readline()
         if not line:
-            return None  # EOF
+            # EOF or pipe closed
+            return None
         headers += line
-        # Header section ends with a blank line
         if line in (b"\r\n", b"\n"):
-            break
+            break  # End of headers
 
-    # Parse Content-Length
+    try:
+        header_text = headers.decode()
+    except UnicodeDecodeError:
+        print("Failed to decode header bytes", file=sys.stderr, flush=True)
+        return None
+
+    # Debug: show raw header block
+    print(f"Raw headers: {repr(header_text)}", file=sys.stderr, flush=True)
+
+    # Extract Content-Length
     length = 0
-    for header_line in headers.decode().splitlines():
+    for header_line in header_text.splitlines():
         if header_line.lower().startswith("content-length:"):
             try:
-                length = int(header_line.split(":")[1].strip())
+                length = int(header_line.split(":", 1)[1].strip())
             except ValueError:
                 length = 0
             break
 
     if length <= 0:
-        return None  # Malformed header
-
-    # Read exactly `length` bytes for the JSON body
-    body = await loop.run_in_executor(None, sys.stdin.buffer.read, length)
-    if not body:
+        print("No valid Content-Length found", file=sys.stderr, flush=True)
         return None
-    return body.decode()
+
+    body = sys.stdin.buffer.read(length)
+    if not body:
+        print("Expected body bytes not available", file=sys.stderr, flush=True)
+        return None
+
+    try:
+        return body.decode()
+    except UnicodeDecodeError:
+        print("Failed to decode body bytes", file=sys.stderr, flush=True)
+        return None
+
+
+async def read_message():
+    """Asynchronously read a framed JSON-RPC message using the blocking helper."""
+    loop = asyncio.get_running_loop()
+    return await loop.run_in_executor(None, _read_message_sync)
 
 
 def send_message(obj):
