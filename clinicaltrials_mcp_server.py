@@ -79,21 +79,37 @@ async def process_request(request_str):
         }
 
 
+async def keep_alive():
+    """Keep the server alive even if there's no input."""
+    while True:
+        print("Server still alive...", file=sys.stderr, flush=True)
+        await asyncio.sleep(30)  # Log every 30 seconds
+
 async def main():
     """Main entry point for the MCP server."""
     print("Clinical Trials MCP server starting...", file=sys.stderr, flush=True)
-
+    
+    # Start the keep-alive task to ensure the server doesn't exit
+    keep_alive_task = asyncio.create_task(keep_alive())
+    
     # Process requests indefinitely
     while True:
         try:
-            # Read the next line from stdin
-            line = await read_stdin()
+            # Read the next line from stdin with a safety timeout
+            # Use a timeout to ensure we can recover if stdin is problematic
+            read_task = asyncio.create_task(read_stdin())
+            try:
+                line = await asyncio.wait_for(read_task, timeout=5)  # 5 second timeout
+            except asyncio.TimeoutError:
+                # Timeout reached, continue the loop
+                await asyncio.sleep(0.1)
+                continue
+                
             if not line:
-                # Don't exit when stdin is closed - Claude Desktop may close stdin after initialization
-                # Instead, log it and wait for new connections
+                # Don't exit when stdin is closed
                 print("Stdin appears closed. Waiting for new data...", file=sys.stderr, flush=True)
                 # Sleep to avoid CPU spinning
-                await asyncio.sleep(1)
+                await asyncio.sleep(2)
                 continue
 
             line = line.strip()
@@ -112,12 +128,14 @@ async def main():
             print(response_json, flush=True)
 
             # For debugging: add a delay to ensure the response is sent
-            await asyncio.sleep(0.01)
+            await asyncio.sleep(0.1)
 
         except Exception as e:
-            print(f"Unhandled exception: {e}", file=sys.stderr, flush=True)
+            print(f"Unhandled exception in main loop: {e}", file=sys.stderr, flush=True)
+            import traceback
+            traceback.print_exc(file=sys.stderr)
             # Continue processing requests even if one fails
-            await asyncio.sleep(0.1)
+            await asyncio.sleep(1)
 
 
 if __name__ == "__main__":
