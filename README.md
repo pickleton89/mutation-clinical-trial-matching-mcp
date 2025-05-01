@@ -91,6 +91,59 @@ Processes and formats the clinical trials data:
 4. Use resources by asking:
    - "Can you tell me more about the KRAS G12C mutation?"
 
+---
+
+## Integrating with Claude Desktop (context7)
+
+You can configure this project as a Claude Desktop MCP tool. Use path placeholders in your configuration, and substitute them with your actual paths:
+
+```json
+"mutation-clinical-trials-mcp": {
+  "command": "{PATH_TO_VENV}/bin/python",
+  "args": [
+    "{PATH_TO_PROJECT}/clinicaltrials_mcp_server.py"
+  ],
+  "description": "Matches genetic mutations to relevant clinical trials and provides summaries."
+}
+```
+
+**Path Variables:**
+- `{PATH_TO_VENV}`: Full path to your virtual environment directory.
+- `{PATH_TO_PROJECT}`: Full path to the directory containing your project files.
+
+**Installation Instructions:**
+1. Clone the repository to your local machine.
+2. Create a virtual environment:  
+   ```bash
+   python -m venv .venv
+   ```
+3. Activate the virtual environment and install dependencies:  
+   ```bash
+   source .venv/bin/activate    # macOS/Linux  
+   .venv\Scripts\activate       # Windows  
+   pip install -r requirements.txt
+   ```
+4. Determine the full path to your virtual environment and project directory.
+5. Update your configuration with these specific paths.
+
+**Examples:**
+- On macOS/Linux:
+  ```json
+  "command": "/Users/username/projects/mutation_trial_matcher/.venv/bin/python"
+  ```
+- On Windows:
+  ```json
+  "command": "C:\\Users\\username\\projects\\mutation_trial_matcher\\.venv\\Scripts\\python.exe"
+  ```
+
+**Path Finding Tips:**
+- To find the exact path to your Python interpreter in the virtual environment, run:
+  - `which python` (macOS/Linux)
+  - `where python` (Windows, after activating the venv)
+- For the project path, use the full path to the directory containing `clinicaltrials_mcp_server.py`.
+
+---
+
 ## Future Improvements
 
 1. Add additional tools for:
