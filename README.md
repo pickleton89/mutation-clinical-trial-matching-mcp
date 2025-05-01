@@ -81,7 +81,7 @@ Processes and formats the clinical trials data:
    ```
 
 2. Configure Claude Desktop:
-   - The config at `/Users/jeffkiefer/Library/Application Support/Claude/claude_desktop_config.json` should already be set up
+   - The config at `~/Library/Application Support/Claude/claude_desktop_config.json` should already be set up
 
 3. Start Claude Desktop and ask questions like:
    - "What clinical trials are available for EGFR L858R mutations?"
