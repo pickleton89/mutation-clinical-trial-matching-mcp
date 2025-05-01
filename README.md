@@ -93,7 +93,7 @@ Processes and formats the clinical trials data:
 
 ---
 
-## Integrating with Claude Desktop (context7)
+## Integrating with Claude Desktop 
 
 You can configure this project as a Claude Desktop MCP tool. Use path placeholders in your configuration, and substitute them with your actual paths:
 
