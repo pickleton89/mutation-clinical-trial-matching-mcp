@@ -122,6 +122,8 @@ This project was built using the [PocketFlow-Template-Python](https://github.com
 
 The project follows the Agentic Coding methodology as outlined in the original template.
 
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
 ## Development Process
 
 This project was developed using an AI-assisted coding approach, following the Agentic Coding principles where humans design and AI agents implement. The original program on main built on 2025-04-30. The implementation was created through pair programming with:
