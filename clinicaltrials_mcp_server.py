@@ -90,7 +90,10 @@ async def main():
     print("Clinical Trials MCP server starting...", file=sys.stderr, flush=True)
     
     # Start the keep-alive task to ensure the server doesn't exit
-    keep_alive_task = asyncio.create_task(keep_alive())
+    # We don't need to track this task, we just need it to run
+    asyncio.create_task(keep_alive())
+    # Uncomment this if you want to explicitly track the task
+    # keep_alive_task = asyncio.create_task(keep_alive())
     
     # Process requests indefinitely
     while True:
