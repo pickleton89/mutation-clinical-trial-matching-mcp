@@ -1,6 +1,10 @@
 # Mutation Clinical Trial Matching MCP
 
-A Model Context Protocol (MCP) server that enables Claude Desktop to search for matches in clincialtrials.gov based on mutations
+A Model Context Protocol (MCP) server that enables Claude Desktop to search for matches in clincialtrials.gov based on mutations. 
+
+## Status
+
+This is currently first phase of development. It works to retreive trials based on given mutations in the claude query. However, there are still bugs and further refinements and additions to be implemented.
 
 ## Overview
 
