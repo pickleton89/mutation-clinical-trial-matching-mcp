@@ -115,3 +115,9 @@ If Claude Desktop disconnects from the MCP server:
 - Check logs at: `/Users/jeffkiefer/Library/Logs/Claude/mcp-server-clinicaltrials-mcp.log`
 - Restart Claude Desktop
 - Verify the server is running correctly
+
+## Acknowledgements
+
+This project was built using the [PocketFlow-Template-Python](https://github.com/The-Pocket/PocketFlow-Template-Python) as a starting point. Special thanks to the original contributors of that project for providing the foundation and structure that made this implementation possible.
+
+The project follows the Agentic Coding methodology as outlined in the original template.
