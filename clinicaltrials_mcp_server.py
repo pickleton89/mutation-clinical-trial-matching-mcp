@@ -12,6 +12,48 @@ async def read_stdin():
     return await loop.run_in_executor(None, sys.stdin.readline)
 
 
+# ---------- MCP stdio framing helpers ----------
+async def read_message():
+    """Read a single JSON-RPC message framed with Content-Length headers."""
+    loop = asyncio.get_running_loop()
+    headers = b""  # Accumulate header bytes
+    while True:
+        line = await loop.run_in_executor(None, sys.stdin.buffer.readline)
+        if not line:
+            return None  # EOF
+        headers += line
+        # Header section ends with a blank line
+        if line in (b"\r\n", b"\n"):
+            break
+
+    # Parse Content-Length
+    length = 0
+    for header_line in headers.decode().splitlines():
+        if header_line.lower().startswith("content-length:"):
+            try:
+                length = int(header_line.split(":")[1].strip())
+            except ValueError:
+                length = 0
+            break
+
+    if length <= 0:
+        return None  # Malformed header
+
+    # Read exactly `length` bytes for the JSON body
+    body = await loop.run_in_executor(None, sys.stdin.buffer.read, length)
+    if not body:
+        return None
+    return body.decode()
+
+
+def send_message(obj):
+    """Write a JSON-RPC response with Content-Length framing to stdout."""
+    raw = json.dumps(obj)
+    msg = f"Content-Length: {len(raw)}\r\n\r\n{raw}"
+    sys.stdout.write(msg)
+    sys.stdout.flush()
+
+
 async def process_request(request_str):
     """Process a single JSON-RPC request."""
     try:
@@ -85,6 +127,7 @@ async def keep_alive():
         print("Server still alive...", file=sys.stderr, flush=True)
         await asyncio.sleep(30)  # Log every 30 seconds
 
+
 async def main():
     """Main entry point for the MCP server."""
     print("Clinical Trials MCP server starting...", file=sys.stderr, flush=True)
@@ -98,9 +141,8 @@ async def main():
     # Process requests indefinitely
     while True:
         try:
-            # Read the next line from stdin with a safety timeout
-            # Use a timeout to ensure we can recover if stdin is problematic
-            read_task = asyncio.create_task(read_stdin())
+            # Wait for the next framed JSON-RPC message with a timeout
+            read_task = asyncio.create_task(read_message())
             try:
                 line = await asyncio.wait_for(read_task, timeout=5)  # 5 second timeout
             except asyncio.TimeoutError:
@@ -115,11 +157,6 @@ async def main():
                 await asyncio.sleep(2)
                 continue
 
-            line = line.strip()
-            if not line:
-                # Skip empty lines
-                continue
-
             print(f"Received: {line}", file=sys.stderr, flush=True)
 
             # Process the request
@@ -128,7 +165,7 @@ async def main():
             # Send the response
             response_json = json.dumps(response)
             print(f"Sending: {response_json}", file=sys.stderr, flush=True)
-            print(response_json, flush=True)
+            send_message(response)
 
             # For debugging: add a delay to ensure the response is sent
             await asyncio.sleep(0.1)
