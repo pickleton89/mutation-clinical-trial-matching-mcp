@@ -48,17 +48,6 @@ Windsurf comes with built-in support for the Context7 MCP server, but you may ne
 
 When working with Windsurf, you can verify the Context7 MCP server is properly configured by checking the MCP servers section in your system prompt, which should include Context7.
 
-### Using Context7 MCP in Windsurf
-
-To use Context7 MCP in your Windsurf environment:
-
-1. **Start a new conversation** with your Windsurf assistant
-2. **Request documentation** using natural language, for example:
-   ```
-   Can you use the context7 MCP server to follow guidelines for this project from the Pocket Flow repository?
-   ```
-3. **Apply the guidance** to your project
-
 ### Benefits of Context7 MCP in Windsurf
 
 - **Seamless Integration**: No additional setup required
@@ -235,62 +224,6 @@ When using Context7 MCP with Pocket Flow, consider exploring these topics:
 3. **Implement**: Follow the Pocket Flow patterns in your implementation
 4. **Test**: Verify your implementation against the patterns
 5. **Refine**: Iterate based on additional guidance as needed
-
-## Natural Language Prompting
-
-While the examples above show the formal function call syntax, you can also use natural language prompts to accomplish the same workflow. This approach is often more intuitive and aligns with the Agentic Coding principles where humans design and agents code.
-
-### Example Natural Language Prompts
-
-#### 1. Resolving Library ID
-
-Instead of formal function calls, you can simply ask:
-
-```
-Can you use the context7 MCP server to find the library ID for the Pocket Flow repository?
-```
-
-#### 2. Retrieving Documentation
-
-Once you have the library ID, you can ask for specific guidance:
-
-```
-Can you retrieve documentation about the Node pattern from the Pocket Flow repository using Context7 MCP?
-```
-
-```
-Please use Context7 to get information about project structure from the Pocket Flow framework.
-```
-
-#### 3. Implementing a Specific Pattern
-
-You can ask for guidance on implementing specific patterns:
-
-```
-How should I implement the BatchNode pattern according to Pocket Flow guidelines? Can you use Context7 to show me examples?
-```
-
-#### 4. Getting Started
-
-For initial project setup:
-
-```
-I'm starting a new project using Pocket Flow. Can you use Context7 to guide me through the initial setup and project structure?
-```
-
-### Workflow with Natural Language
-
-1. **Ask for guidance**: "I need to implement a clinical trial matching service using Pocket Flow. Can you use Context7 to provide guidance?"
-
-2. **Refine your request**: "Can you specifically show me how to implement the Node pattern for querying an external API?"
-
-3. **Apply the guidance**: Use the examples and patterns provided in your implementation
-
-4. **Seek clarification**: "I'm having trouble with the flow orchestration. Can you explain how nodes should connect in Pocket Flow?"
-
-5. **Iterate**: Continue refining your implementation based on the guidance
-
-This natural language approach makes the interaction more conversational while still leveraging the power of Context7 MCP to access Pocket Flow documentation and guidance.
 
 ## Creating Memories from Pocket Flow Documentation
 
