@@ -13,12 +13,19 @@ This project follows the Agentic Coding principles to create a system that integ
 ```mermaid
 flowchart LR
     Claude[Claude Desktop] <-->|MCP Protocol| Server[MCP Server]
-    Server -->|Query| API[Clinicaltrials.gov API]
-    API -->|Trial Data| Server
-    Server -->|Format| Summary[Summarize Data]
-    Summary -->|Structured Response| Server
+    
+    subgraph Flow[PocketFlow]
+        QueryNode[Query Node] -->|trials_data| SummarizeNode[Summarize Node]
+    end
+    
+    Server -->|mutation| Flow
+    QueryNode -->|API Request| API[Clinicaltrials.gov API]
+    API -->|Trial Data| QueryNode
+    Flow -->|summary| Server
     Server -->|Return| Claude
 ```
+
+Each node in the flow follows the PocketFlow Node pattern with `prep`, `exec`, and `post` methods:
 
 ## Project Structure
 
@@ -41,8 +48,9 @@ This project is organized according to the Agentic Coding paradigm:
    - `utils/call_llm.py`: Utilities for working with Claude
 
 4. **Node Design** (AI-led):
-   - `llm/summarize.py`: Formats clinical trial data into readable summaries
-   - `clinicaltrials_mcp_server.py`: Implements the MCP server interface
+   - `utils/node.py`: Implements base Node and BatchNode classes with prep/exec/post pattern
+   - `clinicaltrials/nodes.py`: Defines specialized nodes for querying and summarizing
+   - `clinicaltrials_mcp_server.py`: Orchestrates the flow execution
 
 5. **Implementation** (AI-led):
    - FastMCP SDK for handling the protocol details
@@ -73,9 +81,62 @@ Processes and formats the clinical trials data:
 - Extracts key information (NCT ID, summary, conditions, etc.)
 - Creates a readable markdown summary
 
+## Node Pattern Implementation
+
+This project implements the PocketFlow Node pattern, which provides a modular, maintainable approach to building AI workflows:
+
+### Core Node Classes (`utils/node.py`)
+
+- **Node**: Base class with `prep`, `exec`, and `post` methods for processing data
+- **BatchNode**: Extension for batch processing multiple items
+- **Flow**: Orchestrates execution of nodes in sequence
+
+### Implementation Nodes (`clinicaltrials/nodes.py`)
+
+1. **QueryTrialsNode**:
+   ```python
+   # Queries clinicaltrials.gov API
+   def prep(self, shared): return shared["mutation"]
+   def exec(self, mutation): return query_clinical_trials(mutation)
+   def post(self, shared, mutation, result):
+       shared["trials_data"] = result
+       shared["studies"] = result.get("studies", [])
+       return "summarize"
+   ```
+
+2. **SummarizeTrialsNode**:
+   ```python
+   # Formats trial data into readable summaries
+   def prep(self, shared): return shared["studies"]
+   def exec(self, studies): return format_trial_summary(studies)
+   def post(self, shared, studies, summary):
+       shared["summary"] = summary
+       return None  # End of flow
+   ```
+
+### Flow Execution
+
+The MCP server creates and runs the flow:
+
+```python
+# Create nodes
+query_node = QueryTrialsNode()
+summarize_node = SummarizeTrialsNode()
+
+# Create flow
+flow = Flow(start=query_node)
+flow.add_node("summarize", summarize_node)
+
+# Run flow with shared context
+shared = {"mutation": mutation}
+result = flow.run(shared)
+```
+
+This pattern separates preparation, execution, and post-processing, making the code more maintainable and testable. For more details, see the [design document](docs/design.md).
+
 ## Usage
 
-1. Install dependencies:
+1. Install dependencies with uv:
    ```
    uv pip install -r requirements.txt
    ```
@@ -113,18 +174,24 @@ You can configure this project as a Claude Desktop MCP tool. Use path placeholde
 
 **Installation Instructions:**
 1. Clone the repository to your local machine.
-2. Create a virtual environment:  
+2. Install uv if you don't have it already:
    ```bash
-   python -m venv .venv
+   curl -LsSf https://astral.sh/uv/install.sh | sh    # macOS/Linux
+   # or
+   iwr -useb https://astral.sh/uv/install.ps1 | iex    # Windows PowerShell
    ```
-3. Activate the virtual environment and install dependencies:  
+3. Create a virtual environment and install dependencies in one step:
    ```bash
-   source .venv/bin/activate    # macOS/Linux  
-   .venv\Scripts\activate       # Windows  
-   pip install -r requirements.txt
+   uv venv .venv
+   uv pip install -r requirements.txt
    ```
-4. Determine the full path to your virtual environment and project directory.
-5. Update your configuration with these specific paths.
+4. Activate the virtual environment when needed:
+   ```bash
+   source .venv/bin/activate    # macOS/Linux
+   .venv\Scripts\activate       # Windows
+   ```
+5. Determine the full path to your virtual environment and project directory.
+6. Update your configuration with these specific paths.
 
 **Examples:**
 - On macOS/Linux:
@@ -146,25 +213,20 @@ You can configure this project as a Claude Desktop MCP tool. Use path placeholde
 
 ## Future Improvements
 
-1. Add additional tools for:
-   - Filtering trials by location, phase, or status
-   - Getting detailed information about a specific trial by NCT ID
+For a comprehensive list of planned enhancements and future work, please see the [future_work.md](docs/future_work.md) document.
 
-2. Expand resources with:
-   - More mutation types
-   - Treatment options for each mutation type
-   - Survival statistics
-
-3. Improve summarization with:
-   - Categorization by intervention type
-   - Highlighting novel treatment approaches
 
 ## Dependencies
 
-- Python 3.7+
-- mcp[cli] - Official Model Context Protocol SDK
-- requests - For API calls
-- python-dotenv - For environment variable management
+This project relies on the following key dependencies:
+
+- **Python 3.7+** - Base runtime environment
+- **PocketFlow** (`pocketflow>=0.0.1`) - Framework for building modular AI workflows with the Node pattern
+- **MCP SDK** (`mcp[cli]>=1.0.0`) - Official Model Context Protocol SDK for building Claude Desktop tools
+- **Requests** (`requests==2.31.0`) - HTTP library for making API calls to clinicaltrials.gov
+- **Python-dotenv** (`python-dotenv==1.1.0`) - For loading environment variables from .env files
+
+All dependencies can be installed using uv as described in the installation instructions.
 
 ## Troubleshooting
 
