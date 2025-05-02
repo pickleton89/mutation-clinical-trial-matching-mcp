@@ -32,7 +32,6 @@ Windsurf comes with built-in support for the Context7 MCP server, but you may ne
      - **Name**: `context7`
      - **Description**: `Provides access to documentation from various libraries and repositories`
      - **Endpoint URL**: `https://api.context7.ai/v1` (or the URL provided by your Windsurf administrator)
-     - **API Key**: Enter your Context7 API key if required (consult your administrator if you don't have this)
    - Click "Save" or "Add" to confirm
 
 5. **Enable the Server**:
