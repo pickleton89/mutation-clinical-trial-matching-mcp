@@ -235,14 +235,6 @@ If Claude Desktop disconnects from the MCP server:
 - Restart Claude Desktop
 - Verify the server is running correctly
 
-## Acknowledgements
-
-This project was built using the [PocketFlow-Template-Python](https://github.com/The-Pocket/PocketFlow-Template-Python) as a starting point. Special thanks to the original contributors of that project for providing the foundation and structure that made this implementation possible.
-
-The project follows the Agentic Coding methodology as outlined in the original template.
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
 ## Development Process
 
 This project was developed using an AI-assisted coding approach, following the Agentic Coding principles where humans design and AI agents implement. The original program on main built on 2025-04-30. The implementation was created through pair programming with:
@@ -252,3 +244,28 @@ This project was developed using an AI-assisted coding approach, following the A
    - Claude 3.7 Sonnet
 
 These AI assistants were instrumental in translating high-level design requirements into functional code, helping with API integration, and structuring the project according to best practices.
+
+## Using PocketFlow Guidelines with Context7
+
+**Important Note**: This project is based on the [PocketFlow-Template-Python](https://github.com/The-Pocket/PocketFlow-Template-Python) repository, which includes a comprehensive `.windsurfrules` file. However, Windsurf has a 6,000 character limit for rules files, meaning the complete PocketFlow guidelines cannot be fully loaded into Windsurf's memory.
+
+To address this limitation, we've created detailed instructions on using the Context7 MCP server to access PocketFlow guidelines during development. This approach allows you to leverage the full power of PocketFlow's design patterns and best practices without being constrained by the character limit.
+
+For comprehensive instructions on using Context7 with PocketFlow, please refer to our [Context7 Guide](docs/context7_guide.md). This guide includes:
+
+- Step-by-step instructions for configuring Context7 MCP in Windsurf
+- Natural language prompts for accessing PocketFlow documentation
+- Examples of retrieving specific implementation patterns
+- How to save important patterns as memories for future reference
+
+By following this guide, you can maintain alignment with PocketFlow's Agentic Coding principles while developing and extending this project.
+
+## Acknowledgements
+
+This project was built using the [PocketFlow-Template-Python](https://github.com/The-Pocket/PocketFlow-Template-Python) as a starting point. Special thanks to the original contributors of that project for providing the foundation and structure that made this implementation possible.
+
+The project follows the Agentic Coding methodology as outlined in the original template.
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+

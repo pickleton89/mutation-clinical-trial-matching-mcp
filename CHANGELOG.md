@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 - Added detailed implementation guide in `docs/implementation_guide.md` following the 7-step Agentic Coding approach with code examples.
 - Created developer guide in `docs/developer_guide.md` for contributors, explaining project structure, extension patterns, testing, and deployment.
 - Added design patterns documentation in `docs/design_patterns.md` detailing PocketFlow patterns (Node, Flow, BatchNode), Agent pattern, and implementation examples.
+- Created Context7 MCP guide in `docs/context7_guide.md` explaining how to use the Context7 MCP server to access Pocket Flow documentation and guidance during development.
 - Enhanced project documentation to align with Pocket Flow framework guidelines.
 
 ## [2025-05-02]
