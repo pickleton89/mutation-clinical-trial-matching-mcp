@@ -7,6 +7,18 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 - Ongoing development and improvements.
 
+## [2025-05-02] - Documentation Refactor & Clarity Improvements
+### Changed
+- Major refactor of `docs/context7_guide.md` ([commit be35e0f4](https://github.com/pickleton89/mutation-clinical-trial-matching-mcp/commit/be35e0f48311a21532bea89ebdc04310054ab11f)):
+  - Improved internal logic consistency and document structure for easier understanding.
+  - Added a "Quick Start" summary and reorganized sections for optimal flow.
+  - Flattened heading hierarchy and replaced deep heading levels with clear, concise subsections.
+  - Merged and deduplicated "Benefits" and "Best Practices" sections.
+  - Clarified token limit guidance, memory creation, and library ID variability.
+  - Grouped "Natural Language Prompting" and "Explicit Function Calls" as parallel options.
+  - Updated all content to align with Pocket Flow and Agentic Coding best practices.
+- General documentation now better supports onboarding and reference for new contributors.
+
 ## [2025-05-02] - Documentation Enhancement
 ### Added
 - Created comprehensive API documentation in `docs/api.md` detailing the MCP server interface, ClinicalTrials.gov API integration, data structures, and error handling.
