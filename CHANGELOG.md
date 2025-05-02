@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 - Ongoing development and improvements.
 
+## [2025-05-02] - CLI and MCP Client Alignment
+### Fixed
+- Updated the CLI workflow in `main.py` to pass the raw `clinicaltrials.gov` studies directly to `summarize_trials`, matching the data structure used by the Claude desktop MCP client.
+- Removed the call to `parse_clinical_trials` from the CLI path to ensure consistent summarization output between CLI and MCP workflows.
+- Resolved a lint warning by removing an unused import in `main.py`.
+
 ## [2025-05-02] - Documentation Refactor & Clarity Improvements
 ### Changed
 - Major refactor of `docs/context7_guide.md` ([commit be35e0f4](https://github.com/pickleton89/mutation-clinical-trial-matching-mcp/commit/be35e0f48311a21532bea89ebdc04310054ab11f)):
