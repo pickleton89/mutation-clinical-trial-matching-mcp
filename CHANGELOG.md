@@ -49,6 +49,14 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Created `CHANGELOG.md` to track the narrative of project changes, decisions, and milestones.
 - Initial setup for structured changelog entries.
+- Implemented PocketFlow Node pattern with `prep`, `exec`, and `post` methods to better align with agentic coding principles.
+- Added base `Node` and `BatchNode` classes in `utils/node.py` to support modular flow-based architecture.
+- Created specialized node implementations in `clinicaltrials/nodes.py` for querying and summarizing clinical trials.
+- Added comprehensive unit tests for the Node pattern implementation in `tests/test_nodes.py`.
+
+### Changed
+- Refactored `clinicaltrials_mcp_server.py` to use the new Node pattern while maintaining the same external API.
+- Updated project structure to follow a more modular, flow-based architecture for improved maintainability and testability.
 
 ---
 
