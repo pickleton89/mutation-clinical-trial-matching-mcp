@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 import sys
 from fastmcp import FastMCP
-from clinicaltrials.query import query_clinical_trials
-from llm.summarize import summarize_trials as summarize_trial_data
+from utils.node import Flow
+from clinicaltrials.nodes import QueryTrialsNode, SummarizeTrialsNode
 
 # Initialize FastMCP server
 mcp = FastMCP("Clinical Trials MCP")
@@ -20,13 +20,23 @@ def summarize_trials(mutation: str) -> str:
     """
     print(f"Querying for: {mutation}", file=sys.stderr, flush=True)
     
-    trials_data = query_clinical_trials(mutation)
-    if trials_data and "studies" in trials_data:
-        summary = summarize_trial_data(trials_data["studies"])
-    else:
-        summary = "No trials found or error in fetching trials."
+    # Create nodes
+    query_node = QueryTrialsNode(min_rank=1, max_rank=10, timeout=10)
+    summarize_node = SummarizeTrialsNode()
     
-    return summary
+    # Create flow
+    flow = Flow(start=query_node)
+    flow.add_node("summarize", summarize_node)
+    
+    # Run flow with shared context
+    shared = {"mutation": mutation}
+    result = flow.run(shared)
+    
+    # Return summary or error message
+    if "summary" in result:
+        return result["summary"]
+    else:
+        return "No trials found or error in fetching trials."
 
 if __name__ == "__main__":
     try:
