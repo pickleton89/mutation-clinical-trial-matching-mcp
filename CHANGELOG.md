@@ -1,5 +1,18 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+- Created `docs/memory_vs_windsurfrules.md` to document handling of `.windsurfrules` character limits and the use of Windsurf 🪁 memory as a workaround. Includes comparison table and clear instructions.
+- Updated `README.md` with a new section "Handling the .windsurfrules Character Limit" that:
+  - Explains the 6,000 character limit problem.
+  - Describes two solutions: using Windsurf 🪁 memory and using Context7 MCP.
+  - Links to `docs/memory_vs_windsurfrules.md` and `docs/context7_guide.md` for further instructions.
+- Improved branding and clarity by replacing "AI assistant" with "Windsurf 🪁" in both documentation files.
+
+### Changed
+- Enhanced documentation structure for clarity and ease of onboarding regarding project rules and memory usage.
+
 All notable changes to this project will be documented in this file.
 
 ---
