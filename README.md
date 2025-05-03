@@ -245,7 +245,17 @@ This project was developed using an AI-assisted coding approach, following the A
 
 These AI assistants were instrumental in translating high-level design requirements into functional code, helping with API integration, and structuring the project according to best practices.
 
-## Using PocketFlow Guidelines with Context7
+## Handling the `.windsurfrules` Character Limit
+
+The PocketFlow `.windsurfrules` file from the template repository contains comprehensive project rules, but Windsurf enforces a 6,000 character limit on rules files. This means you cannot include the entire set of guidelines directly in your project, and important rules may be omitted or truncated.
+
+To address this, there are two recommended solutions:
+
+### 1. Using Windsurf 🪁 Memory to Store Rules
+
+You can leverage Windsurf’s memory feature to store the full set of PocketFlow rules, even if they exceed the `.windsurfrules` file limit. This approach allows you to reference all project conventions and best practices in conversation with Windsurf, ensuring nothing is lost due to truncation. For step-by-step instructions and a detailed comparison of memory vs. rules files, see [docs/memory_vs_windsurfrules.md](docs/memory_vs_windsurfrules.md).
+
+### 2. Using Context7 to Access Guidelines
 
 **Important Note**: This project is based on the [PocketFlow-Template-Python](https://github.com/The-Pocket/PocketFlow-Template-Python) repository, which includes a comprehensive `.windsurfrules` file. However, Windsurf has a 6,000 character limit for rules files, meaning the complete PocketFlow guidelines cannot be fully loaded into Windsurf's memory.
 

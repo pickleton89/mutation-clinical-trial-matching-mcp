@@ -2,34 +2,34 @@
 
 ## Problem Statement
 
-Many projects, such as those using the PocketFlow framework, rely on a `.windsurfrules` file to define project structure, coding conventions, and workflow rules. However, this file is limited to 6000 characters in Windsurf, and any content beyond that is ignored by Cascade. This presents a challenge when trying to use comprehensive rule sets—such as those from the PocketFlow template repository—that exceed this limit. This document provides guidance on how to preserve and leverage all project rules by utilizing the AI assistant’s memory feature alongside the `.windsurfrules` file.
+Many projects, such as those using the PocketFlow framework, rely on a `.windsurfrules` file to define project structure, coding conventions, and workflow rules. However, this file is limited to 6000 characters in Windsurf, and any content beyond that is ignored by Cascade. This presents a challenge when trying to use comprehensive rule sets—such as those from the PocketFlow template repository—that exceed this limit. This document provides guidance on how to preserve and leverage all project rules by utilizing Windsurf’s 🪁 memory feature alongside the `.windsurfrules` file.
 
-## How the AI Assistant Uses Project References
+## How Windsurf 🪁 Uses Project References
 
 - **Accessing Reference Files:**
-  - The assistant can fetch and read public files (e.g., `.windsurfrules` on GitHub) using stable URLs.
+  - Windsurf can fetch and read public files (e.g., `.windsurfrules` on GitHub) using stable URLs.
   - These files provide essential project structure, coding conventions, and workflow guidelines.
 
 - **Creating and Using Memory:**
-  - The assistant can store important rules and context from these files in its memory.
+  - Windsurf can store important rules and context from these files in its memory.
   - This memory persists across conversations and can be referenced whenever needed, ensuring continuity even in long-term or multi-session projects.
 
 - **Maintaining Project Consistency:**
-  - By combining file-based rules and persistent memory, the assistant helps maintain consistent project organization, coding standards, and workflow.
+  - By combining file-based rules and persistent memory, Windsurf helps maintain consistent project organization, coding standards, and workflow.
 
 ## Using the PocketFlow Template .windsurfrules in Your Project
 
 If you try to use the `.windsurfrules` file from the [PocketFlow Template Python repository](https://github.com/The-Pocket/PocketFlow-Template-Python/blob/main/.windsurfrules), you may notice that it exceeds the 6000-character limit imposed on `.windsurfrules` (and `global_rules.md`) files in Windsurf. Any content above 6000 characters will be truncated and Cascade will not be aware of it. This means you cannot copy the entire file directly into your own project's `.windsurfrules` if it is too long, or you risk losing important rules or context.
 
-**Recommended Solution: Store the Rules in AI Memory**
+**Recommended Solution: Store the Rules in Windsurf 🪁 Memory**
 
 To retain all the valuable rules and guidelines from the template, you should:
 
 1. **Copy the contents** of the template `.windsurfrules` file.
-2. **Ask the AI assistant** to store these rules in memory. For example, you can say:
+2. **Ask Windsurf 🪁** to store these rules in memory. For example, you can say:
    > "Please store the following PocketFlow rules in memory for use in this project: ..."
-3. The assistant will create a persistent memory entry, making the rules accessible across multiple conversations and sessions.
-4. **Reference the memory** in your documentation or workflow, so you and collaborators know the rules are available via the assistant, even if they aren't all in the file.
+3. Windsurf 🪁 will create a persistent memory entry, making the rules accessible across multiple conversations and sessions.
+4. **Reference the memory** in your documentation or workflow, so you and collaborators know the rules are available via Windsurf, even if they aren't all in the file.
 
 **Tip:** You can also summarize or split the rules into logical sections and store them as multiple memory entries for easier access and organization.
 
