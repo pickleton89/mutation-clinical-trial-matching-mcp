@@ -278,4 +278,8 @@ The project follows the Agentic Coding methodology as outlined in the original t
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
+---
+⚠️ **Disclaimer**
 
+This project is a prototype and is intended for research and demonstration purposes only. It should not be used to make medical decisions or as a substitute for professional medical advice, diagnosis, or treatment. Due to the limitations of large language models (LLMs), the information provided by this tool may be incomplete, inaccurate, or outdated. Users should exercise caution and consult qualified healthcare professionals before making any decisions based on the outputs of this system.
+---

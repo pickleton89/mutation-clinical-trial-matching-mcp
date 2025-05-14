@@ -3,12 +3,13 @@
 ## [Unreleased]
 
 ### Added
-- Created `docs/memory_vs_windsurfrules.md` to document handling of `.windsurfrules` character limits and the use of Windsurf 🪁 memory as a workaround. Includes comparison table and clear instructions.
+- Created `docs/memory_vs_windsurfrules.md` to document handling of `.windsurfrules` character limits and the use of Windsurf  memory as a workaround. Includes comparison table and clear instructions.
 - Updated `README.md` with a new section "Handling the .windsurfrules Character Limit" that:
   - Explains the 6,000 character limit problem.
-  - Describes two solutions: using Windsurf 🪁 memory and using Context7 MCP.
+  - Describes two solutions: using Windsurf  memory and using Context7 MCP.
   - Links to `docs/memory_vs_windsurfrules.md` and `docs/context7_guide.md` for further instructions.
-- Improved branding and clarity by replacing "AI assistant" with "Windsurf 🪁" in both documentation files.
+- Improved branding and clarity by replacing "AI assistant" with "Windsurf " in both documentation files.
+- Added a disclaimer to the end of the README stating that the project is a prototype, not for medical use, and may make mistakes due to LLM limitations.
 
 ### Changed
 - Enhanced documentation structure for clarity and ease of onboarding regarding project rules and memory usage.
