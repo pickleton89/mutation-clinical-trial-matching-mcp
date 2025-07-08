@@ -10,9 +10,19 @@
   - Links to `docs/memory_vs_windsurfrules.md` and `docs/context7_guide.md` for further instructions.
 - Improved branding and clarity by replacing "AI assistant" with "Windsurf " in both documentation files.
 - Added a disclaimer to the end of the README stating that the project is a prototype, not for medical use, and may make mistakes due to LLM limitations.
+- Created `pyproject.toml` with project metadata and dependencies for modern Python project management
+- Generated `uv.lock` universal lockfile for consistent dependency versions across all platforms
 
 ### Changed
 - Enhanced documentation structure for clarity and ease of onboarding regarding project rules and memory usage.
+- **BREAKING**: Migrated from pip/requirements.txt to uv project workflow
+- Updated all development commands in `CLAUDE.md` to use `uv run` prefix
+- Changed dependency management from `requirements.txt` to `pyproject.toml`
+- Updated testing commands to use `uv run python -m unittest discover tests/`
+- Updated MCP server startup to use `uv run python clinicaltrials_mcp_server.py`
+
+### Removed
+- Dependency on manual virtual environment management (now handled automatically by uv)
 
 All notable changes to this project will be documented in this file.
 

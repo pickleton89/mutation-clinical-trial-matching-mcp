@@ -6,17 +6,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Environment Setup
 - **Package Manager**: Always use `uv` for package management and environment setup
-- **Install Dependencies**: `uv pip install -r requirements.txt`
-- **Environment Creation**: `uv venv .venv`
-- **Environment Activation**: `source .venv/bin/activate` (macOS/Linux) or `.venv\Scripts\activate` (Windows)
+- **Sync Dependencies**: `uv sync` (creates .venv and installs dependencies from uv.lock)
+- **Add Dependencies**: `uv add <package>` (adds to pyproject.toml and updates uv.lock)
+- **Remove Dependencies**: `uv remove <package>`
+- **Run Commands**: `uv run <command>` (runs command in project environment)
 
 ### Testing
-- **Run All Tests**: `python -m unittest discover tests/`
-- **Run Specific Test**: `python -m unittest tests.test_nodes.TestQueryTrialsNode.test_query_trials_node`
+- **Run All Tests**: `uv run python -m unittest discover tests/`
+- **Run Specific Test**: `uv run python -m unittest tests.test_nodes.TestQueryTrialsNode.test_query_trials_node`
 - **Test Files**: Located in `tests/` directory, following `test_*.py` pattern
 
 ### MCP Server
-- **Start Server**: `python clinicaltrials_mcp_server.py`
+- **Start Server**: `uv run python clinicaltrials_mcp_server.py`
 - **Server Entry Point**: `clinicaltrials_mcp_server.py`
 - **Protocol**: Uses FastMCP SDK for MCP protocol implementation
 
