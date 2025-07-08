@@ -20,6 +20,7 @@ Classifier: Topic :: Software Development :: Libraries :: Python Modules
 Requires-Python: >=3.13
 Description-Content-Type: text/markdown
 License-File: LICENSE
+Requires-Dist: fastmcp>=2.10.2
 Requires-Dist: mcp[cli]>=1.0.0
 Requires-Dist: pocketflow>=0.0.1
 Requires-Dist: python-dotenv==1.1.0

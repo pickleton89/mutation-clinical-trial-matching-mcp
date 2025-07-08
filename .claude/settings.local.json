@@ -22,7 +22,10 @@
       "Bash(ls:*)",
       "Bash(uv lock:*)",
       "Bash(uv install:*)",
-      "Bash(uv pip install:*)"
+      "Bash(uv pip install:*)",
+      "Bash(npx mcp-remote:*)",
+      "Bash(npm cache clean:*)",
+      "Bash(clear)"
     ],
     "deny": []
   }

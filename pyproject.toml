@@ -20,6 +20,7 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 dependencies = [
+    "fastmcp>=2.10.2",
     "mcp[cli]>=1.0.0",
     "pocketflow>=0.0.1",
     "python-dotenv==1.1.0",
