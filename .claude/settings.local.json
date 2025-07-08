@@ -11,7 +11,14 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(git fetch:*)",
-      "Bash(git pull:*)"
+      "Bash(git pull:*)",
+      "Bash(python:*)",
+      "mcp__graphiti__search_memory_nodes",
+      "mcp__graphiti__search_memory_facts",
+      "Bash(timeout 5 uv run:*)",
+      "Bash(rg:*)",
+      "Bash(rm:*)",
+      "Bash(git rm:*)"
     ],
     "deny": []
   }
