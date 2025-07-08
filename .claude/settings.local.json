@@ -9,7 +9,9 @@
       "Bash(uv run:*)",
       "mcp__graphiti__add_memory",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(git fetch:*)",
+      "Bash(git pull:*)"
     ],
     "deny": []
   }
