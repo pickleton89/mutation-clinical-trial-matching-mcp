@@ -2,6 +2,7 @@
 import logging
 import sys
 from fastmcp import FastMCP
+from mcp import McpError, ErrorData
 from utils.node import Flow
 from clinicaltrials.nodes import QueryTrialsNode, SummarizeTrialsNode
 
@@ -28,28 +29,82 @@ def summarize_trials(mutation: str) -> str:
         
     Returns:
         A formatted summary of relevant clinical trials
+        
+    Raises:
+        McpError: If there's an error in processing the mutation query
     """
-    logger.info(f"Querying for: {mutation}")
-    
-    # Create nodes
-    query_node = QueryTrialsNode(min_rank=1, max_rank=10, timeout=10)
-    summarize_node = SummarizeTrialsNode()
-    
-    # Create flow
-    flow = Flow(start=query_node)
-    flow.add_node("summarize", summarize_node)
-    
-    # Run flow with shared context
-    shared = {"mutation": mutation}
-    result = flow.run(shared)
-    
-    # Return summary or error message
-    if "summary" in result:
-        return result["summary"]
-    else:
-        return "No trials found or error in fetching trials."
+    try:
+        logger.info(f"Querying for: {mutation}")
+        
+        # Validate input
+        if not mutation or not isinstance(mutation, str) or not mutation.strip():
+            logger.error("Invalid mutation parameter provided")
+            raise McpError(
+                ErrorData(
+                    code=-1,
+                    message="Mutation parameter must be a non-empty string"
+                )
+            )
+        
+        # Create nodes
+        query_node = QueryTrialsNode(min_rank=1, max_rank=10, timeout=10)
+        summarize_node = SummarizeTrialsNode()
+        
+        # Create flow
+        flow = Flow(start=query_node)
+        flow.add_node("summarize", summarize_node)
+        
+        # Run flow with shared context
+        shared = {"mutation": mutation.strip()}
+        result = flow.run(shared)
+        
+        # Check for successful execution
+        if "summary" in result:
+            logger.info(f"Successfully generated summary for mutation: {mutation}")
+            return result["summary"]
+        elif "error" in result:
+            # Handle known errors from the flow
+            logger.error(f"Flow execution failed: {result['error']}")
+            raise McpError(
+                ErrorData(
+                    code=-2,
+                    message=f"Failed to process mutation query: {result['error']}"
+                )
+            )
+        else:
+            # Handle unexpected flow result
+            logger.error(f"Unexpected flow result: {result}")
+            raise McpError(
+                ErrorData(
+                    code=-3,
+                    message="No trials found or unexpected error in processing"
+                )
+            )
+            
+    except McpError:
+        # Re-raise MCP errors as-is
+        raise
+    except ValueError as e:
+        logger.error(f"Validation error: {e}")
+        raise McpError(
+            ErrorData(
+                code=-4,
+                message=f"Invalid input or configuration: {str(e)}"
+            )
+        )
+    except Exception as e:
+        logger.error(f"Unexpected error in summarize_trials: {e}", exc_info=True)
+        raise McpError(
+            ErrorData(
+                code=-5,
+                message=f"An unexpected error occurred: {str(e)}"
+            )
+        )
 
-if __name__ == "__main__":
+def main():
+    """
+    Main entry point for the Clinical Trials MCP server.
+    """
     try:
         logger.info("Clinical Trials MCP server starting...")
         mcp.run()
@@ -59,3 +114,7 @@ if __name__ == "__main__":
         logger.error(f"Fatal server error: {e}")
     finally:
         logger.info("Server shutting down")
+
+
+if __name__ == "__main__":
+    main()

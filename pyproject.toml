@@ -1,12 +1,106 @@
 [project]
 name = "mutation-clinical-trial-matching-mcp"
 version = "0.1.0"
-description = "Add your description here"
+description = "A Model Context Protocol (MCP) server that enables Claude Desktop to search for clinical trials based on genetic mutations"
 readme = "README.md"
 requires-python = ">=3.13"
+authors = [
+    {name = "Clinical Trials MCP", email = "noreply@example.com"}
+]
+keywords = ["mcp", "clinical-trials", "mutations", "claude", "healthcare"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Healthcare Industry",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Medical Science Apps.",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
 dependencies = [
     "mcp[cli]>=1.0.0",
     "pocketflow>=0.0.1",
     "python-dotenv==1.1.0",
     "requests==2.31.0",
 ]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "mypy>=1.0.0",
+    "ruff>=0.1.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/pickleton89/mutation-clinical-trial-matching-mcp"
+Repository = "https://github.com/pickleton89/mutation-clinical-trial-matching-mcp"
+Documentation = "https://github.com/pickleton89/mutation-clinical-trial-matching-mcp#readme"
+Issues = "https://github.com/pickleton89/mutation-clinical-trial-matching-mcp/issues"
+
+[project.scripts]
+clinicaltrials-mcp-server = "clinicaltrials_mcp_server:main"
+
+[tool.setuptools.packages.find]
+include = ["clinicaltrials*", "llm*", "utils*"]
+exclude = ["tests*", "docs*", "assets*"]
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+# Ruff configuration
+[tool.ruff]
+select = ["E", "F", "W", "I", "N", "UP", "B", "A", "C4", "PIE", "T20"]
+ignore = ["E501"]  # Line too long
+target-version = "py313"
+line-length = 100
+
+[tool.ruff.per-file-ignores]
+"tests/*" = ["T20"]  # Allow print statements in tests
+
+# MyPy configuration
+[tool.mypy]
+python_version = "3.13"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+strict_optional = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+show_error_codes = true
+
+# Pytest configuration
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "--strict-markers --strict-config --verbose"
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+]
+
+# Coverage configuration
+[tool.coverage.run]
+source = ["clinicaltrials", "llm", "utils"]
+omit = ["tests/*", "*/conftest.py"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+]
+
+[tool.coverage.html]
+directory = "coverage_html_report"

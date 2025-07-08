@@ -9,6 +9,9 @@ Each node has three main methods:
 """
 
 from typing import Any, Dict, List, Optional, TypeVar, Generic
+import logging
+
+logger = logging.getLogger(__name__)
 
 T = TypeVar('T')  # Input type
 R = TypeVar('R')  # Result type
@@ -69,9 +72,16 @@ class Node(Generic[T, R]):
         Returns:
             Optional next node ID or None
         """
-        prep_result = self.prep(shared)
-        exec_result = self.exec(prep_result)
-        return self.post(shared, prep_result, exec_result)
+        try:
+            prep_result = self.prep(shared)
+            exec_result = self.exec(prep_result)
+            return self.post(shared, prep_result, exec_result)
+        except Exception as e:
+            logger.error(f"Error in node processing: {e}")
+            # Store error in shared context for upstream handling
+            shared["error"] = str(e)
+            shared["error_type"] = type(e).__name__
+            return None
 
 
 class BatchNode(Node[List[T], List[R]]):
@@ -145,14 +155,35 @@ class Flow:
         if shared is None:
             shared = {}
         
-        current_node = self.start
-        next_node_id = current_node.process(shared)
-        
-        while next_node_id:
-            if next_node_id not in self.nodes:
-                raise ValueError(f"Node with ID '{next_node_id}' not found in flow")
-            
-            current_node = self.nodes[next_node_id]
+        try:
+            current_node = self.start
             next_node_id = current_node.process(shared)
-        
-        return shared
+            
+            # Check if initial node had an error
+            if "error" in shared:
+                logger.error(f"Error in start node: {shared['error']}")
+                return shared
+            
+            while next_node_id:
+                if next_node_id not in self.nodes:
+                    error_msg = f"Node with ID '{next_node_id}' not found in flow"
+                    logger.error(error_msg)
+                    shared["error"] = error_msg
+                    shared["error_type"] = "NodeNotFoundError"
+                    return shared
+                
+                current_node = self.nodes[next_node_id]
+                next_node_id = current_node.process(shared)
+                
+                # Check if current node had an error
+                if "error" in shared:
+                    logger.error(f"Error in node '{next_node_id}': {shared['error']}")
+                    return shared
+            
+            return shared
+            
+        except Exception as e:
+            logger.error(f"Unexpected error in flow execution: {e}", exc_info=True)
+            shared["error"] = str(e)
+            shared["error_type"] = type(e).__name__
+            return shared
