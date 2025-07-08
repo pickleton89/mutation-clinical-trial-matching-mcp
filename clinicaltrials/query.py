@@ -4,11 +4,11 @@ Functions to query clinicaltrials.gov for trials matching a mutation.
 
 import logging
 import requests
-from typing import Optional, Dict, Any
+from typing import Dict, Any
 
 logger = logging.getLogger(__name__)
 
-def query_clinical_trials(mutation: str, min_rank: int = 1, max_rank: int = 10, timeout: int = 10) -> Optional[Dict[str, Any]]:
+def query_clinical_trials(mutation: str, min_rank: int = 1, max_rank: int = 10, timeout: int = 10) -> Dict[str, Any]:
     """
     Query clinicaltrials.gov for clinical trials related to a given mutation.
 
@@ -19,7 +19,7 @@ def query_clinical_trials(mutation: str, min_rank: int = 1, max_rank: int = 10, 
         timeout (int): Timeout for the HTTP request in seconds (default: 10).
 
     Returns:
-        Optional[Dict[str, Any]]: Parsed JSON response from clinicaltrials.gov, or None if an error occurred.
+        Dict[str, Any]: Parsed JSON response from clinicaltrials.gov, or error dictionary with 'error' and 'studies' keys if an error occurred.
     """
     # Input validation
     if not mutation or not isinstance(mutation, str) or len(mutation.strip()) == 0:
