@@ -1,8 +1,19 @@
 #!/usr/bin/env python3
+import logging
 import sys
 from fastmcp import FastMCP
 from utils.node import Flow
 from clinicaltrials.nodes import QueryTrialsNode, SummarizeTrialsNode
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(sys.stderr)
+    ]
+)
+logger = logging.getLogger(__name__)
 
 # Initialize FastMCP server
 mcp = FastMCP("Clinical Trials MCP")
@@ -18,7 +29,7 @@ def summarize_trials(mutation: str) -> str:
     Returns:
         A formatted summary of relevant clinical trials
     """
-    print(f"Querying for: {mutation}", file=sys.stderr, flush=True)
+    logger.info(f"Querying for: {mutation}")
     
     # Create nodes
     query_node = QueryTrialsNode(min_rank=1, max_rank=10, timeout=10)
@@ -40,11 +51,11 @@ def summarize_trials(mutation: str) -> str:
 
 if __name__ == "__main__":
     try:
-        print("Clinical Trials MCP server starting...", file=sys.stderr, flush=True)
+        logger.info("Clinical Trials MCP server starting...")
         mcp.run()
     except KeyboardInterrupt:
-        print("Server interrupted by keyboard", file=sys.stderr, flush=True)
+        logger.info("Server interrupted by keyboard")
     except Exception as e:
-        print(f"Fatal server error: {e}", file=sys.stderr, flush=True)
+        logger.error(f"Fatal server error: {e}")
     finally:
-        print("Server shutting down", file=sys.stderr, flush=True)
+        logger.info("Server shutting down")

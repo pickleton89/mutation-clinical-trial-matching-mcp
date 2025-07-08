@@ -3,6 +3,11 @@
 ## [Unreleased]
 
 ### Added
+- **Logging Implementation**: Replaced all print statements with proper logging module for improved debugging and maintainability
+  - Added structured logging with timestamps and level-based formatting in `clinicaltrials/query.py`
+  - Configured centralized logging in `clinicaltrials_mcp_server.py` with stderr output for MCP compatibility
+  - Implemented appropriate log levels: ERROR for errors, WARNING for parameter validation, INFO for operations, DEBUG for troubleshooting
+  - All 11 print statements in query.py and 5 in MCP server replaced with proper logging calls
 - Created `docs/memory_vs_windsurfrules.md` to document handling of `.windsurfrules` character limits and the use of Windsurf  memory as a workaround. Includes comparison table and clear instructions.
 - Updated `README.md` with a new section "Handling the .windsurfrules Character Limit" that:
   - Explains the 6,000 character limit problem.
