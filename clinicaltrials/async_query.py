@@ -12,6 +12,8 @@ from utils.circuit_breaker import async_circuit_breaker
 from utils.metrics import timer, increment, histogram, gauge
 from utils.response_validation import response_validator
 from utils.async_http_client import get_clinicaltrials_client
+from utils.async_semaphore_manager import get_clinicaltrials_semaphore, SemaphoreContext
+from utils.async_batch_processor import BatchProcessor
 from clinicaltrials.config import get_global_config
 
 logger = logging.getLogger(__name__)
@@ -180,10 +182,11 @@ async def _async_query_clinical_trials_impl(
     
     with timer("clinicaltrials_api_request_async", tags={"mutation": mutation}):
         try:
-            # Use pure async implementation
-            result = await _async_query_clinical_trials_pure_impl(
-                mutation, min_rank, max_rank, timeout
-            )
+            # Use semaphore-controlled pure async implementation
+            async with SemaphoreContext('clinicaltrials', 'query_trials'):
+                result = await _async_query_clinical_trials_pure_impl(
+                    mutation, min_rank, max_rank, timeout
+                )
             
             # Record success metrics
             if "error" not in result:
@@ -236,7 +239,7 @@ async def query_multiple_mutations_async(
     max_concurrent: int = 5
 ) -> Dict[str, Dict[str, Any]]:
     """
-    Query multiple mutations concurrently for improved performance.
+    Query multiple mutations concurrently using optimized batch processing.
     
     Args:
         mutations (List[str]): List of mutations to query for.
@@ -248,64 +251,81 @@ async def query_multiple_mutations_async(
     Returns:
         Dict[str, Dict[str, Any]]: Dictionary mapping mutation names to their results.
     """
+    if not mutations:
+        return {}
+    
     # Track batch query metrics
     increment("clinicaltrials_api_batch_queries", tags={"batch_size": str(len(mutations))})
     
-    # Use semaphore to limit concurrent requests
-    semaphore = asyncio.Semaphore(max_concurrent)
+    # Create optimized batch processor
+    batch_processor = BatchProcessor(
+        service_name="clinicaltrials",
+        operation_name="batch_mutation_query",
+        max_concurrent=max_concurrent,
+        adaptive_sizing=True,
+        target_latency_ms=500.0  # Target 500ms per mutation
+    )
     
-    async def _query_with_semaphore(mutation: str) -> tuple[str, Dict[str, Any]]:
-        async with semaphore:
-            result = await query_clinical_trials_async(mutation, min_rank, max_rank, timeout)
-            return mutation, result
+    # Define the processing function for each mutation
+    async def _process_mutation(mutation: str) -> tuple[str, Dict[str, Any]]:
+        result = await query_clinical_trials_async(mutation, min_rank, max_rank, timeout)
+        return mutation, result
     
-    # Execute all queries concurrently
+    # Define error handler for failed mutations
+    async def _handle_mutation_error(mutation: str, error: Exception) -> tuple[str, Dict[str, Any]]:
+        logger.error(f"Error processing mutation {mutation}: {error}", extra={
+            "mutation": mutation,
+            "error": str(error),
+            "error_type": type(error).__name__,
+            "action": "batch_mutation_error"
+        })
+        return mutation, {"error": f"Failed to process mutation: {str(error)}", "studies": []}
+    
+    # Execute batch processing
     start_time = time.time()
-    logger.info(f"Starting batch async query for {len(mutations)} mutations", extra={
+    logger.info(f"Starting optimized batch async query for {len(mutations)} mutations", extra={
         "mutations": mutations,
         "batch_size": len(mutations),
         "max_concurrent": max_concurrent,
-        "action": "batch_query_start"
+        "action": "optimized_batch_query_start"
     })
     
-    tasks = [_query_with_semaphore(mutation) for mutation in mutations]
-    results = await asyncio.gather(*tasks, return_exceptions=True)
+    # Process all mutations using the optimized batch processor
+    results = await batch_processor.process_batch(
+        mutations, 
+        _process_mutation,
+        _handle_mutation_error
+    )
     
-    batch_duration = time.time() - start_time
-    histogram("clinicaltrials_api_batch_duration", batch_duration, tags={"batch_size": str(len(mutations))})
-    gauge("clinicaltrials_api_last_batch_duration", batch_duration)
-    
-    # Process results and handle exceptions
+    # Convert results to dictionary format
     mutation_results = {}
     successful_queries = 0
     
-    for result in results:
-        if isinstance(result, Exception):
-            logger.error(f"Batch query exception: {result}", extra={
-                "batch_size": len(mutations),
-                "error": str(result),
-                "action": "batch_query_exception"
-            })
-            increment("clinicaltrials_api_batch_errors", tags={"error_type": "exception"})
-            continue
-        
-        mutation, query_result = result
-        mutation_results[mutation] = query_result
-        
-        # Count successful queries (those without error key)
-        if "error" not in query_result:
-            successful_queries += 1
+    for mutation, query_result in results:
+        if mutation and query_result:  # Handle potential None values from error handling
+            mutation_results[mutation] = query_result
+            
+            # Count successful queries (those without error key)
+            if "error" not in query_result:
+                successful_queries += 1
     
-    # Record batch success metrics
+    # Record final metrics
+    batch_duration = time.time() - start_time
+    histogram("clinicaltrials_api_batch_duration", batch_duration, tags={"batch_size": str(len(mutations))})
+    gauge("clinicaltrials_api_last_batch_duration", batch_duration)
     histogram("clinicaltrials_api_batch_success_count", successful_queries, tags={"batch_size": str(len(mutations))})
     gauge("clinicaltrials_api_last_batch_success_rate", successful_queries / len(mutations) if mutations else 0)
     
-    logger.info(f"Batch async query completed: {successful_queries}/{len(mutations)} successful in {batch_duration:.2f}s", extra={
+    # Log performance statistics
+    performance_stats = batch_processor.get_performance_stats()
+    logger.info(f"Optimized batch async query completed: {successful_queries}/{len(mutations)} successful in {batch_duration:.2f}s", extra={
         "mutations": mutations,
         "batch_size": len(mutations),
         "successful_queries": successful_queries,
         "batch_duration": batch_duration,
-        "action": "batch_query_complete"
+        "items_per_second": len(mutations) / batch_duration,
+        "performance_stats": performance_stats,
+        "action": "optimized_batch_query_complete"
     })
     
     return mutation_results

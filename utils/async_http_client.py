@@ -71,10 +71,13 @@ class AsyncHttpClientManager:
             ),
             "limits": httpx.Limits(
                 max_connections=config.http_max_connections,
-                max_keepalive_connections=config.http_max_keepalive_connections
+                max_keepalive_connections=config.http_max_keepalive_connections,
+                keepalive_expiry=config.http_keepalive_expiry
             ),
             "follow_redirects": kwargs.get('follow_redirects', True),
-            "headers": kwargs.get('headers', {})
+            "headers": kwargs.get('headers', {}),
+            "http2": config.enable_http2
+            # Note: retries are handled by our retry decorator, not httpx client
         }
         
         # Service-specific configurations
@@ -173,7 +176,13 @@ class AsyncHttpClientManager:
                         },
                         "limits": {
                             "max_connections": getattr(client, '_limits', {}).get('max_connections', 'N/A'),
-                            "max_keepalive_connections": getattr(client, '_limits', {}).get('max_keepalive_connections', 'N/A')
+                            "max_keepalive_connections": getattr(client, '_limits', {}).get('max_keepalive_connections', 'N/A'),
+                            "keepalive_expiry": getattr(client, '_limits', {}).get('keepalive_expiry', 'N/A')
+                        },
+                        "features": {
+                            "http2_enabled": getattr(client, '_transport', {}).get('_pool', {}).get('_http2', False),
+                            "connection_pool_size": len(getattr(client, '_transport', {}).get('_pool', {}).get('_connections', [])),
+                            "follow_redirects": getattr(client, '_follow_redirects', True)
                         }
                     }
                     for service, client in _clients.items()

@@ -55,6 +55,20 @@ class APIConfig:
     http_max_connections: int = 100
     http_max_keepalive_connections: int = 20
     
+    # Advanced Connection Pool Configuration
+    http_keepalive_expiry: int = 60  # seconds to keep connections alive
+    http_max_keepalive_size: int = 1024  # max bytes for keep-alive connection
+    http_retries: int = 3  # connection-level retries
+    
+    # Concurrent Request Management
+    max_concurrent_requests: int = 10  # global semaphore limit
+    max_concurrent_per_host: int = 5   # per-host concurrent limit
+    
+    # Performance Optimization
+    enable_http2: bool = False  # enable HTTP/2 support (requires h2 package)
+    enable_connection_pooling: bool = True
+    connection_pool_size: int = 100  # dedicated pool size per service
+    
     # Redis Configuration (for distributed caching)
     redis_url: str = "redis://localhost:6379"
     redis_max_connections: int = 10
