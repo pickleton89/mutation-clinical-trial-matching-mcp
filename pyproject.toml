@@ -1,6 +1,6 @@
 [project]
 name = "mutation-clinical-trial-matching-mcp"
-version = "0.1.0"
+version = "0.2.0"
 description = "A Model Context Protocol (MCP) server that enables Claude Desktop to search for clinical trials based on genetic mutations"
 readme = "README.md"
 requires-python = ">=3.13"

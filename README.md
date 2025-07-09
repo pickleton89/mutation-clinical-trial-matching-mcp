@@ -2,6 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
+[![Version 0.2.0](https://img.shields.io/badge/version-0.2.0-blue.svg)](https://github.com/pickleton89/mutation-clinical-trial-matching-mcp/releases)
 [![Tests](https://img.shields.io/badge/tests-142%20passing-green.svg)](https://github.com/pickleton89/mutation-clinical-trial-matching-mcp/actions)
 [![Code Style: Ruff](https://img.shields.io/badge/code%20style-ruff-black.svg)](https://github.com/astral-sh/ruff)
 
