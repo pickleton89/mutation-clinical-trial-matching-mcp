@@ -5,6 +5,7 @@ from fastmcp import FastMCP
 from mcp import McpError, ErrorData
 from utils.node import Flow
 from clinicaltrials.nodes import QueryTrialsNode, SummarizeTrialsNode
+from clinicaltrials.config import get_config
 
 # Configure logging
 logging.basicConfig(
@@ -15,6 +16,14 @@ logging.basicConfig(
     ]
 )
 logger = logging.getLogger(__name__)
+
+# Validate configuration on startup
+try:
+    config = get_config()
+    logger.info("Configuration validated successfully")
+except ValueError as e:
+    logger.error(f"Configuration validation failed: {e}")
+    sys.exit(1)
 
 # Initialize FastMCP server
 mcp = FastMCP("Clinical Trials MCP")

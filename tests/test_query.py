@@ -5,13 +5,29 @@ Unit tests for clinicaltrials.query
 import unittest
 from unittest.mock import patch, Mock
 import requests
-from clinicaltrials.query import query_clinical_trials
+from clinicaltrials.query import query_clinical_trials, clear_cache
+from clinicaltrials.config import reset_global_config
 
 
 class TestQueryClinicalTrials(unittest.TestCase):
     """Test the query_clinical_trials function."""
 
-    @patch('clinicaltrials.query.requests.get')
+    def setUp(self):
+        """Clear cache and reset config before each test."""
+        clear_cache()
+        reset_global_config()
+        
+        # Mock environment variables for testing
+        self.env_patcher = patch.dict('os.environ', {
+            'ANTHROPIC_API_KEY': 'test-key-123'
+        })
+        self.env_patcher.start()
+    
+    def tearDown(self):
+        """Clean up after each test."""
+        self.env_patcher.stop()
+
+    @patch('clinicaltrials.query._session.get')
     def test_successful_query(self, mock_get):
         """Test successful API query with valid response."""
         # Mock successful API response
@@ -42,7 +58,7 @@ class TestQueryClinicalTrials(unittest.TestCase):
         self.assertEqual(call_args[1]["params"]["pageSize"], 10)
         self.assertEqual(call_args[1]["timeout"], 10)
 
-    @patch('clinicaltrials.query.requests.get')
+    @patch('clinicaltrials.query._session.get')
     def test_empty_mutation_error(self, mock_get):
         """Test error handling for empty mutation string."""
         result = query_clinical_trials("")
@@ -56,7 +72,7 @@ class TestQueryClinicalTrials(unittest.TestCase):
         # Verify no API call was made
         mock_get.assert_not_called()
 
-    @patch('clinicaltrials.query.requests.get')
+    @patch('clinicaltrials.query._session.get')
     def test_none_mutation_error(self, mock_get):
         """Test error handling for None mutation."""
         result = query_clinical_trials(None)
@@ -70,7 +86,7 @@ class TestQueryClinicalTrials(unittest.TestCase):
         # Verify no API call was made
         mock_get.assert_not_called()
 
-    @patch('clinicaltrials.query.requests.get')
+    @patch('clinicaltrials.query._session.get')
     def test_whitespace_mutation_error(self, mock_get):
         """Test error handling for whitespace-only mutation."""
         result = query_clinical_trials("   ")
@@ -84,7 +100,7 @@ class TestQueryClinicalTrials(unittest.TestCase):
         # Verify no API call was made
         mock_get.assert_not_called()
 
-    @patch('clinicaltrials.query.requests.get')
+    @patch('clinicaltrials.query._session.get')
     def test_invalid_min_rank_parameter(self, mock_get):
         """Test parameter validation and correction for min_rank."""
         # Mock successful response
@@ -105,7 +121,7 @@ class TestQueryClinicalTrials(unittest.TestCase):
         call_args = mock_get.call_args
         self.assertEqual(call_args[1]["params"]["pageSize"], 10)  # Should be 10 (1 to 10)
 
-    @patch('clinicaltrials.query.requests.get')
+    @patch('clinicaltrials.query._session.get')
     def test_invalid_max_rank_parameter(self, mock_get):
         """Test parameter validation and correction for max_rank."""
         # Mock successful response
@@ -126,7 +142,7 @@ class TestQueryClinicalTrials(unittest.TestCase):
         call_args = mock_get.call_args
         self.assertEqual(call_args[1]["params"]["pageSize"], 10)  # Should be 10 (5 to 14)
 
-    @patch('clinicaltrials.query.requests.get')
+    @patch('clinicaltrials.query._session.get')
     def test_api_error_status_code(self, mock_get):
         """Test handling of non-200 API response."""
         # Mock API error response
@@ -144,7 +160,7 @@ class TestQueryClinicalTrials(unittest.TestCase):
         self.assertIn("API Error (Status 400)", result["error"])
         self.assertEqual(result["studies"], [])
 
-    @patch('clinicaltrials.query.requests.get')
+    @patch('clinicaltrials.query._session.get')
     def test_json_parsing_error(self, mock_get):
         """Test handling of invalid JSON response."""
         # Mock response with invalid JSON
@@ -163,7 +179,7 @@ class TestQueryClinicalTrials(unittest.TestCase):
         self.assertIn("Failed to parse API response", result["error"])
         self.assertEqual(result["studies"], [])
 
-    @patch('clinicaltrials.query.requests.get')
+    @patch('clinicaltrials.query._session.get')
     def test_timeout_error(self, mock_get):
         """Test handling of request timeout."""
         # Mock timeout error
@@ -178,7 +194,7 @@ class TestQueryClinicalTrials(unittest.TestCase):
         self.assertIn("timed out", result["error"])
         self.assertEqual(result["studies"], [])
 
-    @patch('clinicaltrials.query.requests.get')
+    @patch('clinicaltrials.query._session.get')
     def test_connection_error(self, mock_get):
         """Test handling of connection error."""
         # Mock connection error
@@ -193,7 +209,7 @@ class TestQueryClinicalTrials(unittest.TestCase):
         self.assertIn("Failed to connect", result["error"])
         self.assertEqual(result["studies"], [])
 
-    @patch('clinicaltrials.query.requests.get')
+    @patch('clinicaltrials.query._session.get')
     def test_general_request_error(self, mock_get):
         """Test handling of general request error."""
         # Mock general request error
@@ -208,7 +224,7 @@ class TestQueryClinicalTrials(unittest.TestCase):
         self.assertIn("Error querying clinicaltrials.gov", result["error"])
         self.assertEqual(result["studies"], [])
 
-    @patch('clinicaltrials.query.requests.get')
+    @patch('clinicaltrials.query._session.get')
     def test_custom_timeout_parameter(self, mock_get):
         """Test custom timeout parameter is passed correctly."""
         # Mock successful response
@@ -225,7 +241,7 @@ class TestQueryClinicalTrials(unittest.TestCase):
         call_args = mock_get.call_args
         self.assertEqual(call_args[1]["timeout"], 30)
 
-    @patch('clinicaltrials.query.requests.get')
+    @patch('clinicaltrials.query._session.get')
     def test_custom_rank_range(self, mock_get):
         """Test custom min_rank and max_rank parameters."""
         # Mock successful response
