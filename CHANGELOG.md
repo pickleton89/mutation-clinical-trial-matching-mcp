@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **API 403 Error Resolution**: Fixed 403 Forbidden errors from clinicaltrials.gov by reverting from httpx to requests
+  - Reverted `clinicaltrials/async_query.py` to use `requests` library with `ThreadPoolExecutor`
+  - Maintained async Node pattern using `asyncio.get_event_loop().run_in_executor()`
+  - Preserved all existing features: retry logic, circuit breakers, metrics, and batch processing
+  - Follows PocketFlow design principles by treating HTTP client as utility function choice
+  - All mutations now successfully return study data without 403 errors
+  - MCP server startup and cache warming working correctly with reliable API calls
+
 ### Added
 - **Phase 1-3 Async Migration**: Eliminated ThreadPoolExecutor anti-pattern and implemented pure async architecture
   - **Phase 1 Foundation**: Created unified HTTP client manager (`utils/async_http_client.py`)
