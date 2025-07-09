@@ -34,7 +34,8 @@
       "Bash(pkill:*)",
       "Bash(true)",
       "mcp__pocketflow__fetch_PocketFlow_documentation",
-      "Bash(uv sync:*)"
+      "Bash(uv sync:*)",
+      "Bash(timeout:*)"
     ],
     "deny": []
   }
