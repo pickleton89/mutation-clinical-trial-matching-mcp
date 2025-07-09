@@ -3,6 +3,33 @@
 ## [Unreleased]
 
 ### Added
+- **Server Migration to Async Primary**: Complete architectural migration from sync to async server with enterprise features
+  - **Primary Server Migration**: Transformed `clinicaltrials_async_mcp_server.py` into the primary server (`clinicaltrials_mcp_server_primary.py`)
+    - Enhanced with all enterprise monitoring tools from the original sync server
+    - Added 11 comprehensive tools including async variants and new capabilities
+    - Integrated proper MCP error handling with structured error codes and validation
+    - Implemented automatic cache warming on startup for improved performance
+    - Added comprehensive health checks with cache analytics integration
+  - **Deprecation Strategy**: Established clear migration path for users
+    - Original `clinicaltrials_mcp_server.py` now shows deprecation notice with migration instructions
+    - Legacy sync server preserved as `clinicaltrials_mcp_server_sync_legacy.py`
+    - Updated `pyproject.toml` to point to new primary server
+    - Clear performance benefits messaging (80% faster, batch processing, distributed caching)
+  - **Enhanced Tool Suite**: Primary server now provides comprehensive enterprise capabilities
+    - **Core Functions**: `summarize_trials_async()` (primary), `summarize_multiple_trials_async()` (batch), `summarize_trials()` (backward compatibility)
+    - **Health Monitoring**: `get_health_status()` with cache analytics, circuit breaker states, and feature flags
+    - **Metrics Export**: `get_metrics_json()` and `get_metrics_prometheus()` for monitoring systems
+    - **Circuit Breaker Monitoring**: `get_circuit_breaker_status()` with detailed state information
+    - **Cache Management**: `get_cache_analytics()`, `get_cache_report()`, `warm_cache()`, `invalidate_cache()`
+  - **Migration Documentation**: Created comprehensive guides for smooth transition
+    - `docs/server_migration_guide.md` with step-by-step migration instructions
+    - Updated `CLAUDE.md` with new server commands and architecture notes
+    - Detailed rollback procedures and troubleshooting guide
+    - Performance benchmarks and feature comparisons
+  - **Startup Enhancements**: Added intelligent startup tasks for optimal performance
+    - Automatic cache warming with common and trending mutations
+    - Configuration validation on startup with clear error messages
+    - Proper resource cleanup and async client management
 - **Phase 3 Advanced Features Implementation**: Enterprise-grade reliability, comprehensive monitoring, and validation capabilities
   - **Circuit Breaker Pattern**: Implemented comprehensive circuit breaker system in `utils/circuit_breaker.py`
     - Three-state pattern (CLOSED, OPEN, HALF_OPEN) with configurable failure thresholds and recovery timeouts
