@@ -25,7 +25,9 @@
       "Bash(uv pip install:*)",
       "Bash(npx mcp-remote:*)",
       "Bash(npm cache clean:*)",
-      "Bash(clear)"
+      "Bash(clear)",
+      "Bash(diff:*)",
+      "Bash(mv:*)"
     ],
     "deny": []
   }

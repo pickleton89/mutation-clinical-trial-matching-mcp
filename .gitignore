@@ -12,6 +12,11 @@ out/
 *.pyc
 __pycache__/
 *.egg-info/
+.mypy_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+coverage_html_report/
 
 # Environment files
 .env

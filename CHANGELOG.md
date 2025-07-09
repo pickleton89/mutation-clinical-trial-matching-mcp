@@ -3,6 +3,14 @@
 ## [Unreleased]
 
 ### Added
+- **Repository Cleanup Phase 1**: Cleaned up repository organization and structure for better maintainability
+  - Removed duplicate `clinicaltrials_async_mcp_server.py` file (identical to primary server)
+  - Moved documentation files from root to proper locations:
+    - `IMPLEMENTATION_PLAN.md` → `docs/implementation_plan.md`
+    - `future_work.md` → `docs/future_work.md`
+    - `rules.md` → `docs/rules.md`
+  - Removed redundant `requirements.txt` file (using `pyproject.toml` for dependency management)
+  - Enhanced `.gitignore` with additional Python-specific entries for build artifacts and cache directories
 - **Server Migration to Async Primary**: Complete architectural migration from sync to async server with enterprise features
   - **Primary Server Migration**: Transformed `clinicaltrials_async_mcp_server.py` into the primary server (`clinicaltrials_mcp_server_primary.py`)
     - Enhanced with all enterprise monitoring tools from the original sync server
