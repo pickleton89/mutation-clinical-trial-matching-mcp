@@ -32,7 +32,8 @@
       "WebFetch(domain:clinicaltrials.gov)",
       "Bash(curl:*)",
       "Bash(pkill:*)",
-      "Bash(true)"
+      "Bash(true)",
+      "mcp__pocketflow__fetch_PocketFlow_documentation"
     ],
     "deny": []
   }
