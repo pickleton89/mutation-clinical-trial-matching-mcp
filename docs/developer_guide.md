@@ -20,7 +20,7 @@ This project follows the Agentic Coding paradigm, which emphasizes collaboration
 
 ### Prerequisites
 
-- Python 3.9 or higher
+- Python 3.13 or higher
 - uv package manager (recommended)
 - Claude Desktop (for testing)
 
@@ -34,8 +34,7 @@ This project follows the Agentic Coding paradigm, which emphasizes collaboration
 
 2. Create a virtual environment and install dependencies:
    ```bash
-   uv venv .venv
-   uv pip install -r requirements.txt
+   uv sync
    ```
 
 3. Activate the virtual environment:

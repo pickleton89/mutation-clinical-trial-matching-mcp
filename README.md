@@ -138,7 +138,7 @@ This pattern separates preparation, execution, and post-processing, making the c
 
 1. Install dependencies with uv:
    ```
-   uv pip install -r requirements.txt
+   uv sync
    ```
 
 2. Configure Claude Desktop:
@@ -182,8 +182,7 @@ You can configure this project as a Claude Desktop MCP tool. Use path placeholde
    ```
 3. Create a virtual environment and install dependencies in one step:
    ```bash
-   uv venv .venv
-   uv pip install -r requirements.txt
+   uv sync
    ```
 4. Activate the virtual environment when needed:
    ```bash
@@ -220,7 +219,7 @@ For a comprehensive list of planned enhancements and future work, please see the
 
 This project relies on the following key dependencies:
 
-- **Python 3.7+** - Base runtime environment
+- **Python 3.13+** - Base runtime environment
 - **PocketFlow** (`pocketflow>=0.0.1`) - Framework for building modular AI workflows with the Node pattern
 - **MCP SDK** (`mcp[cli]>=1.0.0`) - Official Model Context Protocol SDK for building Claude Desktop tools
 - **Requests** (`requests==2.31.0`) - HTTP library for making API calls to clinicaltrials.gov

@@ -1,2 +1,0 @@
-[console_scripts]
-clinicaltrials-mcp-server = clinicaltrials_mcp_server:main
