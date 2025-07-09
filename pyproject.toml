@@ -26,7 +26,6 @@ dependencies = [
     "pocketflow>=0.0.1",
     "python-dotenv==1.1.0",
     "redis>=6.2.0",
-    "requests==2.31.0",
 ]
 
 [project.optional-dependencies]
@@ -35,6 +34,7 @@ dev = [
     "pytest-cov>=4.0.0",
     "mypy>=1.0.0",
     "ruff>=0.1.0",
+    "requests==2.31.0",  # temporary for legacy test compatibility
 ]
 
 [project.urls]

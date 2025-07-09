@@ -3,10 +3,10 @@ Functions to query clinicaltrials.gov for trials matching a mutation.
 """
 
 import logging
-import requests
 import time
 from functools import lru_cache
 from typing import Dict, Any
+import requests
 from utils.retry import exponential_backoff_retry
 from utils.circuit_breaker import circuit_breaker
 from utils.metrics import timer, increment, histogram, gauge
@@ -15,6 +15,7 @@ from clinicaltrials.config import get_global_config
 
 logger = logging.getLogger(__name__)
 
+# NOTE: This is a legacy sync implementation - use clinicaltrials.async_query for new code
 # Create a session for connection reuse
 _session = requests.Session()
 

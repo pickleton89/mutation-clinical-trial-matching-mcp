@@ -1,9 +1,9 @@
 import os
-import requests
 import json
 import time
 import logging
 from typing import Optional
+import requests
 from dotenv import load_dotenv
 from utils.retry import exponential_backoff_retry
 from utils.circuit_breaker import circuit_breaker
@@ -16,6 +16,7 @@ load_dotenv()
 
 logger = logging.getLogger(__name__)
 
+# NOTE: This is a legacy sync implementation - use utils.async_call_llm for new code
 # Create a session for connection reuse
 _session = requests.Session()
 
@@ -45,6 +46,8 @@ def call_llm(prompt: str) -> str:
     Send a prompt to Claude via Anthropic API and return the response.
 
     This function uses configuration from the global config system.
+    
+    NOTE: This is a legacy sync implementation - use utils.async_call_llm for new code
     """
     config = get_global_config()
     

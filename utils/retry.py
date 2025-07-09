@@ -8,8 +8,8 @@ import logging
 import random
 from functools import wraps
 from typing import Callable, Type, Tuple, Any
-import requests
 import httpx
+import requests
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +20,7 @@ DEFAULT_BACKOFF_FACTOR = 2.0
 DEFAULT_MAX_DELAY = 60.0
 DEFAULT_JITTER = True
 
-# Exceptions that should trigger retries
+# Exceptions that should trigger retries (legacy - use ASYNC_RETRIABLE_EXCEPTIONS)
 RETRIABLE_EXCEPTIONS = (
     requests.exceptions.Timeout,
     requests.exceptions.ConnectionError,

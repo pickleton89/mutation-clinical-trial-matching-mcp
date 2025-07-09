@@ -251,5 +251,5 @@ async def cleanup_async_clients():
     """Clean up all async clients."""
     await close_anthropic_async_client()
     # Import here to avoid circular import
-    from clinicaltrials.async_query import close_executor
-    await close_executor()
+    from utils.async_http_client import cleanup_all_clients
+    await cleanup_all_clients()

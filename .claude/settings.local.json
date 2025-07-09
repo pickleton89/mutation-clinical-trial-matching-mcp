@@ -33,7 +33,8 @@
       "Bash(curl:*)",
       "Bash(pkill:*)",
       "Bash(true)",
-      "mcp__pocketflow__fetch_PocketFlow_documentation"
+      "mcp__pocketflow__fetch_PocketFlow_documentation",
+      "Bash(uv sync:*)"
     ],
     "deny": []
   }

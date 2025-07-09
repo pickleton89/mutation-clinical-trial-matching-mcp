@@ -6,33 +6,17 @@ import asyncio
 import logging
 import time
 from typing import Dict, Any, List, Optional
-import requests
-from concurrent.futures import ThreadPoolExecutor
+import httpx
 from utils.retry import async_exponential_backoff_retry
 from utils.circuit_breaker import async_circuit_breaker
 from utils.metrics import timer, increment, histogram, gauge
 from utils.response_validation import response_validator
+from utils.async_http_client import get_clinicaltrials_client
 from clinicaltrials.config import get_global_config
 
 logger = logging.getLogger(__name__)
 
-# Global thread pool executor for async requests
-_executor: Optional[ThreadPoolExecutor] = None
-
-def get_executor() -> ThreadPoolExecutor:
-    """Get or create the global thread pool executor."""
-    global _executor
-    if _executor is None:
-        config = get_global_config()
-        _executor = ThreadPoolExecutor(max_workers=config.http_max_connections)
-    return _executor
-
-async def close_executor():
-    """Close the global thread pool executor."""
-    global _executor
-    if _executor:
-        _executor.shutdown(wait=True)
-        _executor = None
+# NOTE: ThreadPoolExecutor removed - using pure async httpx instead
 
 @response_validator("clinical_trials_api")
 async def _async_query_clinical_trials_with_retry(
@@ -64,14 +48,14 @@ async def _async_query_clinical_trials_with_retry(
     
     return await _retry_wrapper()
 
-def _sync_query_clinical_trials_impl(
+async def _async_query_clinical_trials_pure_impl(
     mutation: str, 
     min_rank: int = 1, 
     max_rank: int = 10, 
     timeout: int = 10
 ) -> Dict[str, Any]:
     """
-    Synchronous implementation of clinical trials query using requests library.
+    Pure async implementation of clinical trials query using httpx.
     """
     # Prepare request
     config = get_global_config()
@@ -80,11 +64,6 @@ def _sync_query_clinical_trials_impl(
         "format": "json",
         "query.term": mutation,
         "pageSize": max_rank - min_rank + 1
-    }
-    
-    headers = {
-        "Accept": "application/json",
-        "User-Agent": config.user_agent
     }
     
     try:
@@ -98,18 +77,15 @@ def _sync_query_clinical_trials_impl(
             "action": "api_request_start"
         })
         
-        response = requests.get(base_url, params=params, headers=headers, timeout=timeout)
+        # Get the async HTTP client
+        client = await get_clinicaltrials_client()
+        
+        # Make the async request
+        response = await client.get(base_url, params=params, timeout=timeout)
         request_duration = time.time() - start_time
         
         # Check for non-200 status codes
-        if response.status_code != 200:
-            logger.error(f"API Error (Status {response.status_code}): {response.text}", extra={
-                "mutation": mutation,
-                "status_code": response.status_code,
-                "request_duration": request_duration,
-                "action": "api_request_error"
-            })
-            return {"error": f"API Error (Status {response.status_code})", "studies": []}
+        response.raise_for_status()
         
         # Try to parse JSON
         try:
@@ -134,7 +110,7 @@ def _sync_query_clinical_trials_impl(
             logger.debug("Response content: %s", response.text[:500] + "..." if len(response.text) > 500 else response.text)
             return {"error": f"Failed to parse API response: {json_err}", "studies": []}
             
-    except requests.exceptions.Timeout:
+    except httpx.TimeoutException:
         request_duration = time.time() - start_time
         logger.error(f"Timeout ({timeout}s) when querying clinicaltrials.gov", extra={
             "mutation": mutation,
@@ -144,7 +120,7 @@ def _sync_query_clinical_trials_impl(
         })
         return {"error": "The request to clinicaltrials.gov timed out", "studies": []}
         
-    except requests.exceptions.ConnectionError as e:
+    except httpx.ConnectError as e:
         request_duration = time.time() - start_time
         logger.error(f"Connection error: {e}", extra={
             "mutation": mutation,
@@ -153,8 +129,18 @@ def _sync_query_clinical_trials_impl(
             "action": "api_request_connection_error"
         })
         return {"error": "Failed to connect to clinicaltrials.gov", "studies": []}
+    
+    except httpx.HTTPStatusError as e:
+        request_duration = time.time() - start_time
+        logger.error(f"HTTP Error (Status {e.response.status_code}): {e.response.text}", extra={
+            "mutation": mutation,
+            "status_code": e.response.status_code,
+            "request_duration": request_duration,
+            "action": "api_request_error"
+        })
+        return {"error": f"API Error (Status {e.response.status_code})", "studies": []}
         
-    except requests.exceptions.RequestException as e:
+    except httpx.RequestError as e:
         request_duration = time.time() - start_time
         logger.error(f"Request error: {e}", extra={
             "mutation": mutation,
@@ -194,11 +180,8 @@ async def _async_query_clinical_trials_impl(
     
     with timer("clinicaltrials_api_request_async", tags={"mutation": mutation}):
         try:
-            # Run the synchronous function in a thread pool
-            executor = get_executor()
-            result = await asyncio.get_event_loop().run_in_executor(
-                executor, 
-                _sync_query_clinical_trials_impl,
+            # Use pure async implementation
+            result = await _async_query_clinical_trials_pure_impl(
                 mutation, min_rank, max_rank, timeout
             )
             

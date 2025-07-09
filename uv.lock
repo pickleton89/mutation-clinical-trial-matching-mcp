@@ -386,7 +386,6 @@ dependencies = [
     { name = "pocketflow" },
     { name = "python-dotenv" },
     { name = "redis" },
-    { name = "requests" },
 ]
 
 [package.optional-dependencies]
@@ -394,6 +393,7 @@ dev = [
     { name = "mypy" },
     { name = "pytest" },
     { name = "pytest-cov" },
+    { name = "requests" },
     { name = "ruff" },
 ]
 
@@ -414,7 +414,7 @@ requires-dist = [
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=4.0.0" },
     { name = "python-dotenv", specifier = "==1.1.0" },
     { name = "redis", specifier = ">=6.2.0" },
-    { name = "requests", specifier = "==2.31.0" },
+    { name = "requests", marker = "extra == 'dev'", specifier = "==2.31.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.1.0" },
 ]
 provides-extras = ["dev"]
