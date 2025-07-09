@@ -100,3 +100,4 @@ coverage/
 
 # Claude local files
 CLAUDE.local.md
+.claude/
