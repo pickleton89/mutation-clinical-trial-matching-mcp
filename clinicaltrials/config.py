@@ -46,6 +46,19 @@ class APIConfig:
     
     # User Agent Configuration
     user_agent: str = "mutation-clinical-trial-matching-mcp/0.1.0 (Clinical Trials MCP Server)"
+    
+    # HTTP Connection Configuration (for async clients)
+    http_connect_timeout: int = 5
+    http_read_timeout: int = 30
+    http_write_timeout: int = 10
+    http_pool_timeout: int = 5
+    http_max_connections: int = 100
+    http_max_keepalive_connections: int = 20
+    
+    # Redis Configuration (for distributed caching)
+    redis_url: str = "redis://localhost:6379"
+    redis_max_connections: int = 10
+    redis_timeout: int = 5
 
 
 def load_config() -> APIConfig:
@@ -137,6 +150,46 @@ def load_config() -> APIConfig:
         config.user_agent
     )
     
+    # HTTP Connection Configuration
+    config.http_connect_timeout = int(os.getenv(
+        "HTTP_CONNECT_TIMEOUT", 
+        str(config.http_connect_timeout)
+    ))
+    config.http_read_timeout = int(os.getenv(
+        "HTTP_READ_TIMEOUT", 
+        str(config.http_read_timeout)
+    ))
+    config.http_write_timeout = int(os.getenv(
+        "HTTP_WRITE_TIMEOUT", 
+        str(config.http_write_timeout)
+    ))
+    config.http_pool_timeout = int(os.getenv(
+        "HTTP_POOL_TIMEOUT", 
+        str(config.http_pool_timeout)
+    ))
+    config.http_max_connections = int(os.getenv(
+        "HTTP_MAX_CONNECTIONS", 
+        str(config.http_max_connections)
+    ))
+    config.http_max_keepalive_connections = int(os.getenv(
+        "HTTP_MAX_KEEPALIVE_CONNECTIONS", 
+        str(config.http_max_keepalive_connections)
+    ))
+    
+    # Redis Configuration
+    config.redis_url = os.getenv(
+        "REDIS_URL", 
+        config.redis_url
+    )
+    config.redis_max_connections = int(os.getenv(
+        "REDIS_MAX_CONNECTIONS", 
+        str(config.redis_max_connections)
+    ))
+    config.redis_timeout = int(os.getenv(
+        "REDIS_TIMEOUT", 
+        str(config.redis_timeout)
+    ))
+    
     return config
 
 
@@ -196,6 +249,38 @@ def validate_config(config: APIConfig) -> list[str]:
     
     if config.circuit_breaker_recovery_timeout <= 0:
         errors.append("CIRCUIT_BREAKER_RECOVERY_TIMEOUT must be positive")
+    
+    # HTTP Connection Configuration validation
+    if config.http_connect_timeout <= 0:
+        errors.append("HTTP_CONNECT_TIMEOUT must be positive")
+    
+    if config.http_read_timeout <= 0:
+        errors.append("HTTP_READ_TIMEOUT must be positive")
+    
+    if config.http_write_timeout <= 0:
+        errors.append("HTTP_WRITE_TIMEOUT must be positive")
+    
+    if config.http_pool_timeout <= 0:
+        errors.append("HTTP_POOL_TIMEOUT must be positive")
+    
+    if config.http_max_connections <= 0:
+        errors.append("HTTP_MAX_CONNECTIONS must be positive")
+    
+    if config.http_max_keepalive_connections <= 0:
+        errors.append("HTTP_MAX_KEEPALIVE_CONNECTIONS must be positive")
+    
+    if config.http_max_keepalive_connections > config.http_max_connections:
+        errors.append("HTTP_MAX_KEEPALIVE_CONNECTIONS cannot be greater than HTTP_MAX_CONNECTIONS")
+    
+    # Redis Configuration validation
+    if not config.redis_url.startswith(('redis://', 'rediss://')):
+        errors.append("REDIS_URL must be a valid Redis URL (redis:// or rediss://)")
+    
+    if config.redis_max_connections <= 0:
+        errors.append("REDIS_MAX_CONNECTIONS must be positive")
+    
+    if config.redis_timeout <= 0:
+        errors.append("REDIS_TIMEOUT must be positive")
     
     # Logical validation
     if config.retry_initial_delay > config.retry_max_delay:

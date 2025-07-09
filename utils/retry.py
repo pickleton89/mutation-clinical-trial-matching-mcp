@@ -2,12 +2,14 @@
 Retry utilities with exponential backoff for API calls.
 """
 
+import asyncio
 import time
 import logging
 import random
 from functools import wraps
 from typing import Callable, Type, Tuple, Any
 import requests
+import httpx
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +26,14 @@ RETRIABLE_EXCEPTIONS = (
     requests.exceptions.ConnectionError,
     requests.exceptions.HTTPError,
     requests.exceptions.RequestException,
+)
+
+# Async exceptions that should trigger retries
+ASYNC_RETRIABLE_EXCEPTIONS = (
+    httpx.TimeoutException,
+    httpx.ConnectError,
+    httpx.HTTPStatusError,
+    httpx.RequestError,
 )
 
 
@@ -173,6 +183,122 @@ def _calculate_delay(
         delay = max(0.1, delay)  # Ensure minimum delay
     
     return delay
+
+
+def async_exponential_backoff_retry(
+    max_retries: int = DEFAULT_MAX_RETRIES,
+    initial_delay: float = DEFAULT_INITIAL_DELAY,
+    backoff_factor: float = DEFAULT_BACKOFF_FACTOR,
+    max_delay: float = DEFAULT_MAX_DELAY,
+    jitter: bool = DEFAULT_JITTER,
+    retriable_exceptions: Tuple[Type[Exception], ...] = ASYNC_RETRIABLE_EXCEPTIONS,
+    retry_on_status_codes: Tuple[int, ...] = (500, 502, 503, 504, 429),
+) -> Callable:
+    """
+    Async decorator that implements exponential backoff retry logic.
+    
+    Args:
+        max_retries: Maximum number of retry attempts
+        initial_delay: Initial delay between retries in seconds
+        backoff_factor: Factor to multiply delay by after each retry
+        max_delay: Maximum delay between retries
+        jitter: Whether to add random jitter to reduce thundering herd
+        retriable_exceptions: Tuple of exception types that should trigger retries
+        retry_on_status_codes: HTTP status codes that should trigger retries
+    
+    Returns:
+        Async decorator function that applies retry logic
+    """
+    def decorator(func: Callable) -> Callable:
+        @wraps(func)
+        async def wrapper(*args, **kwargs) -> Any:
+            last_exception = None
+            
+            for attempt in range(max_retries + 1):
+                try:
+                    result = await func(*args, **kwargs)
+                    
+                    # Check if we have a response object with status code
+                    if hasattr(result, 'status_code') and result.status_code in retry_on_status_codes:
+                        if attempt < max_retries:
+                            delay = _calculate_delay(attempt, initial_delay, backoff_factor, max_delay, jitter)
+                            logger.warning(
+                                f"Async HTTP {result.status_code} received, retrying in {delay:.2f}s "
+                                f"(attempt {attempt + 1}/{max_retries + 1})",
+                                extra={
+                                    "function": func.__name__,
+                                    "attempt": attempt + 1,
+                                    "max_retries": max_retries + 1,
+                                    "delay": delay,
+                                    "status_code": result.status_code,
+                                    "action": "async_retry_on_status_code"
+                                }
+                            )
+                            await asyncio.sleep(delay)
+                            continue
+                    
+                    # Success case
+                    if attempt > 0:
+                        logger.info(
+                            f"Async function {func.__name__} succeeded after {attempt} retries",
+                            extra={
+                                "function": func.__name__,
+                                "attempts": attempt + 1,
+                                "action": "async_retry_success"
+                            }
+                        )
+                    return result
+                    
+                except retriable_exceptions as e:
+                    last_exception = e
+                    if attempt < max_retries:
+                        delay = _calculate_delay(attempt, initial_delay, backoff_factor, max_delay, jitter)
+                        logger.warning(
+                            f"Async exception {type(e).__name__} in {func.__name__}, retrying in {delay:.2f}s "
+                            f"(attempt {attempt + 1}/{max_retries + 1}): {str(e)}",
+                            extra={
+                                "function": func.__name__,
+                                "attempt": attempt + 1,
+                                "max_retries": max_retries + 1,
+                                "delay": delay,
+                                "exception": str(e),
+                                "exception_type": type(e).__name__,
+                                "action": "async_retry_on_exception"
+                            }
+                        )
+                        await asyncio.sleep(delay)
+                    else:
+                        logger.error(
+                            f"Async function {func.__name__} failed after {max_retries} retries: {str(e)}",
+                            extra={
+                                "function": func.__name__,
+                                "max_retries": max_retries,
+                                "exception": str(e),
+                                "exception_type": type(e).__name__,
+                                "action": "async_retry_exhausted"
+                            }
+                        )
+                        raise
+                except Exception as e:
+                    # Non-retriable exceptions should be raised immediately
+                    logger.error(
+                        f"Non-retriable async exception in {func.__name__}: {str(e)}",
+                        extra={
+                            "function": func.__name__,
+                            "exception": str(e),
+                            "exception_type": type(e).__name__,
+                            "action": "async_non_retriable_exception"
+                        }
+                    )
+                    raise
+            
+            # This should never be reached due to the raise in the except block
+            # But adding it for completeness
+            if last_exception:
+                raise last_exception
+            
+        return wrapper
+    return decorator
 
 
 def get_retry_stats(func: Callable) -> dict:

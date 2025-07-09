@@ -7,11 +7,12 @@ This module implements the Circuit Breaker pattern to improve API resilience by:
 - Configurable failure threshold and recovery timeout
 """
 
+import asyncio
 import time
 import logging
 import functools
 from enum import Enum
-from typing import Any, Callable, Optional, Dict, TypeVar, Generic
+from typing import Any, Callable, Optional, Dict, TypeVar, Generic, Awaitable
 from dataclasses import dataclass, field
 from threading import Lock
 
@@ -388,5 +389,63 @@ def circuit_breaker(
             success_threshold=success_threshold
         )
         return cb(func)
+    
+    return decorator
+
+
+def async_circuit_breaker(
+    name: str,
+    failure_threshold: int = 5,
+    recovery_timeout: int = 60,
+    success_threshold: int = 1
+) -> Callable[[Callable[..., Awaitable[T]]], Callable[..., Awaitable[T]]]:
+    """
+    Async decorator to add circuit breaker protection to an async function.
+    
+    Args:
+        name: Name of the circuit breaker
+        failure_threshold: Number of failures before opening circuit
+        recovery_timeout: Time in seconds before transitioning to HALF_OPEN
+        success_threshold: Number of successes in HALF_OPEN to close circuit
+        
+    Returns:
+        Async decorator function
+    """
+    def decorator(func: Callable[..., Awaitable[T]]) -> Callable[..., Awaitable[T]]:
+        cb = get_circuit_breaker(
+            name=name,
+            failure_threshold=failure_threshold,
+            recovery_timeout=recovery_timeout,
+            success_threshold=success_threshold
+        )
+        
+        @functools.wraps(func)
+        async def async_wrapper(*args, **kwargs) -> T:
+            with cb._lock:
+                cb._stats.total_calls += 1
+            
+            # Record metrics if available
+            if _metrics_available:
+                increment("circuit_breaker_total_calls", tags={"name": cb.name})
+                gauge(f"circuit_breaker_total_calls_{cb.name}", cb._stats.total_calls)
+            
+            if not cb._can_attempt_call():
+                if _metrics_available:
+                    increment("circuit_breaker_rejected_calls", tags={"name": cb.name})
+                raise CircuitBreakerError(
+                    cb.name,
+                    cb._stats.failure_count,
+                    cb._stats.last_failure_time
+                )
+            
+            try:
+                result = await func(*args, **kwargs)
+                cb._record_success()
+                return result
+            except Exception as e:
+                cb._record_failure(e)
+                raise
+        
+        return async_wrapper
     
     return decorator
