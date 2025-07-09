@@ -16,7 +16,7 @@ from mcp import McpError, ErrorData
 from clinicaltrials.async_nodes import AsyncQueryTrialsNode, AsyncSummarizeTrialsNode, AsyncBatchQueryTrialsNode
 from utils.node import AsyncFlow
 from utils.async_call_llm import cleanup_async_clients
-from clinicaltrials.async_query import close_executor
+# from clinicaltrials.async_query import close_executor  # No longer needed - using pure async httpx
 from utils.metrics import get_metrics, export_prometheus, export_json
 from utils.circuit_breaker import get_all_circuit_breaker_stats
 from utils.cache_strategies import get_cache_analytics
@@ -541,7 +541,7 @@ async def invalidate_cache(pattern: str = "*") -> str:
 async def cleanup():
     """Clean up async resources."""
     await cleanup_async_clients()
-    await close_executor()
+    # No longer need to close executor - using pure async httpx
 
 async def startup_tasks():
     """Perform startup tasks including cache warming."""
@@ -574,6 +574,7 @@ def main():
             asyncio.run(startup_tasks())
         except Exception as e:
             logger.warning(f"Startup tasks failed: {e}")
+        
         
         # Run the server
         mcp.run()

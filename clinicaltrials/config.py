@@ -45,7 +45,7 @@ class APIConfig:
     circuit_breaker_recovery_timeout: int = 60
     
     # User Agent Configuration
-    user_agent: str = "mutation-clinical-trial-matching-mcp/0.1.0 (Clinical Trials MCP Server)"
+    user_agent: str = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
     
     # HTTP Connection Configuration (for async clients)
     http_connect_timeout: int = 5
@@ -65,7 +65,7 @@ class APIConfig:
     max_concurrent_per_host: int = 5   # per-host concurrent limit
     
     # Performance Optimization
-    enable_http2: bool = False  # enable HTTP/2 support (requires h2 package)
+    enable_http2: bool = False  # enable HTTP/2 support (requires h2 package) - disabled due to 403 errors
     enable_connection_pooling: bool = True
     connection_pool_size: int = 100  # dedicated pool size per service
     

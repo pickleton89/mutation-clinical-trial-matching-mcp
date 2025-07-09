@@ -43,7 +43,13 @@ class AsyncHttpClientManager:
             httpx.AsyncClient: Configured async HTTP client
         """
         async with _client_lock:
-            if service not in _clients:
+            if service not in _clients or _clients[service].is_closed:
+                # Close and recreate if client is closed
+                if service in _clients:
+                    try:
+                        await _clients[service].aclose()
+                    except Exception:
+                        pass  # Already closed
                 _clients[service] = await AsyncHttpClientManager._create_client(service, **kwargs)
             return _clients[service]
     
@@ -193,7 +199,31 @@ class AsyncHttpClientManager:
 # Convenience functions for common operations
 async def get_clinicaltrials_client() -> httpx.AsyncClient:
     """Get the async HTTP client for clinicaltrials.gov API."""
-    return await AsyncHttpClientManager.get_client('clinicaltrials')
+    # For now, create a fresh client for each request to avoid event loop issues
+    # This is less efficient but ensures reliability
+    config = get_global_config()
+    
+    return httpx.AsyncClient(
+        timeout=httpx.Timeout(
+            connect=config.http_connect_timeout,
+            read=config.http_read_timeout,
+            write=config.http_write_timeout,
+            pool=config.http_pool_timeout
+        ),
+        limits=httpx.Limits(
+            max_connections=config.http_max_connections,
+            max_keepalive_connections=config.http_max_keepalive_connections,
+            keepalive_expiry=config.http_keepalive_expiry
+        ),
+        headers={
+            "Accept": "application/json",
+            "User-Agent": config.user_agent,
+            "Referer": "https://clinicaltrials.gov/",
+            "Accept-Language": "en-US,en;q=0.9"
+        },
+        follow_redirects=True,
+        http2=config.enable_http2
+    )
 
 
 async def get_anthropic_client() -> httpx.AsyncClient:
