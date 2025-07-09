@@ -28,7 +28,11 @@
       "Bash(clear)",
       "Bash(diff:*)",
       "Bash(mv:*)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "WebFetch(domain:clinicaltrials.gov)",
+      "Bash(curl:*)",
+      "Bash(pkill:*)",
+      "Bash(true)"
     ],
     "deny": []
   }

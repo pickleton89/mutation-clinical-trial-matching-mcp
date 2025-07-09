@@ -6,7 +6,8 @@ import asyncio
 import logging
 import time
 from typing import Dict, Any, List, Optional
-import httpx
+import requests
+from concurrent.futures import ThreadPoolExecutor
 from utils.retry import async_exponential_backoff_retry
 from utils.circuit_breaker import async_circuit_breaker
 from utils.metrics import timer, increment, histogram, gauge
@@ -15,38 +16,23 @@ from clinicaltrials.config import get_global_config
 
 logger = logging.getLogger(__name__)
 
-# Global async client for connection reuse
-_async_client: Optional[httpx.AsyncClient] = None
+# Global thread pool executor for async requests
+_executor: Optional[ThreadPoolExecutor] = None
 
-async def get_async_client() -> httpx.AsyncClient:
-    """Get or create the global async HTTP client."""
-    global _async_client
-    if _async_client is None:
+def get_executor() -> ThreadPoolExecutor:
+    """Get or create the global thread pool executor."""
+    global _executor
+    if _executor is None:
         config = get_global_config()
-        _async_client = httpx.AsyncClient(
-            headers={
-                "Accept": "application/json",
-                "User-Agent": config.user_agent
-            },
-            timeout=httpx.Timeout(
-                connect=config.http_connect_timeout,
-                read=config.http_read_timeout,
-                write=config.http_write_timeout,
-                pool=config.http_pool_timeout
-            ),
-            limits=httpx.Limits(
-                max_connections=config.http_max_connections,
-                max_keepalive_connections=config.http_max_keepalive_connections
-            )
-        )
-    return _async_client
+        _executor = ThreadPoolExecutor(max_workers=config.http_max_connections)
+    return _executor
 
-async def close_async_client():
-    """Close the global async HTTP client."""
-    global _async_client
-    if _async_client:
-        await _async_client.aclose()
-        _async_client = None
+async def close_executor():
+    """Close the global thread pool executor."""
+    global _executor
+    if _executor:
+        _executor.shutdown(wait=True)
+        _executor = None
 
 @response_validator("clinical_trials_api")
 async def _async_query_clinical_trials_with_retry(
@@ -78,6 +64,106 @@ async def _async_query_clinical_trials_with_retry(
     
     return await _retry_wrapper()
 
+def _sync_query_clinical_trials_impl(
+    mutation: str, 
+    min_rank: int = 1, 
+    max_rank: int = 10, 
+    timeout: int = 10
+) -> Dict[str, Any]:
+    """
+    Synchronous implementation of clinical trials query using requests library.
+    """
+    # Prepare request
+    config = get_global_config()
+    base_url = config.clinicaltrials_api_url
+    params = {
+        "format": "json",
+        "query.term": mutation,
+        "pageSize": max_rank - min_rank + 1
+    }
+    
+    headers = {
+        "Accept": "application/json",
+        "User-Agent": config.user_agent
+    }
+    
+    try:
+        start_time = time.time()
+        
+        logger.info(f"Querying clinicaltrials.gov for mutation: {mutation}", extra={
+            "mutation": mutation,
+            "min_rank": min_rank,
+            "max_rank": max_rank,
+            "timeout": timeout,
+            "action": "api_request_start"
+        })
+        
+        response = requests.get(base_url, params=params, headers=headers, timeout=timeout)
+        request_duration = time.time() - start_time
+        
+        # Check for non-200 status codes
+        if response.status_code != 200:
+            logger.error(f"API Error (Status {response.status_code}): {response.text}", extra={
+                "mutation": mutation,
+                "status_code": response.status_code,
+                "request_duration": request_duration,
+                "action": "api_request_error"
+            })
+            return {"error": f"API Error (Status {response.status_code})", "studies": []}
+        
+        # Try to parse JSON
+        try:
+            result = response.json()
+            study_count = len(result.get("studies", []))
+            
+            logger.info(f"Found {study_count} studies for mutation {mutation} in {request_duration:.2f}s", extra={
+                "mutation": mutation,
+                "study_count": study_count,
+                "request_duration": request_duration,
+                "action": "api_request_success"
+            })
+            return result
+            
+        except ValueError as json_err:
+            logger.error(f"JSON parsing error: {json_err}", extra={
+                "mutation": mutation,
+                "request_duration": request_duration,
+                "json_error": str(json_err),
+                "action": "json_parse_error"
+            })
+            logger.debug("Response content: %s", response.text[:500] + "..." if len(response.text) > 500 else response.text)
+            return {"error": f"Failed to parse API response: {json_err}", "studies": []}
+            
+    except requests.exceptions.Timeout:
+        request_duration = time.time() - start_time
+        logger.error(f"Timeout ({timeout}s) when querying clinicaltrials.gov", extra={
+            "mutation": mutation,
+            "timeout": timeout,
+            "request_duration": request_duration,
+            "action": "api_request_timeout"
+        })
+        return {"error": "The request to clinicaltrials.gov timed out", "studies": []}
+        
+    except requests.exceptions.ConnectionError as e:
+        request_duration = time.time() - start_time
+        logger.error(f"Connection error: {e}", extra={
+            "mutation": mutation,
+            "request_duration": request_duration,
+            "error": str(e),
+            "action": "api_request_connection_error"
+        })
+        return {"error": "Failed to connect to clinicaltrials.gov", "studies": []}
+        
+    except requests.exceptions.RequestException as e:
+        request_duration = time.time() - start_time
+        logger.error(f"Request error: {e}", extra={
+            "mutation": mutation,
+            "request_duration": request_duration,
+            "error": str(e),
+            "action": "api_request_error"
+        })
+        return {"error": f"Error querying clinicaltrials.gov: {e}", "studies": []}
+
 async def _async_query_clinical_trials_impl(
     mutation: str, 
     min_rank: int = 1, 
@@ -106,110 +192,35 @@ async def _async_query_clinical_trials_impl(
         increment("clinicaltrials_api_validation_warnings_async", tags={"warning_type": "invalid_max_rank"})
         max_rank = min_rank + 9
     
-    # Prepare request
-    config = get_global_config()
-    base_url = config.clinicaltrials_api_url
-    params = {
-        "format": "json",
-        "query.term": mutation,
-        "pageSize": max_rank - min_rank + 1
-    }
-    
     with timer("clinicaltrials_api_request_async", tags={"mutation": mutation}):
         try:
-            client = await get_async_client()
-            start_time = time.time()
+            # Run the synchronous function in a thread pool
+            executor = get_executor()
+            result = await asyncio.get_event_loop().run_in_executor(
+                executor, 
+                _sync_query_clinical_trials_impl,
+                mutation, min_rank, max_rank, timeout
+            )
             
-            logger.info(f"Async querying clinicaltrials.gov for mutation: {mutation}", extra={
-                "mutation": mutation,
-                "min_rank": min_rank,
-                "max_rank": max_rank,
-                "timeout": timeout,
-                "action": "async_api_request_start"
-            })
-            
-            response = await client.get(base_url, params=params, timeout=timeout)
-            request_duration = time.time() - start_time
-            
-            # Record request metrics
-            histogram("clinicaltrials_api_request_duration_async", request_duration, tags={"mutation": mutation})
-            gauge("clinicaltrials_api_last_request_duration_async", request_duration)
-            
-            # Check for non-200 status codes
-            if response.status_code != 200:
-                increment("clinicaltrials_api_errors_async", tags={"error_type": "http_error", "status_code": str(response.status_code)})
-                logger.error(f"Async API Error (Status {response.status_code}): {response.text}", extra={
-                    "mutation": mutation,
-                    "status_code": response.status_code,
-                    "request_duration": request_duration,
-                    "action": "async_api_request_error"
-                })
-                return {"error": f"API Error (Status {response.status_code})", "studies": []}
-            
-            # Try to parse JSON
-            try:
-                result = response.json()
+            # Record success metrics
+            if "error" not in result:
                 study_count = len(result.get("studies", []))
-                
-                # Record success metrics
                 increment("clinicaltrials_api_success_async", tags={"mutation": mutation})
                 histogram("clinicaltrials_api_study_count_async", study_count, tags={"mutation": mutation})
                 gauge("clinicaltrials_api_last_study_count_async", study_count)
+            else:
+                increment("clinicaltrials_api_errors_async", tags={"error_type": "api_error"})
                 
-                logger.info(f"Async found {study_count} studies for mutation {mutation} in {request_duration:.2f}s", extra={
-                    "mutation": mutation,
-                    "study_count": study_count,
-                    "request_duration": request_duration,
-                    "action": "async_api_request_success"
-                })
-                return result
-                
-            except ValueError as json_err:
-                increment("clinicaltrials_api_errors_async", tags={"error_type": "json_parse_error"})
-                logger.error(f"Async JSON parsing error: {json_err}", extra={
-                    "mutation": mutation,
-                    "request_duration": request_duration,
-                    "json_error": str(json_err),
-                    "action": "async_json_parse_error"
-                })
-                logger.debug("Response content: %s", response.text[:500] + "..." if len(response.text) > 500 else response.text)
-                return {"error": f"Failed to parse API response: {json_err}", "studies": []}
-                
-        except httpx.TimeoutException:
-            request_duration = time.time() - start_time
-            increment("clinicaltrials_api_errors_async", tags={"error_type": "timeout"})
-            histogram("clinicaltrials_api_request_duration_async", request_duration, tags={"mutation": mutation, "error": "timeout"})
-            logger.error(f"Async timeout ({timeout}s) when querying clinicaltrials.gov", extra={
-                "mutation": mutation,
-                "timeout": timeout,
-                "request_duration": request_duration,
-                "action": "async_api_request_timeout"
-            })
-            return {"error": "The request to clinicaltrials.gov timed out", "studies": []}
+            return result
             
-        except httpx.ConnectError as e:
-            request_duration = time.time() - start_time
-            increment("clinicaltrials_api_errors_async", tags={"error_type": "connection_error"})
-            histogram("clinicaltrials_api_request_duration_async", request_duration, tags={"mutation": mutation, "error": "connection"})
-            logger.error(f"Async connection error: {e}", extra={
+        except Exception as e:
+            increment("clinicaltrials_api_errors_async", tags={"error_type": "unexpected_error"})
+            logger.error(f"Unexpected error in async query: {e}", extra={
                 "mutation": mutation,
-                "request_duration": request_duration,
-                "error": str(e),
-                "action": "async_api_request_connection_error"
-            })
-            return {"error": "Failed to connect to clinicaltrials.gov", "studies": []}
-            
-        except httpx.RequestError as e:
-            request_duration = time.time() - start_time
-            increment("clinicaltrials_api_errors_async", tags={"error_type": "request_error"})
-            histogram("clinicaltrials_api_request_duration_async", request_duration, tags={"mutation": mutation, "error": "request"})
-            logger.error(f"Async request error: {e}", extra={
-                "mutation": mutation,
-                "request_duration": request_duration,
                 "error": str(e),
                 "action": "async_api_request_error"
             })
-            return {"error": f"Error querying clinicaltrials.gov: {e}", "studies": []}
+            return {"error": f"Unexpected error: {str(e)}", "studies": []}
 
 async def query_clinical_trials_async(
     mutation: str, 

@@ -16,6 +16,7 @@ from mcp import McpError, ErrorData
 from clinicaltrials.async_nodes import AsyncQueryTrialsNode, AsyncSummarizeTrialsNode, AsyncBatchQueryTrialsNode
 from utils.node import AsyncFlow
 from utils.async_call_llm import cleanup_async_clients
+from clinicaltrials.async_query import close_executor
 from utils.metrics import get_metrics, export_prometheus, export_json
 from utils.circuit_breaker import get_all_circuit_breaker_stats
 from utils.cache_strategies import get_cache_analytics
@@ -74,13 +75,11 @@ def initialize_async_batch_flow():
     
     logger.info("Async batch flow initialized with batch query and summarize nodes")
 
-@mcp.tool()
-async def summarize_trials_async(mutation: str) -> str:
+async def _summarize_trials_async_impl(mutation: str) -> str:
     """
-    Primary async function for summarizing clinical trials.
+    Internal async implementation for summarizing clinical trials.
     
-    Query clinical trials for a specific mutation and return a summary.
-    This function uses async/await with httpx for high-performance concurrent requests.
+    This function contains the core logic that both sync and async versions call.
     
     Args:
         mutation: The genetic mutation to search for (e.g., "EGFR L858R")
@@ -164,6 +163,25 @@ async def summarize_trials_async(mutation: str) -> str:
         )
 
 @mcp.tool()
+async def summarize_trials_async(mutation: str) -> str:
+    """
+    Primary async function for summarizing clinical trials.
+    
+    Query clinical trials for a specific mutation and return a summary.
+    This function uses async/await with httpx for high-performance concurrent requests.
+    
+    Args:
+        mutation: The genetic mutation to search for (e.g., "EGFR L858R")
+        
+    Returns:
+        A formatted summary of relevant clinical trials
+        
+    Raises:
+        McpError: If there's an error in processing the mutation query
+    """
+    return await _summarize_trials_async_impl(mutation)
+
+@mcp.tool()
 async def summarize_multiple_trials_async(mutations: str) -> str:
     """
     Async batch version for multiple mutations.
@@ -220,9 +238,9 @@ async def summarize_multiple_trials_async(mutations: str) -> str:
         return f"Error: {str(e)}"
 
 @mcp.tool()
-def summarize_trials(mutation: str) -> str:
+async def summarize_trials(mutation: str) -> str:
     """
-    Backward compatible sync version of summarize_trials.
+    Backward compatible version of summarize_trials.
     
     This function wraps the async version to maintain backward compatibility.
     Note: This will be deprecated in favor of summarize_trials_async.
@@ -234,18 +252,10 @@ def summarize_trials(mutation: str) -> str:
         A formatted summary of relevant clinical trials
     """
     try:
-        # Run the async version in the current event loop
-        loop = asyncio.get_event_loop()
-        if loop.is_running():
-            # If we're already in an event loop, create a new task
-            task = loop.create_task(summarize_trials_async(mutation))
-            # This is a hack for compatibility - in production, the MCP server should handle this
-            return "Error: Cannot run sync version in async context. Please use summarize_trials_async."
-        else:
-            # Run the async version
-            return loop.run_until_complete(summarize_trials_async(mutation))
+        # Since we're in an async context, just call the async implementation
+        return await _summarize_trials_async_impl(mutation)
     except Exception as e:
-        logger.error(f"Error in sync wrapper: {e}", exc_info=True)
+        logger.error(f"Error in wrapper: {e}", exc_info=True)
         return f"Error: {str(e)}"
 
 @mcp.tool()
@@ -531,6 +541,7 @@ async def invalidate_cache(pattern: str = "*") -> str:
 async def cleanup():
     """Clean up async resources."""
     await cleanup_async_clients()
+    await close_executor()
 
 async def startup_tasks():
     """Perform startup tasks including cache warming."""
