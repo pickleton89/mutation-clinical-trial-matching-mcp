@@ -17,6 +17,9 @@ class AsyncQueryTrialsNode(AsyncNode):
     Async node that queries clinicaltrials.gov for trials matching a mutation.
     """
     
+    def __init__(self):
+        super().__init__()
+    
     async def prep(self, shared: Dict[str, Any]) -> Dict[str, Any]:
         """
         Extract mutation from shared context.
@@ -104,14 +107,17 @@ class AsyncQueryTrialsNode(AsyncNode):
             "action": "post"
         })
         
-        # Return next node ID (typically the summarizer)
-        return "summarize_trials"
+        # Return next node ID using new chaining logic
+        return self.get_next_node_id()
 
 
 class AsyncBatchQueryTrialsNode(AsyncBatchNode):
     """
     Async batch node that queries clinical trials for multiple mutations concurrently.
     """
+    
+    def __init__(self):
+        super().__init__()
     
     async def prep(self, shared: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -220,14 +226,17 @@ class AsyncBatchQueryTrialsNode(AsyncBatchNode):
             "action": "post"
         })
         
-        # Return next node ID (typically the summarizer)
-        return "summarize_trials"
+        # Return next node ID using new chaining logic
+        return self.get_next_node_id()
 
 
 class AsyncSummarizeTrialsNode(AsyncNode):
     """
     Async node that summarizes clinical trials using LLM.
     """
+    
+    def __init__(self):
+        super().__init__()
     
     async def prep(self, shared: Dict[str, Any]) -> Dict[str, Any]:
         """

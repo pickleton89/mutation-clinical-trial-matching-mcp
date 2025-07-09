@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **PocketFlow Pattern Alignment**: Enhanced Node and Flow classes with PocketFlow-compliant syntax
+  - Added `>>` operator for node chaining: `query_node >> summarize_node`
+  - Implemented `-` operator for conditional branching: `node - "action" >> target_node`
+  - Automatic node registration in flows based on chaining and branching relationships
+  - Enhanced flow execution logic to properly handle new chaining and branching patterns
+  - Updated `servers/primary.py` to use new chaining syntax for cleaner flow definitions
+  - Comprehensive test suite with 12 test cases covering all new functionality
+  - Maintained 100% backward compatibility with existing Node and Flow APIs
+
 ### Fixed
 - **API 403 Error Resolution**: Fixed 403 Forbidden errors from clinicaltrials.gov by reverting from httpx to requests
   - Reverted `clinicaltrials/async_query.py` to use `requests` library with `ThreadPoolExecutor`

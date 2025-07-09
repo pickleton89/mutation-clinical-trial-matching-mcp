@@ -26,6 +26,7 @@ class QueryTrialsNode(Node[str, Dict[str, Any]]):
             max_rank: The maximum rank of results to return (default: 10)
             timeout: Timeout for the HTTP request in seconds (default: 10)
         """
+        super().__init__()
         self.min_rank = min_rank
         self.max_rank = max_rank
         self.timeout = timeout
@@ -75,13 +76,18 @@ class QueryTrialsNode(Node[str, Dict[str, Any]]):
         """
         shared["trials_data"] = result
         shared["studies"] = result.get("studies", [])
-        return "summarize" if "next_node" not in shared else shared["next_node"]
+        next_id = self.get_next_node_id()
+        # For backward compatibility, return "summarize" if no next node is configured
+        return next_id if next_id else "summarize"
 
 
 class SummarizeTrialsNode(Node[List[Dict[str, Any]], str]):
     """
     Node for summarizing clinical trial data.
     """
+    
+    def __init__(self):
+        super().__init__()
     
     def prep(self, shared: Dict[str, Any]) -> List[Dict[str, Any]]:
         """

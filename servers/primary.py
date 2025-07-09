@@ -48,32 +48,36 @@ mcp = FastMCP("Clinical Trials Async MCP Server")
 async_flow = None
 
 def initialize_async_flow():
-    """Initialize the async flow with nodes."""
+    """Initialize the async flow with nodes using new chaining syntax."""
     global async_flow
     
     # Create async nodes
     query_node = AsyncQueryTrialsNode()
     summarize_node = AsyncSummarizeTrialsNode()
     
-    # Create async flow
-    async_flow = AsyncFlow(query_node)
-    async_flow.add_node("summarize_trials", summarize_node)
+    # Use new chaining syntax following PocketFlow documentation
+    query_node >> summarize_node
     
-    logger.info("Async flow initialized with query and summarize nodes")
+    # Create async flow with automatic node registration
+    async_flow = AsyncFlow(query_node)
+    
+    logger.info("Async flow initialized with query and summarize nodes using >> chaining")
 
 def initialize_async_batch_flow():
-    """Initialize the async batch flow for multiple mutations."""
+    """Initialize the async batch flow for multiple mutations using new chaining syntax."""
     global async_batch_flow
     
     # Create async batch nodes
     batch_query_node = AsyncBatchQueryTrialsNode()
     summarize_node = AsyncSummarizeTrialsNode()
     
-    # Create async batch flow
-    async_batch_flow = AsyncFlow(batch_query_node)
-    async_batch_flow.add_node("summarize_trials", summarize_node)
+    # Use new chaining syntax following PocketFlow documentation
+    batch_query_node >> summarize_node
     
-    logger.info("Async batch flow initialized with batch query and summarize nodes")
+    # Create async batch flow with automatic node registration
+    async_batch_flow = AsyncFlow(batch_query_node)
+    
+    logger.info("Async batch flow initialized with batch query and summarize nodes using >> chaining")
 
 async def _summarize_trials_async_impl(mutation: str) -> str:
     """

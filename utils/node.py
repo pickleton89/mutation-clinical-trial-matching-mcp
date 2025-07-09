@@ -11,7 +11,7 @@ Also provides async versions of these classes for asynchronous processing.
 """
 
 import asyncio
-from typing import Any, Dict, List, Optional, TypeVar, Generic, Awaitable
+from typing import Any, Dict, List, Optional, TypeVar, Generic, Awaitable, Union
 import logging
 
 logger = logging.getLogger(__name__)
@@ -20,12 +20,61 @@ T = TypeVar('T')  # Input type
 R = TypeVar('R')  # Result type
 
 
+class NodeConnection:
+    """
+    Represents a connection between nodes, supporting both simple chaining and branching.
+    """
+    
+    def __init__(self, source_node: 'Node', target_node: Optional['Node'] = None, action: Optional[str] = None):
+        self.source_node = source_node
+        self.target_node = target_node
+        self.action = action
+        self.connections = {}  # For branching: action -> target_node
+        
+    def __rshift__(self, other: 'Node') -> 'NodeConnection':
+        """Support node >> node chaining."""
+        if self.target_node is None:
+            # Simple chaining case
+            self.target_node = other
+            return NodeConnection(other)
+        else:
+            # Return new connection for the target node
+            return NodeConnection(other)
+    
+    def __sub__(self, action: str) -> 'BranchConnection':
+        """Support node - "action" >> target branching."""
+        return BranchConnection(self.source_node, action)
+
+
+class BranchConnection:
+    """
+    Represents a branching connection for conditional flows.
+    """
+    
+    def __init__(self, source_node: 'Node', action: str):
+        self.source_node = source_node
+        self.action = action
+        
+    def __rshift__(self, target_node: 'Node') -> 'Node':
+        """Support node - "action" >> target branching."""
+        # Store the branching information in the source node
+        if not hasattr(self.source_node, '_branches'):
+            self.source_node._branches = {}
+        self.source_node._branches[self.action] = target_node
+        return target_node
+
+
 class Node(Generic[T, R]):
     """
     Base Node class for PocketFlow pattern.
     
     A Node processes a single input and produces a single output.
+    Supports chaining with >> operator and branching with - operator.
     """
+    
+    def __init__(self):
+        self._branches = {}  # For storing branching logic: action -> target_node
+        self._next_node = None  # For simple chaining
     
     def prep(self, shared: Dict[str, Any]) -> T:
         """
@@ -65,6 +114,48 @@ class Node(Generic[T, R]):
         """
         raise NotImplementedError("post method must be implemented by subclasses")
     
+    def __rshift__(self, other: 'Node') -> 'Node':
+        """
+        Support node >> node chaining syntax.
+        
+        Args:
+            other: The next node in the chain
+            
+        Returns:
+            The other node for continued chaining
+        """
+        self._next_node = other
+        return other
+    
+    def __sub__(self, action: str) -> 'BranchConnection':
+        """
+        Support node - "action" >> target branching syntax.
+        
+        Args:
+            action: The action/condition for branching
+            
+        Returns:
+            A BranchConnection object for completing the branch
+        """
+        return BranchConnection(self, action)
+    
+    def get_next_node_id(self, action: Optional[str] = None) -> Optional[str]:
+        """
+        Get the next node ID based on action or default chaining.
+        
+        Args:
+            action: The action returned from post method
+            
+        Returns:
+            Next node ID or None
+        """
+        if action and action in self._branches:
+            next_node = self._branches[action]
+            return f"node_{id(next_node)}"
+        elif self._next_node:
+            return f"node_{id(self._next_node)}"
+        return None
+    
     def process(self, shared: Dict[str, Any]) -> Optional[str]:
         """
         Process the node by calling prep, exec, and post in sequence.
@@ -93,7 +184,11 @@ class BatchNode(Node[List[T], List[R]]):
     
     A BatchNode processes a list of inputs and produces a list of outputs.
     The exec method is called for each item in the list.
+    Supports chaining with >> operator and branching with - operator.
     """
+    
+    def __init__(self):
+        super().__init__()
     
     def exec_single(self, item: T) -> R:
         """
@@ -123,6 +218,7 @@ class BatchNode(Node[List[T], List[R]]):
 class Flow:
     """
     Flow class to orchestrate execution of nodes.
+    Supports automatic registration of chained nodes.
     """
     
     def __init__(self, start: Node):
@@ -134,6 +230,34 @@ class Flow:
         """
         self.start = start
         self.nodes = {}
+        self._auto_register_nodes(start)
+    
+    def _auto_register_nodes(self, node: Node, visited: set = None):
+        """
+        Automatically register nodes from chaining and branching.
+        
+        Args:
+            node: The node to register and explore
+            visited: Set of already visited nodes to avoid cycles
+        """
+        if visited is None:
+            visited = set()
+        
+        node_id = f"node_{id(node)}"
+        if node_id in visited:
+            return
+        
+        visited.add(node_id)
+        self.nodes[node_id] = node
+        
+        # Register chained node
+        if hasattr(node, '_next_node') and node._next_node:
+            self._auto_register_nodes(node._next_node, visited)
+        
+        # Register branched nodes
+        if hasattr(node, '_branches'):
+            for target_node in node._branches.values():
+                self._auto_register_nodes(target_node, visited)
     
     def add_node(self, node_id: str, node: Node):
         """
@@ -160,14 +284,20 @@ class Flow:
         
         try:
             current_node = self.start
-            next_node_id = current_node.process(shared)
             
-            # Check if initial node had an error
-            if "error" in shared:
-                logger.error(f"Error in start node: {shared['error']}")
-                return shared
-            
-            while next_node_id:
+            while current_node:
+                # Process current node
+                next_node_id = current_node.process(shared)
+                
+                # Check if current node had an error
+                if "error" in shared:
+                    logger.error(f"Error in node: {shared['error']}")
+                    return shared
+                
+                # The process method already returns the next node ID
+                if not next_node_id:
+                    break
+                
                 if next_node_id not in self.nodes:
                     error_msg = f"Node with ID '{next_node_id}' not found in flow"
                     logger.error(error_msg)
@@ -176,12 +306,6 @@ class Flow:
                     return shared
                 
                 current_node = self.nodes[next_node_id]
-                next_node_id = current_node.process(shared)
-                
-                # Check if current node had an error
-                if "error" in shared:
-                    logger.error(f"Error in node '{next_node_id}': {shared['error']}")
-                    return shared
             
             return shared
             
@@ -197,7 +321,12 @@ class AsyncNode(Generic[T, R]):
     Base Async Node class for PocketFlow pattern.
     
     An AsyncNode processes a single input and produces a single output asynchronously.
+    Supports chaining with >> operator and branching with - operator.
     """
+    
+    def __init__(self):
+        self._branches = {}  # For storing branching logic: action -> target_node
+        self._next_node = None  # For simple chaining
     
     async def prep(self, shared: Dict[str, Any]) -> T:
         """
@@ -237,6 +366,48 @@ class AsyncNode(Generic[T, R]):
         """
         raise NotImplementedError("post method must be implemented by subclasses")
     
+    def __rshift__(self, other: 'AsyncNode') -> 'AsyncNode':
+        """
+        Support async node >> node chaining syntax.
+        
+        Args:
+            other: The next async node in the chain
+            
+        Returns:
+            The other node for continued chaining
+        """
+        self._next_node = other
+        return other
+    
+    def __sub__(self, action: str) -> 'BranchConnection':
+        """
+        Support async node - "action" >> target branching syntax.
+        
+        Args:
+            action: The action/condition for branching
+            
+        Returns:
+            A BranchConnection object for completing the branch
+        """
+        return BranchConnection(self, action)
+    
+    def get_next_node_id(self, action: Optional[str] = None) -> Optional[str]:
+        """
+        Get the next node ID based on action or default chaining.
+        
+        Args:
+            action: The action returned from post method
+            
+        Returns:
+            Next node ID or None
+        """
+        if action and action in self._branches:
+            next_node = self._branches[action]
+            return f"node_{id(next_node)}"
+        elif self._next_node:
+            return f"node_{id(self._next_node)}"
+        return None
+    
     async def process(self, shared: Dict[str, Any]) -> Optional[str]:
         """
         Process the node by calling prep, exec, and post in sequence asynchronously.
@@ -265,7 +436,11 @@ class AsyncBatchNode(AsyncNode[List[T], List[R]]):
     
     An AsyncBatchNode processes a list of inputs and produces a list of outputs asynchronously.
     The exec method is called for each item in the list.
+    Supports chaining with >> operator and branching with - operator.
     """
+    
+    def __init__(self):
+        super().__init__()
     
     async def exec_single(self, item: T) -> R:
         """
@@ -296,6 +471,7 @@ class AsyncBatchNode(AsyncNode[List[T], List[R]]):
 class AsyncFlow:
     """
     Async Flow class to orchestrate execution of async nodes.
+    Supports automatic registration of chained nodes.
     """
     
     def __init__(self, start: AsyncNode):
@@ -307,6 +483,34 @@ class AsyncFlow:
         """
         self.start = start
         self.nodes = {}
+        self._auto_register_nodes(start)
+    
+    def _auto_register_nodes(self, node: AsyncNode, visited: set = None):
+        """
+        Automatically register async nodes from chaining and branching.
+        
+        Args:
+            node: The async node to register and explore
+            visited: Set of already visited nodes to avoid cycles
+        """
+        if visited is None:
+            visited = set()
+        
+        node_id = f"node_{id(node)}"
+        if node_id in visited:
+            return
+        
+        visited.add(node_id)
+        self.nodes[node_id] = node
+        
+        # Register chained node
+        if hasattr(node, '_next_node') and node._next_node:
+            self._auto_register_nodes(node._next_node, visited)
+        
+        # Register branched nodes
+        if hasattr(node, '_branches'):
+            for target_node in node._branches.values():
+                self._auto_register_nodes(target_node, visited)
     
     def add_node(self, node_id: str, node: AsyncNode):
         """
@@ -333,14 +537,20 @@ class AsyncFlow:
         
         try:
             current_node = self.start
-            next_node_id = await current_node.process(shared)
             
-            # Check if initial node had an error
-            if "error" in shared:
-                logger.error(f"Error in async start node: {shared['error']}")
-                return shared
-            
-            while next_node_id:
+            while current_node:
+                # Process current node
+                next_node_id = await current_node.process(shared)
+                
+                # Check if current node had an error
+                if "error" in shared:
+                    logger.error(f"Error in async node: {shared['error']}")
+                    return shared
+                
+                # The process method already returns the next node ID
+                if not next_node_id:
+                    break
+                
                 if next_node_id not in self.nodes:
                     error_msg = f"Async node with ID '{next_node_id}' not found in flow"
                     logger.error(error_msg)
@@ -349,12 +559,6 @@ class AsyncFlow:
                     return shared
                 
                 current_node = self.nodes[next_node_id]
-                next_node_id = await current_node.process(shared)
-                
-                # Check if current node had an error
-                if "error" in shared:
-                    logger.error(f"Error in async node '{next_node_id}': {shared['error']}")
-                    return shared
             
             return shared
             
