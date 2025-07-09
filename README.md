@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
-[![Version 0.2.0](https://img.shields.io/badge/version-0.2.0-blue.svg)](https://github.com/pickleton89/mutation-clinical-trial-matching-mcp/releases)
+[![Version 0.2.1](https://img.shields.io/badge/version-0.2.1-blue.svg)](https://github.com/pickleton89/mutation-clinical-trial-matching-mcp/releases)
 [![Tests](https://img.shields.io/badge/tests-142%20passing-green.svg)](https://github.com/pickleton89/mutation-clinical-trial-matching-mcp/actions)
 [![Code Style: Ruff](https://img.shields.io/badge/code%20style-ruff-black.svg)](https://github.com/astral-sh/ruff)
 
@@ -15,6 +15,7 @@ A high-performance Model Context Protocol (MCP) server that enables Claude Deskt
 ✅ **Core Functionality**: Successfully retrieves and summarizes clinical trials based on genetic mutations  
 ✅ **Enterprise Features**: Circuit breakers, metrics, retry logic, distributed caching, and monitoring  
 ✅ **High Performance**: Async architecture with 80% performance improvement and concurrent processing  
+✅ **API Resilience**: Robust error handling with 403 Forbidden error resolution via requests library  
 ✅ **Comprehensive Testing**: 142 passing tests with full coverage of critical functionality  
 ✅ **Modern Tooling**: Uses `uv` for dependency management and follows Python best practices  
 ✅ **Production Monitoring**: Prometheus metrics, cache analytics, and health monitoring dashboards  
@@ -102,18 +103,20 @@ This project is organized according to the Agentic Coding paradigm:
 
 The main high-performance server implementing the Model Context Protocol with enterprise features:
 
-- **Async Architecture**: Uses FastMCP 2.0 with httpx for concurrent request processing
+- **Async Architecture**: Uses FastMCP 2.0 with optimized connection pooling for concurrent processing
 - **Enterprise Tools**: Health monitoring, metrics collection, cache management
 - **Auto-scaling**: Circuit breakers and retry logic for robust API communication
 - **Cache Warming**: Automatically pre-loads common mutations for instant responses
+- **API Resilience**: Handles 403 Forbidden errors with proper fallback mechanisms
 
 ### Async Query Module (`clinicaltrials/async_query.py`)
 
 High-performance async querying with enterprise-grade reliability:
-- **Concurrent Processing**: Multiple API calls processed simultaneously
+- **Concurrent Processing**: Multiple API calls processed simultaneously via ThreadPoolExecutor
 - **Circuit Breaker**: Automatic failure detection and recovery
 - **Distributed Caching**: Redis-backed caching with in-memory fallback
 - **Metrics Collection**: Detailed performance and usage analytics
+- **API Compatibility**: Uses requests library for reliable clinicaltrials.gov API access
 
 ### Async Nodes (`clinicaltrials/async_nodes.py`)
 
@@ -124,10 +127,12 @@ PocketFlow nodes optimized for async processing:
 
 ### Enterprise Utilities
 
+- **Async HTTP Client** (`utils/async_http_client.py`): Centralized HTTP client management with connection pooling
 - **Cache Strategies** (`utils/cache_strategies.py`): Smart cache warming and invalidation
 - **Distributed Cache** (`utils/distributed_cache.py`): Redis-backed distributed caching
 - **Metrics** (`utils/metrics.py`): Prometheus-compatible metrics collection
 - **Circuit Breakers** (`utils/circuit_breaker.py`): Automatic failure detection and recovery
+- **Response Validation** (`utils/response_validation.py`): Schema-based API response validation
 
 ## Node Pattern Implementation
 
@@ -281,9 +286,9 @@ For a comprehensive list of planned enhancements and future work, please see the
 This project relies on the following key dependencies:
 
 - **Python 3.13+** - Base runtime environment
-- **FastMCP** (`fastmcp>=2.10.0`) - High-performance async MCP framework
+- **FastMCP** (`fastmcp>=2.10.2`) - High-performance async MCP framework
 - **PocketFlow** (`pocketflow>=0.0.1`) - Framework for building modular AI workflows with the Node pattern  
-- **Requests** (`requests==2.31.0`) - HTTP library for clinicaltrials.gov API calls
+- **Requests** (`requests==2.31.0`) - HTTP library for clinicaltrials.gov API calls (dev dependency for legacy test compatibility)
 - **HTTPX** (`httpx>=0.28.1`) - Async HTTP client for direct Anthropic API calls
 - **Redis** (`redis>=6.2.0`) - Optional distributed caching backend
 - **Python-dotenv** (`python-dotenv==1.1.0`) - Environment variable management
@@ -321,8 +326,9 @@ This project evolved through multiple phases of AI-collaborative development:
 **Phase 2** (2024-12): Enhanced with comprehensive testing and documentation  
 **Phase 3** (2025-01): Major refactoring for improved organization and maintainability  
 **Phase 4** (2025-01): Full async migration with enterprise features and 80% performance improvement  
+**Phase 5** (2025-07): API resilience improvements and 403 error resolution
 
-**Current Version (v0.2.0)**: Production-ready async server with enterprise features developed through collaboration with Claude Code, leveraging 20+ years of cancer research domain expertise to guide AI implementation.
+**Current Version (v0.2.1)**: Production-ready async server with enterprise features and robust API error handling, developed through collaboration with Claude Code, leveraging 20+ years of cancer research domain expertise to guide AI implementation.
 
 ## Handling the `.windsurfrules` Character Limit
 
