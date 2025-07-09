@@ -27,7 +27,8 @@
       "Bash(npm cache clean:*)",
       "Bash(clear)",
       "Bash(diff:*)",
-      "Bash(mv:*)"
+      "Bash(mv:*)",
+      "Bash(mkdir:*)"
     ],
     "deny": []
   }

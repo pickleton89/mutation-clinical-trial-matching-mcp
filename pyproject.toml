@@ -44,10 +44,11 @@ Documentation = "https://github.com/pickleton89/mutation-clinical-trial-matching
 Issues = "https://github.com/pickleton89/mutation-clinical-trial-matching-mcp/issues"
 
 [project.scripts]
-clinicaltrials-mcp-server = "clinicaltrials_mcp_server_primary:main"
+clinicaltrials-mcp-server = "servers.primary:main"
+clinicaltrials-cli = "scripts.cli:main"
 
 [tool.setuptools.packages.find]
-include = ["clinicaltrials*", "llm*", "utils*"]
+include = ["clinicaltrials*", "llm*", "utils*", "servers*", "scripts*"]
 exclude = ["tests*", "docs*", "assets*"]
 
 [build-system]

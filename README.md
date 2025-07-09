@@ -175,7 +175,7 @@ You can configure this project as a Claude Desktop MCP tool. Use path placeholde
 "mutation-clinical-trials-mcp": {
   "command": "{PATH_TO_VENV}/bin/python",
   "args": [
-    "{PATH_TO_PROJECT}/clinicaltrials_mcp_server.py"
+    "{PATH_TO_PROJECT}/servers/primary.py"
   ],
   "description": "Matches genetic mutations to relevant clinical trials and provides summaries."
 }
@@ -219,7 +219,7 @@ You can configure this project as a Claude Desktop MCP tool. Use path placeholde
 - To find the exact path to your Python interpreter in the virtual environment, run:
   - `which python` (macOS/Linux)
   - `where python` (Windows, after activating the venv)
-- For the project path, use the full path to the directory containing `clinicaltrials_mcp_server.py`.
+- For the project path, use the full path to the directory containing `servers/primary.py`.
 
 ---
 

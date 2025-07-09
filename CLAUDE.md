@@ -17,15 +17,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Test Files**: Located in `tests/` directory, following `test_*.py` pattern
 
 ### MCP Server
-- **Start Server**: `uv run python clinicaltrials_mcp_server_primary.py`
-- **Primary Server**: `clinicaltrials_mcp_server_primary.py` (async with enterprise features)
-- **Legacy Server**: `clinicaltrials_mcp_server_sync_legacy.py` (deprecated sync version)
+- **Start Server**: `uv run python servers/primary.py`
+- **Primary Server**: `servers/primary.py` (async with enterprise features)
+- **Legacy Server**: `servers/legacy/sync_server.py` (deprecated sync version)
 - **Protocol**: Uses FastMCP SDK for MCP protocol implementation
 
 #### Server Migration Notes
 The project has migrated from sync to async architecture:
-- **clinicaltrials_mcp_server.py** now shows deprecation notice
-- **clinicaltrials_mcp_server_primary.py** is the new primary server with:
+- **servers/legacy/deprecated_server.py** now shows deprecation notice
+- **servers/primary.py** is the new primary server with:
   - Async/await support with httpx
   - 80% faster performance
   - Batch processing for multiple mutations

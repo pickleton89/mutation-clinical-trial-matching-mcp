@@ -28,6 +28,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Created comprehensive Contributing section with development setup and guidelines
     - Enhanced License section with proper MIT license reference
     - Improved overall structure and professional presentation
+- **Project Structure Phase 3**: Reorganized codebase into cleaner module structure following Python best practices
+  - **Created servers/ directory**: Organized all MCP server implementations
+    - Moved `clinicaltrials_mcp_server_primary.py` → `servers/primary.py` (primary async server)
+    - Created `servers/legacy/` subdirectory for deprecated servers
+    - Moved `clinicaltrials_mcp_server.py` → `servers/legacy/deprecated_server.py`
+    - Moved `clinicaltrials_mcp_server_sync_legacy.py` → `servers/legacy/sync_server.py`
+  - **Created scripts/ directory**: Organized CLI tools and utilities
+    - Moved `main.py` → `scripts/cli.py` for better organization
+    - Added proper `__init__.py` files for all new packages
+  - **Updated configuration**: Modified pyproject.toml to reflect new structure
+    - Updated entry points: `clinicaltrials-mcp-server = "servers.primary:main"`
+    - Added CLI entry point: `clinicaltrials-cli = "scripts.cli:main"`
+    - Updated package discovery to include new directories
+  - **Updated documentation**: Fixed all references to use new paths
+    - Updated README.md configuration examples
+    - Updated CLAUDE.md development commands
+    - Maintained backward compatibility through proper entry points
 
 ## [0.1.0] - 2025-07-09
 
