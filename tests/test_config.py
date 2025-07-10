@@ -2,10 +2,17 @@
 Unit tests for clinicaltrials.config module
 """
 
-import unittest
 import os
+import unittest
 from unittest.mock import patch
-from clinicaltrials.config import APIConfig, load_config, validate_config, get_config, reset_global_config
+
+from clinicaltrials.config import (
+    APIConfig,
+    get_config,
+    load_config,
+    reset_global_config,
+    validate_config,
+)
 
 
 class TestAPIConfig(unittest.TestCase):
@@ -14,7 +21,7 @@ class TestAPIConfig(unittest.TestCase):
     def test_default_values(self):
         """Test that default values are set correctly."""
         config = APIConfig()
-        
+
         # Check some key defaults
         self.assertEqual(config.clinicaltrials_api_url, "https://clinicaltrials.gov/api/v2/studies")
         self.assertEqual(config.anthropic_api_url, "https://api.anthropic.com/v1/messages")
@@ -36,7 +43,7 @@ class TestLoadConfig(unittest.TestCase):
         """Test loading configuration with default values."""
         with patch.dict(os.environ, {}, clear=True):
             config = load_config()
-            
+
             # Should have default values
             self.assertEqual(config.clinicaltrials_api_url, "https://clinicaltrials.gov/api/v2/studies")
             self.assertEqual(config.max_retries, 3)
@@ -53,10 +60,10 @@ class TestLoadConfig(unittest.TestCase):
             "RETRY_INITIAL_DELAY": "2.0",
             "RETRY_JITTER": "false"
         }
-        
+
         with patch.dict(os.environ, test_env, clear=True):
             config = load_config()
-            
+
             self.assertEqual(config.anthropic_api_key, "test-key-123")
             self.assertEqual(config.clinicaltrials_api_url, "https://test.clinicaltrials.gov/api/v2/studies")
             self.assertEqual(config.max_retries, 5)
@@ -78,7 +85,7 @@ class TestLoadConfig(unittest.TestCase):
             ("TRUE", True),
             ("FALSE", False),
         ]
-        
+
         for env_value, expected in test_cases:
             with patch.dict(os.environ, {"RETRY_JITTER": env_value}, clear=True):
                 config = load_config()
@@ -92,7 +99,7 @@ class TestValidateConfig(unittest.TestCase):
         """Test validation of valid configuration."""
         config = APIConfig()
         config.anthropic_api_key = "test-key-123"
-        
+
         errors = validate_config(config)
         self.assertEqual(errors, [])
 
@@ -100,7 +107,7 @@ class TestValidateConfig(unittest.TestCase):
         """Test validation with missing API key."""
         config = APIConfig()
         config.anthropic_api_key = ""
-        
+
         errors = validate_config(config)
         self.assertIn("ANTHROPIC_API_KEY is required", errors)
 
@@ -110,7 +117,7 @@ class TestValidateConfig(unittest.TestCase):
         config.anthropic_api_key = "test-key-123"
         config.clinicaltrials_api_url = "not-a-url"
         config.anthropic_api_url = "also-not-a-url"
-        
+
         errors = validate_config(config)
         self.assertIn("CLINICALTRIALS_API_URL must be a valid URL", errors)
         self.assertIn("ANTHROPIC_API_URL must be a valid URL", errors)
@@ -122,7 +129,7 @@ class TestValidateConfig(unittest.TestCase):
         config.clinicaltrials_timeout = -1
         config.max_retries = -1
         config.cache_size = -1
-        
+
         errors = validate_config(config)
         self.assertIn("CLINICALTRIALS_TIMEOUT must be positive", errors)
         self.assertIn("MAX_RETRIES must be non-negative", errors)
@@ -134,7 +141,7 @@ class TestValidateConfig(unittest.TestCase):
         config.anthropic_api_key = "test-key-123"
         config.retry_initial_delay = 10.0
         config.retry_max_delay = 5.0
-        
+
         errors = validate_config(config)
         self.assertIn("RETRY_INITIAL_DELAY cannot be greater than RETRY_MAX_DELAY", errors)
 
@@ -145,7 +152,7 @@ class TestValidateConfig(unittest.TestCase):
         config.anthropic_max_tokens = 0
         config.retry_initial_delay = 0
         config.cache_ttl = 0
-        
+
         errors = validate_config(config)
         self.assertIn("ANTHROPIC_MAX_TOKENS must be positive", errors)
         self.assertIn("RETRY_INITIAL_DELAY must be positive", errors)
@@ -170,7 +177,7 @@ class TestGetConfig(unittest.TestCase):
         with patch.dict(os.environ, {}, clear=True):
             with self.assertRaises(ValueError) as context:
                 get_config()
-            
+
             self.assertIn("Configuration validation failed", str(context.exception))
             self.assertIn("ANTHROPIC_API_KEY is required", str(context.exception))
 
@@ -183,7 +190,7 @@ class TestGetConfig(unittest.TestCase):
         }, clear=True):
             with self.assertRaises(ValueError) as context:
                 get_config()
-            
+
             error_msg = str(context.exception)
             self.assertIn("ANTHROPIC_API_KEY is required", error_msg)
             self.assertIn("CLINICALTRIALS_API_URL must be a valid URL", error_msg)
@@ -202,7 +209,7 @@ class TestGlobalConfig(unittest.TestCase):
         """Test that global config is lazy-loaded."""
         from clinicaltrials.config import _config
         self.assertIsNone(_config)
-        
+
         with patch.dict(os.environ, {"ANTHROPIC_API_KEY": "test-key-123"}, clear=True):
             from clinicaltrials.config import get_global_config
             config = get_global_config()
@@ -213,9 +220,9 @@ class TestGlobalConfig(unittest.TestCase):
         with patch.dict(os.environ, {"ANTHROPIC_API_KEY": "test-key-123"}, clear=True):
             from clinicaltrials.config import get_global_config
             config1 = get_global_config()
-            
+
             reset_global_config()
-            
+
             config2 = get_global_config()
             # Should be the same values but different instances after reset
             self.assertEqual(config1.anthropic_api_key, config2.anthropic_api_key)

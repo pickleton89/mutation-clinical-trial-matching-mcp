@@ -3,8 +3,9 @@ Unit tests for llm.summarize
 """
 
 import unittest
-from unittest.mock import patch, Mock
-from llm.summarize import summarize_trials, call_claude_via_mcp
+from unittest.mock import patch
+
+from llm.summarize import call_claude_via_mcp, summarize_trials
 
 
 class TestSummarizeTrials(unittest.TestCase):
@@ -13,7 +14,7 @@ class TestSummarizeTrials(unittest.TestCase):
     def test_empty_trials_list(self):
         """Test summarization with empty trials list."""
         result = summarize_trials([])
-        
+
         self.assertEqual(result, "No clinical trials found for the specified mutation.")
 
     def test_single_trial_summary(self):
@@ -53,9 +54,9 @@ class TestSummarizeTrials(unittest.TestCase):
                 }
             }
         }
-        
+
         result = summarize_trials([mock_trial])
-        
+
         # Verify basic structure
         self.assertIn("# Clinical Trials Summary", result)
         self.assertIn("Found 1 clinical trial matching", result)
@@ -123,9 +124,9 @@ class TestSummarizeTrials(unittest.TestCase):
                 }
             }
         ]
-        
+
         result = summarize_trials(mock_trials)
-        
+
         # Verify both phases are present
         self.assertIn("Found 2 clinical trials matching", result)
         self.assertIn("## Phase 1 Trials (1)", result)
@@ -161,9 +162,9 @@ class TestSummarizeTrials(unittest.TestCase):
                 }
             }
         }
-        
+
         result = summarize_trials([mock_trial])
-        
+
         # Verify unknown phase is handled
         self.assertIn("## Unknown Phase Trials (1)", result)
         self.assertIn("Unknown Phase Trial", result)
@@ -179,9 +180,9 @@ class TestSummarizeTrials(unittest.TestCase):
                 # Missing most optional modules
             }
         }
-        
+
         result = summarize_trials([mock_trial])
-        
+
         # Verify basic structure is still present
         self.assertIn("# Clinical Trials Summary", result)
         self.assertIn("Found 1 clinical trial matching", result)
@@ -192,7 +193,7 @@ class TestSummarizeTrials(unittest.TestCase):
     def test_long_summary_truncation(self):
         """Test that long summaries are truncated appropriately."""
         long_summary = "A" * 300  # 300 characters, should be truncated
-        
+
         mock_trial = {
             "protocolSection": {
                 "identificationModule": {
@@ -219,9 +220,9 @@ class TestSummarizeTrials(unittest.TestCase):
                 }
             }
         }
-        
+
         result = summarize_trials([mock_trial])
-        
+
         # Verify summary is truncated
         self.assertIn("A" * 197 + "...", result)
         self.assertNotIn("A" * 300, result)
@@ -257,9 +258,9 @@ class TestSummarizeTrials(unittest.TestCase):
                 }
             }
         }
-        
+
         result = summarize_trials([mock_trial])
-        
+
         # Verify only first 5 conditions and interventions are included
         self.assertIn("Condition1", result)
         self.assertIn("Condition5", result)
@@ -301,9 +302,9 @@ class TestSummarizeTrials(unittest.TestCase):
                 }
             }
         }
-        
+
         result = summarize_trials([mock_trial])
-        
+
         # Verify only first 3 locations are included
         self.assertIn("Hospital1", result)
         self.assertIn("Hospital3", result)
@@ -313,7 +314,7 @@ class TestSummarizeTrials(unittest.TestCase):
         """Test handling of malformed trial data."""
         # Test with completely malformed data
         result = summarize_trials([{}])
-        
+
         # Should still produce a summary without crashing
         self.assertIn("# Clinical Trials Summary", result)
         self.assertIn("Found 1 clinical trial matching", result)
@@ -328,9 +329,9 @@ class TestCallClaudeViaMcp(unittest.TestCase):
     def test_call_claude_via_mcp(self, mock_call_llm):
         """Test that call_claude_via_mcp calls the call_llm function."""
         mock_call_llm.return_value = "Test response"
-        
+
         result = call_claude_via_mcp("Test prompt")
-        
+
         self.assertEqual(result, "Test response")
         mock_call_llm.assert_called_once_with("Test prompt")
 

@@ -1,16 +1,15 @@
-import os
-import json
-import time
 import logging
-from typing import Optional
+import time
+
 import requests
-from requests import exceptions as requests_exceptions
 from dotenv import load_dotenv
-from utils.retry import exponential_backoff_retry
-from utils.circuit_breaker import circuit_breaker
-from utils.metrics import timer, increment, histogram, gauge
-from utils.response_validation import response_validator
+from requests import exceptions as requests_exceptions
+
 from clinicaltrials.config import get_global_config
+from utils.circuit_breaker import circuit_breaker
+from utils.metrics import gauge, histogram, increment, timer
+from utils.response_validation import response_validator
+from utils.retry import exponential_backoff_retry
 
 # Load environment variables from .env file
 load_dotenv()
@@ -47,11 +46,11 @@ def call_llm(prompt: str) -> str:
     Send a prompt to Claude via Anthropic API and return the response.
 
     This function uses configuration from the global config system.
-    
+
     NOTE: This is a legacy sync implementation - use utils.async_call_llm for new code
     """
     config = get_global_config()
-    
+
     if not config.anthropic_api_key:
         return "[ERROR: ANTHROPIC_API_KEY environment variable not set]"
 
@@ -70,7 +69,7 @@ def call_llm(prompt: str) -> str:
     )
     def _retry_wrapper():
         return _call_llm_impl(prompt, config)
-    
+
     return _retry_wrapper()
 
 @response_validator("anthropic_api")
@@ -85,7 +84,7 @@ def _call_llm_impl(prompt: str, config) -> str:
     # Track LLM call metrics
     increment("anthropic_api_calls_total", tags={"model": config.anthropic_model})
     histogram("anthropic_api_prompt_length", len(prompt), tags={"model": config.anthropic_model})
-    
+
     with timer("anthropic_api_request", tags={"model": config.anthropic_model}):
         try:
             # Set API key in session headers
@@ -112,19 +111,19 @@ def _call_llm_impl(prompt: str, config) -> str:
 
             response.raise_for_status()
             response_data = response.json()
-            
+
             # Validate response structure
             _validate_anthropic_response(response_data)
-            
+
             response_text = response_data["content"][0]["text"]
-            
+
             # Record success metrics
             increment("anthropic_api_success", tags={"model": config.anthropic_model})
             histogram("anthropic_api_request_duration", request_duration, tags={"model": config.anthropic_model})
             histogram("anthropic_api_response_length", len(response_text), tags={"model": config.anthropic_model})
             gauge("anthropic_api_last_request_duration", request_duration)
             gauge("anthropic_api_last_response_length", len(response_text))
-            
+
             logger.info(f"Anthropic API request completed in {request_duration:.2f}s", extra={
                 "model": data["model"],
                 "request_duration": request_duration,
@@ -132,7 +131,7 @@ def _call_llm_impl(prompt: str, config) -> str:
                 "response_length": len(response_text),
                 "action": "llm_request_success"
             })
-            
+
             return response_text
         except requests_exceptions.RequestException as e:
             request_duration = time.time() - start_time
@@ -162,4 +161,3 @@ def _call_llm_impl(prompt: str, config) -> str:
 
 if __name__ == "__main__":
     prompt = "What is the meaning of life?"
-    print(call_llm(prompt))

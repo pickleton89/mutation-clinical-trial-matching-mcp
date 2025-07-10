@@ -3,13 +3,15 @@ import json
 import logging
 import sys
 import time
+
 from fastmcp import FastMCP
-from mcp import McpError, ErrorData
-from utils.node import Flow
-from utils.metrics import get_metrics, export_prometheus, export_json
-from utils.circuit_breaker import get_all_circuit_breaker_stats
-from clinicaltrials.nodes import QueryTrialsNode, SummarizeTrialsNode
+from mcp import ErrorData, McpError
+
 from clinicaltrials.config import get_config
+from clinicaltrials.nodes import QueryTrialsNode, SummarizeTrialsNode
+from utils.circuit_breaker import get_all_circuit_breaker_stats
+from utils.metrics import export_json, export_prometheus, get_metrics
+from utils.node import Flow
 
 # Configure logging
 logging.basicConfig(
@@ -36,19 +38,19 @@ mcp = FastMCP("Clinical Trials MCP")
 def summarize_trials(mutation: str) -> str:
     """
     Summarizes clinical trials for a specific genetic mutation.
-    
+
     Args:
         mutation: The genetic mutation to search for (e.g., "BRAF V600E")
-        
+
     Returns:
         A formatted summary of relevant clinical trials
-        
+
     Raises:
         McpError: If there's an error in processing the mutation query
     """
     try:
         logger.info(f"Querying for: {mutation}")
-        
+
         # Validate input
         if not mutation or not isinstance(mutation, str) or not mutation.strip():
             logger.error("Invalid mutation parameter provided")
@@ -58,19 +60,19 @@ def summarize_trials(mutation: str) -> str:
                     message="Mutation parameter must be a non-empty string"
                 )
             )
-        
+
         # Create nodes
         query_node = QueryTrialsNode(min_rank=1, max_rank=10, timeout=10)
         summarize_node = SummarizeTrialsNode()
-        
+
         # Create flow
         flow = Flow(start=query_node)
         flow.add_node("summarize", summarize_node)
-        
+
         # Run flow with shared context
         shared = {"mutation": mutation.strip()}
         result = flow.run(shared)
-        
+
         # Check for successful execution
         if "summary" in result:
             logger.info(f"Successfully generated summary for mutation: {mutation}")
@@ -93,7 +95,7 @@ def summarize_trials(mutation: str) -> str:
                     message="No trials found or unexpected error in processing"
                 )
             )
-            
+
     except McpError:
         # Re-raise MCP errors as-is
         raise
@@ -104,7 +106,7 @@ def summarize_trials(mutation: str) -> str:
                 code=-4,
                 message=f"Invalid input or configuration: {str(e)}"
             )
-        )
+        ) from e
     except Exception as e:
         logger.error(f"Unexpected error in summarize_trials: {e}", exc_info=True)
         raise McpError(
@@ -112,13 +114,13 @@ def summarize_trials(mutation: str) -> str:
                 code=-5,
                 message=f"An unexpected error occurred: {str(e)}"
             )
-        )
+        ) from e
 
 @mcp.tool()
 def get_health_status() -> str:
     """
     Returns the health status of the MCP server and its components.
-    
+
     Returns:
         A JSON string containing health status information including:
         - Service status and uptime
@@ -128,13 +130,13 @@ def get_health_status() -> str:
     try:
         import json
         import time
-        
+
         # Get circuit breaker statistics
         cb_stats = get_all_circuit_breaker_stats()
-        
+
         # Get basic metrics
         metrics = get_metrics()
-        
+
         # Create health status
         health_status = {
             "status": "healthy",
@@ -157,9 +159,9 @@ def get_health_status() -> str:
                 "total_histograms": len(metrics.get("histograms", {}))
             }
         }
-        
+
         return json.dumps(health_status, indent=2)
-        
+
     except Exception as e:
         logger.error(f"Error getting health status: {e}")
         return json.dumps({
@@ -172,7 +174,7 @@ def get_health_status() -> str:
 def get_metrics_json() -> str:
     """
     Returns current metrics in JSON format.
-    
+
     Returns:
         JSON string containing all current metrics including:
         - Counters (API calls, cache hits/misses, errors)
@@ -192,7 +194,7 @@ def get_metrics_json() -> str:
 def get_metrics_prometheus() -> str:
     """
     Returns current metrics in Prometheus format.
-    
+
     Returns:
         Prometheus-formatted metrics string suitable for scraping by monitoring systems.
         Includes all counters, gauges, and histograms with proper type annotations.
@@ -207,7 +209,7 @@ def get_metrics_prometheus() -> str:
 def get_circuit_breaker_status() -> str:
     """
     Returns detailed circuit breaker status and statistics.
-    
+
     Returns:
         JSON string containing circuit breaker information including:
         - Current states (CLOSED, OPEN, HALF_OPEN)
@@ -218,14 +220,14 @@ def get_circuit_breaker_status() -> str:
     try:
         import json
         import time
-        
+
         cb_stats = get_all_circuit_breaker_stats()
-        
+
         status = {
             "timestamp": time.time(),
             "circuit_breakers": {}
         }
-        
+
         for name, stats in cb_stats.items():
             status["circuit_breakers"][name] = {
                 "failure_count": stats.failure_count,
@@ -237,9 +239,9 @@ def get_circuit_breaker_status() -> str:
                 "last_failure_age_seconds": time.time() - stats.last_failure_time if stats.last_failure_time else None,
                 "last_success_age_seconds": time.time() - stats.last_success_time if stats.last_success_time else None
             }
-        
+
         return json.dumps(status, indent=2)
-        
+
     except Exception as e:
         logger.error(f"Error getting circuit breaker status: {e}")
         return json.dumps({

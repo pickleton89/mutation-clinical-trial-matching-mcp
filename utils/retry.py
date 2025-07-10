@@ -3,13 +3,14 @@ Retry utilities with exponential backoff for API calls.
 """
 
 import asyncio
-import time
 import logging
 import random
+import time
+from collections.abc import Callable
 from functools import wraps
-from typing import Callable, Type, Tuple, Any, cast
+from typing import Any, cast
+
 import httpx
-import requests
 from requests import exceptions as requests_exceptions
 
 logger = logging.getLogger(__name__)
@@ -44,12 +45,12 @@ def exponential_backoff_retry(
     backoff_factor: float = DEFAULT_BACKOFF_FACTOR,
     max_delay: float = DEFAULT_MAX_DELAY,
     jitter: bool = DEFAULT_JITTER,
-    retriable_exceptions: Tuple[Type[Exception], ...] = RETRIABLE_EXCEPTIONS,
-    retry_on_status_codes: Tuple[int, ...] = (500, 502, 503, 504, 429),
+    retriable_exceptions: tuple[type[Exception], ...] = RETRIABLE_EXCEPTIONS,
+    retry_on_status_codes: tuple[int, ...] = (500, 502, 503, 504, 429),
 ) -> Callable:
     """
     Decorator that implements exponential backoff retry logic.
-    
+
     Args:
         max_retries: Maximum number of retry attempts
         initial_delay: Initial delay between retries in seconds
@@ -58,7 +59,7 @@ def exponential_backoff_retry(
         jitter: Whether to add random jitter to reduce thundering herd
         retriable_exceptions: Tuple of exception types that should trigger retries
         retry_on_status_codes: HTTP status codes that should trigger retries
-    
+
     Returns:
         Decorator function that applies retry logic
     """
@@ -66,11 +67,11 @@ def exponential_backoff_retry(
         @wraps(func)
         def wrapper(*args, **kwargs) -> Any:
             last_exception = None
-            
+
             for attempt in range(max_retries + 1):
                 try:
                     result = func(*args, **kwargs)
-                    
+
                     # Check if we have a response object with status code
                     if hasattr(result, 'status_code') and result.status_code in retry_on_status_codes:
                         if attempt < max_retries:
@@ -89,7 +90,7 @@ def exponential_backoff_retry(
                             )
                             time.sleep(delay)
                             continue
-                    
+
                     # Success case
                     if attempt > 0:
                         logger.info(
@@ -101,7 +102,7 @@ def exponential_backoff_retry(
                             }
                         )
                     return result
-                    
+
                 except retriable_exceptions as e:
                     last_exception = e
                     if attempt < max_retries:
@@ -144,12 +145,12 @@ def exponential_backoff_retry(
                         }
                     )
                     raise
-            
+
             # This should never be reached due to the raise in the except block
             # But adding it for completeness
             if last_exception:
                 raise last_exception
-            
+
         return wrapper
     return decorator
 
@@ -163,26 +164,26 @@ def _calculate_delay(
 ) -> float:
     """
     Calculate delay for exponential backoff with optional jitter.
-    
+
     Args:
         attempt: Current attempt number (0-indexed)
         initial_delay: Initial delay in seconds
         backoff_factor: Factor to multiply delay by
         max_delay: Maximum delay allowed
         jitter: Whether to add random jitter
-    
+
     Returns:
         Calculated delay in seconds
     """
     delay = initial_delay * (backoff_factor ** attempt)
     delay = min(delay, max_delay)
-    
+
     if jitter:
         # Add ±25% random jitter to prevent thundering herd
         jitter_amount = delay * 0.25
         delay += random.uniform(-jitter_amount, jitter_amount)
         delay = max(0.1, delay)  # Ensure minimum delay
-    
+
     return delay
 
 
@@ -192,12 +193,12 @@ def async_exponential_backoff_retry(
     backoff_factor: float = DEFAULT_BACKOFF_FACTOR,
     max_delay: float = DEFAULT_MAX_DELAY,
     jitter: bool = DEFAULT_JITTER,
-    retriable_exceptions: Tuple[Type[Exception], ...] = ASYNC_RETRIABLE_EXCEPTIONS,
-    retry_on_status_codes: Tuple[int, ...] = (500, 502, 503, 504, 429),
+    retriable_exceptions: tuple[type[Exception], ...] = ASYNC_RETRIABLE_EXCEPTIONS,
+    retry_on_status_codes: tuple[int, ...] = (500, 502, 503, 504, 429),
 ) -> Callable:
     """
     Async decorator that implements exponential backoff retry logic.
-    
+
     Args:
         max_retries: Maximum number of retry attempts
         initial_delay: Initial delay between retries in seconds
@@ -206,7 +207,7 @@ def async_exponential_backoff_retry(
         jitter: Whether to add random jitter to reduce thundering herd
         retriable_exceptions: Tuple of exception types that should trigger retries
         retry_on_status_codes: HTTP status codes that should trigger retries
-    
+
     Returns:
         Async decorator function that applies retry logic
     """
@@ -214,11 +215,11 @@ def async_exponential_backoff_retry(
         @wraps(func)
         async def wrapper(*args, **kwargs) -> Any:
             last_exception = None
-            
+
             for attempt in range(max_retries + 1):
                 try:
                     result = await func(*args, **kwargs)
-                    
+
                     # Check if we have a response object with status code
                     if hasattr(result, 'status_code') and result.status_code in retry_on_status_codes:
                         if attempt < max_retries:
@@ -237,7 +238,7 @@ def async_exponential_backoff_retry(
                             )
                             await asyncio.sleep(delay)
                             continue
-                    
+
                     # Success case
                     if attempt > 0:
                         logger.info(
@@ -249,7 +250,7 @@ def async_exponential_backoff_retry(
                             }
                         )
                     return result
-                    
+
                 except retriable_exceptions as e:
                     last_exception = e
                     if attempt < max_retries:
@@ -292,12 +293,12 @@ def async_exponential_backoff_retry(
                         }
                     )
                     raise
-            
+
             # This should never be reached due to the raise in the except block
             # But adding it for completeness
             if last_exception:
                 raise last_exception
-            
+
         return wrapper
     return decorator
 
@@ -305,10 +306,10 @@ def async_exponential_backoff_retry(
 def get_retry_stats(func: Callable) -> dict:
     """
     Get retry statistics for a decorated function.
-    
+
     Args:
         func: The decorated function
-    
+
     Returns:
         Dictionary with retry statistics
     """
@@ -320,7 +321,7 @@ def get_retry_stats(func: Callable) -> dict:
             "total_retries": 0,
             "average_retries": 0.0
         }
-    
+
     stats = cast(dict, func._retry_stats)
     total_calls = stats.get("total_calls", 0)
     return {

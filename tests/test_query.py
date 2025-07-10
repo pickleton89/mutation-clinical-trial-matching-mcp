@@ -3,11 +3,13 @@ Unit tests for clinicaltrials.query
 """
 
 import unittest
-from unittest.mock import patch, Mock
+from unittest.mock import Mock, patch
+
 import requests
 from requests import exceptions as requests_exceptions
-from clinicaltrials.query import query_clinical_trials, clear_cache
+
 from clinicaltrials.config import reset_global_config
+from clinicaltrials.query import clear_cache, query_clinical_trials
 
 
 class TestQueryClinicalTrials(unittest.TestCase):
@@ -17,13 +19,13 @@ class TestQueryClinicalTrials(unittest.TestCase):
         """Clear cache and reset config before each test."""
         clear_cache()
         reset_global_config()
-        
+
         # Mock environment variables for testing
         self.env_patcher = patch.dict('os.environ', {
             'ANTHROPIC_API_KEY': 'test-key-123'
         })
         self.env_patcher.start()
-    
+
     def tearDown(self):
         """Clean up after each test."""
         self.env_patcher.stop()
@@ -41,16 +43,16 @@ class TestQueryClinicalTrials(unittest.TestCase):
             ]
         }
         mock_get.return_value = mock_response
-        
+
         # Call the function
         result = query_clinical_trials("BRAF V600E")
-        
+
         # Verify results
         self.assertIsInstance(result, dict)
         self.assertIn("studies", result)
         self.assertEqual(len(result["studies"]), 2)
         self.assertEqual(result["studies"][0]["protocolSection"]["identificationModule"]["briefTitle"], "Test Trial 1")
-        
+
         # Verify API call was made correctly
         mock_get.assert_called_once()
         call_args = mock_get.call_args
@@ -63,13 +65,13 @@ class TestQueryClinicalTrials(unittest.TestCase):
     def test_empty_mutation_error(self, mock_get):
         """Test error handling for empty mutation string."""
         result = query_clinical_trials("")
-        
+
         # Verify error response
         self.assertIsInstance(result, dict)
         self.assertIn("error", result)
         self.assertEqual(result["error"], "Mutation must be a non-empty string")
         self.assertEqual(result["studies"], [])
-        
+
         # Verify no API call was made
         mock_get.assert_not_called()
 
@@ -77,13 +79,13 @@ class TestQueryClinicalTrials(unittest.TestCase):
     def test_none_mutation_error(self, mock_get):
         """Test error handling for None mutation."""
         result = query_clinical_trials(None)
-        
+
         # Verify error response
         self.assertIsInstance(result, dict)
         self.assertIn("error", result)
         self.assertEqual(result["error"], "Mutation must be a non-empty string")
         self.assertEqual(result["studies"], [])
-        
+
         # Verify no API call was made
         mock_get.assert_not_called()
 
@@ -91,13 +93,13 @@ class TestQueryClinicalTrials(unittest.TestCase):
     def test_whitespace_mutation_error(self, mock_get):
         """Test error handling for whitespace-only mutation."""
         result = query_clinical_trials("   ")
-        
+
         # Verify error response
         self.assertIsInstance(result, dict)
         self.assertIn("error", result)
         self.assertEqual(result["error"], "Mutation must be a non-empty string")
         self.assertEqual(result["studies"], [])
-        
+
         # Verify no API call was made
         mock_get.assert_not_called()
 
@@ -109,14 +111,14 @@ class TestQueryClinicalTrials(unittest.TestCase):
         mock_response.status_code = 200
         mock_response.json.return_value = {"studies": []}
         mock_get.return_value = mock_response
-        
+
         # Test with invalid min_rank
         result = query_clinical_trials("BRAF V600E", min_rank=0)
-        
+
         # Verify the function still works (min_rank corrected to 1)
         self.assertIsInstance(result, dict)
         self.assertIn("studies", result)
-        
+
         # Verify API call was made with corrected pageSize
         mock_get.assert_called_once()
         call_args = mock_get.call_args
@@ -130,14 +132,14 @@ class TestQueryClinicalTrials(unittest.TestCase):
         mock_response.status_code = 200
         mock_response.json.return_value = {"studies": []}
         mock_get.return_value = mock_response
-        
+
         # Test with invalid max_rank
         result = query_clinical_trials("BRAF V600E", min_rank=5, max_rank=3)
-        
+
         # Verify the function still works (max_rank corrected)
         self.assertIsInstance(result, dict)
         self.assertIn("studies", result)
-        
+
         # Verify API call was made with corrected pageSize
         mock_get.assert_called_once()
         call_args = mock_get.call_args
@@ -151,10 +153,10 @@ class TestQueryClinicalTrials(unittest.TestCase):
         mock_response.status_code = 400
         mock_response.text = "Bad Request"
         mock_get.return_value = mock_response
-        
+
         # Call the function
         result = query_clinical_trials("BRAF V600E")
-        
+
         # Verify error response
         self.assertIsInstance(result, dict)
         self.assertIn("error", result)
@@ -170,10 +172,10 @@ class TestQueryClinicalTrials(unittest.TestCase):
         mock_response.json.side_effect = ValueError("Invalid JSON")
         mock_response.text = "Not valid JSON"
         mock_get.return_value = mock_response
-        
+
         # Call the function
         result = query_clinical_trials("BRAF V600E")
-        
+
         # Verify error response
         self.assertIsInstance(result, dict)
         self.assertIn("error", result)
@@ -185,10 +187,10 @@ class TestQueryClinicalTrials(unittest.TestCase):
         """Test handling of request timeout."""
         # Mock timeout error
         mock_get.side_effect = requests_exceptions.Timeout()
-        
+
         # Call the function
         result = query_clinical_trials("BRAF V600E")
-        
+
         # Verify error response
         self.assertIsInstance(result, dict)
         self.assertIn("error", result)
@@ -200,10 +202,10 @@ class TestQueryClinicalTrials(unittest.TestCase):
         """Test handling of connection error."""
         # Mock connection error
         mock_get.side_effect = requests_exceptions.ConnectionError("Connection failed")
-        
+
         # Call the function
         result = query_clinical_trials("BRAF V600E")
-        
+
         # Verify error response
         self.assertIsInstance(result, dict)
         self.assertIn("error", result)
@@ -215,10 +217,10 @@ class TestQueryClinicalTrials(unittest.TestCase):
         """Test handling of general request error."""
         # Mock general request error
         mock_get.side_effect = requests.RequestException("Request failed")
-        
+
         # Call the function
         result = query_clinical_trials("BRAF V600E")
-        
+
         # Verify error response
         self.assertIsInstance(result, dict)
         self.assertIn("error", result)
@@ -233,10 +235,10 @@ class TestQueryClinicalTrials(unittest.TestCase):
         mock_response.status_code = 200
         mock_response.json.return_value = {"studies": []}
         mock_get.return_value = mock_response
-        
+
         # Call with custom timeout
-        result = query_clinical_trials("BRAF V600E", timeout=30)
-        
+        query_clinical_trials("BRAF V600E", timeout=30)
+
         # Verify timeout parameter was passed
         mock_get.assert_called_once()
         call_args = mock_get.call_args
@@ -250,10 +252,10 @@ class TestQueryClinicalTrials(unittest.TestCase):
         mock_response.status_code = 200
         mock_response.json.return_value = {"studies": []}
         mock_get.return_value = mock_response
-        
+
         # Call with custom rank range
-        result = query_clinical_trials("BRAF V600E", min_rank=5, max_rank=15)
-        
+        query_clinical_trials("BRAF V600E", min_rank=5, max_rank=15)
+
         # Verify pageSize parameter was calculated correctly
         mock_get.assert_called_once()
         call_args = mock_get.call_args

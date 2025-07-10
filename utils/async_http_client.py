@@ -8,37 +8,39 @@ and resource cleanup across all API services.
 
 import asyncio
 import logging
-from typing import Optional, Dict, Any
+from typing import Any
+
 import httpx
+
 from clinicaltrials.config import get_global_config
 
 logger = logging.getLogger(__name__)
 
 # Global HTTP clients for different services
-_clients: Dict[str, httpx.AsyncClient] = {}
+_clients: dict[str, httpx.AsyncClient] = {}
 _client_lock = asyncio.Lock()
 
 
 class AsyncHttpClientManager:
     """
     Centralized manager for async HTTP clients with service-specific configurations.
-    
+
     This class provides:
     - Shared connection pooling across requests
     - Unified timeout configuration
     - Proper resource cleanup
     - Per-service client instances
     """
-    
+
     @staticmethod
     async def get_client(service: str, **kwargs) -> httpx.AsyncClient:
         """
         Get or create an async HTTP client for a specific service.
-        
+
         Args:
             service: Service identifier (e.g., 'clinicaltrials', 'anthropic')
             **kwargs: Additional client configuration options
-            
+
         Returns:
             httpx.AsyncClient: Configured async HTTP client
         """
@@ -52,21 +54,21 @@ class AsyncHttpClientManager:
                         pass  # Already closed
                 _clients[service] = await AsyncHttpClientManager._create_client(service, **kwargs)
             return _clients[service]
-    
+
     @staticmethod
     async def _create_client(service: str, **kwargs) -> httpx.AsyncClient:
         """
         Create a new async HTTP client with service-specific configuration.
-        
+
         Args:
             service: Service identifier
             **kwargs: Additional client configuration options
-            
+
         Returns:
             httpx.AsyncClient: Configured async HTTP client
         """
         config = get_global_config()
-        
+
         # Base configuration common to all services
         base_config = {
             "timeout": httpx.Timeout(
@@ -85,7 +87,7 @@ class AsyncHttpClientManager:
             "http2": config.enable_http2
             # Note: retries are handled by our retry decorator, not httpx client
         }
-        
+
         # Service-specific configurations
         if service == 'clinicaltrials':
             base_config['headers'].update({
@@ -99,7 +101,7 @@ class AsyncHttpClientManager:
                 write=config.http_write_timeout,
                 pool=config.http_pool_timeout
             )
-            
+
         elif service == 'anthropic':
             base_config['headers'].update({
                 "content-type": "application/json",
@@ -113,10 +115,10 @@ class AsyncHttpClientManager:
                 write=config.http_write_timeout,
                 pool=config.http_pool_timeout
             )
-        
+
         # Override with any additional kwargs
         base_config.update({k: v for k, v in kwargs.items() if k not in ['read_timeout', 'follow_redirects', 'headers']})
-        
+
         logger.info(f"Creating async HTTP client for service: {service}", extra={
             "service": service,
             "connect_timeout": base_config['timeout'].connect,
@@ -124,14 +126,14 @@ class AsyncHttpClientManager:
             "max_connections": base_config['limits'].max_connections,
             "action": "http_client_creation"
         })
-        
+
         return httpx.AsyncClient(**base_config)
-    
+
     @staticmethod
     async def close_client(service: str) -> None:
         """
         Close and remove a specific service client.
-        
+
         Args:
             service: Service identifier
         """
@@ -143,7 +145,7 @@ class AsyncHttpClientManager:
                     "service": service,
                     "action": "http_client_cleanup"
                 })
-    
+
     @staticmethod
     async def close_all_clients() -> None:
         """Close all active HTTP clients."""
@@ -158,12 +160,12 @@ class AsyncHttpClientManager:
             logger.info("All async HTTP clients closed", extra={
                 "action": "http_clients_cleanup_complete"
             })
-    
+
     @staticmethod
-    async def get_client_info() -> Dict[str, Any]:
+    async def get_client_info() -> dict[str, Any]:
         """
         Get information about active clients.
-        
+
         Returns:
             Dict containing client status information
         """
@@ -202,7 +204,7 @@ async def get_clinicaltrials_client() -> httpx.AsyncClient:
     # For now, create a fresh client for each request to avoid event loop issues
     # This is less efficient but ensures reliability
     config = get_global_config()
-    
+
     return httpx.AsyncClient(
         timeout=httpx.Timeout(
             connect=config.http_connect_timeout,

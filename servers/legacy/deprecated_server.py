@@ -56,7 +56,7 @@ def main():
     logger.warning("Migration is simple - just replace the server file!")
     logger.warning("")
     logger.warning("=" * 80)
-    
+
     # Exit with error code to prevent accidental usage
     sys.exit(1)
 
