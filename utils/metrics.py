@@ -372,6 +372,7 @@ def get_metrics_collector() -> MetricsCollector:
     with _collector_lock:
         if _metrics_collector is None:
             _metrics_collector = MetricsCollector()
+        assert _metrics_collector is not None  # Type narrowing
         return _metrics_collector
 
 
@@ -430,7 +431,7 @@ def timed(name: Optional[str] = None, tags: Optional[Dict[str, str]] = None):
         tags: Optional tags for the metric
     """
     def decorator(func: Callable) -> Callable:
-        metric_name = name or func.__name__
+        metric_name = name or getattr(func, '__name__', 'unknown')
         
         def wrapper(*args, **kwargs):
             with timer(metric_name, tags):

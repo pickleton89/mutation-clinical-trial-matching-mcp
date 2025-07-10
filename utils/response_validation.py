@@ -393,8 +393,8 @@ def response_validator(schema_name: str, log_warnings: bool = True, log_errors: 
                 
                 if log_errors and validation_result.has_errors:
                     for error in validation_result.errors:
-                        logger.error(f"Response validation error in {func.__name__}: {error.error_message}", extra={
-                            "function": func.__name__,
+                        logger.error(f"Response validation error in {getattr(func, '__name__', 'unknown')}: {error.error_message}", extra={
+                            "function": getattr(func, '__name__', 'unknown'),
                             "field_path": error.field_path,
                             "expected_type": error.expected_type,
                             "actual_value": str(error.actual_value),
@@ -404,8 +404,8 @@ def response_validator(schema_name: str, log_warnings: bool = True, log_errors: 
                 
                 if log_warnings and validation_result.has_warnings:
                     for warning in validation_result.warnings:
-                        logger.warning(f"Response validation warning in {func.__name__}: {warning.error_message}", extra={
-                            "function": func.__name__,
+                        logger.warning(f"Response validation warning in {getattr(func, '__name__', 'unknown')}: {warning.error_message}", extra={
+                            "function": getattr(func, '__name__', 'unknown'),
                             "field_path": warning.field_path,
                             "expected_type": warning.expected_type,
                             "actual_value": str(warning.actual_value),

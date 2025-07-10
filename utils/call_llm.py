@@ -4,6 +4,7 @@ import time
 import logging
 from typing import Optional
 import requests
+from requests import exceptions as requests_exceptions
 from dotenv import load_dotenv
 from utils.retry import exponential_backoff_retry
 from utils.circuit_breaker import circuit_breaker
@@ -133,7 +134,7 @@ def _call_llm_impl(prompt: str, config) -> str:
             })
             
             return response_text
-        except requests.exceptions.RequestException as e:
+        except requests_exceptions.RequestException as e:
             request_duration = time.time() - start_time
             increment("anthropic_api_errors", tags={"error_type": "request_exception", "model": config.anthropic_model})
             histogram("anthropic_api_request_duration", request_duration, tags={"model": config.anthropic_model, "error": "request_exception"})

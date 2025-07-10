@@ -19,7 +19,7 @@ from utils.async_call_llm import cleanup_async_clients
 # from clinicaltrials.async_query import close_executor  # No longer needed - using pure async httpx
 from utils.metrics import get_metrics, export_prometheus, export_json
 from utils.circuit_breaker import get_all_circuit_breaker_stats
-from utils.cache_strategies import get_cache_analytics
+from utils.cache_strategies import get_cache_analytics as get_cache_analytics_instance
 from utils.distributed_cache import get_cache
 from clinicaltrials.config import get_config
 
@@ -44,8 +44,9 @@ except ValueError as e:
 # Initialize FastMCP
 mcp = FastMCP("Clinical Trials Async MCP Server")
 
-# Global async flow instance
+# Global async flow instances
 async_flow = None
+async_batch_flow = None
 
 def initialize_async_flow():
     """Initialize the async flow with nodes using new chaining syntax."""
@@ -109,6 +110,8 @@ async def _summarize_trials_async_impl(mutation: str) -> str:
         
         if async_flow is None:
             initialize_async_flow()
+        
+        assert async_flow is not None, "async_flow should be initialized"
         
         # Create shared context
         shared = {
@@ -212,6 +215,8 @@ async def summarize_multiple_trials_async(mutations: str) -> str:
         if 'async_batch_flow' not in globals():
             initialize_async_batch_flow()
         
+        assert async_batch_flow is not None, "async_batch_flow should be initialized"
+        
         # Create shared context
         shared = {
             "mutations": mutation_list,
@@ -284,7 +289,7 @@ async def get_health_status() -> str:
         
         # Get cache analytics
         try:
-            cache_analytics = await get_cache_analytics().get_comprehensive_stats()
+            cache_analytics = await get_cache_analytics_instance().get_comprehensive_stats()
         except Exception as e:
             logger.warning(f"Could not get cache analytics: {e}")
             cache_analytics = {"error": str(e)}
@@ -422,7 +427,7 @@ async def get_cache_analytics() -> str:
         - Cache efficiency scores
     """
     try:
-        analytics = get_cache_analytics()
+        analytics = get_cache_analytics_instance()
         
         # Get comprehensive stats
         stats = await analytics.get_comprehensive_stats()
@@ -456,7 +461,7 @@ async def get_cache_report() -> str:
         Markdown-formatted report with cache performance analysis and recommendations.
     """
     try:
-        analytics = get_cache_analytics()
+        analytics = get_cache_analytics_instance()
         report = await analytics.generate_cache_report()
         return report
         

@@ -322,6 +322,25 @@ class SmartInvalidator:
         
         return total_invalidated
     
+    async def invalidate_pattern_async(self, pattern: str) -> int:
+        """
+        Invalidate cache entries matching a pattern.
+        
+        Args:
+            pattern: Pattern to match cache keys ("*" for all)
+            
+        Returns:
+            Number of entries invalidated
+        """
+        # Use the cache's built-in pattern invalidation
+        total_invalidated = await self.cache.invalidate_pattern_async(pattern)
+        
+        self.invalidation_stats["pattern_invalidations"] += total_invalidated
+        self.invalidation_stats["total_invalidations"] += total_invalidated
+        self.invalidation_stats["last_invalidation_time"] = time.time()
+        
+        return total_invalidated
+    
     def get_invalidation_stats(self) -> Dict[str, Any]:
         """Get invalidation statistics."""
         return self.invalidation_stats.copy()
@@ -444,6 +463,7 @@ def get_cache_warmer() -> CacheWarmer:
     global _cache_warmer
     if _cache_warmer is None:
         _cache_warmer = CacheWarmer()
+    assert _cache_warmer is not None  # Type narrowing
     return _cache_warmer
 
 
@@ -452,6 +472,7 @@ def get_smart_invalidator() -> SmartInvalidator:
     global _smart_invalidator
     if _smart_invalidator is None:
         _smart_invalidator = SmartInvalidator()
+    assert _smart_invalidator is not None  # Type narrowing
     return _smart_invalidator
 
 
@@ -460,4 +481,5 @@ def get_cache_analytics() -> CacheAnalytics:
     global _cache_analytics
     if _cache_analytics is None:
         _cache_analytics = CacheAnalytics()
+    assert _cache_analytics is not None  # Type narrowing
     return _cache_analytics

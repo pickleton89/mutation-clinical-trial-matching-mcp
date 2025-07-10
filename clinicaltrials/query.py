@@ -5,8 +5,9 @@ Functions to query clinicaltrials.gov for trials matching a mutation.
 import logging
 import time
 from functools import lru_cache
-from typing import Dict, Any
+from typing import Dict, Any, Union
 import requests
+from requests import exceptions as requests_exceptions
 from utils.retry import exponential_backoff_retry
 from utils.circuit_breaker import circuit_breaker
 from utils.metrics import timer, increment, histogram, gauge
@@ -159,7 +160,7 @@ def _query_clinical_trials_impl(mutation: str, min_rank: int = 1, max_rank: int 
                 logger.debug("Response content: %s", response.text[:500] + "..." if len(response.text) > 500 else response.text)
                 return {"error": f"Failed to parse API response: {json_err}", "studies": []}
                 
-        except requests.exceptions.Timeout:
+        except requests_exceptions.Timeout:
             request_duration = time.time() - start_time
             increment("clinicaltrials_api_errors", tags={"error_type": "timeout"})
             histogram("clinicaltrials_api_request_duration", request_duration, tags={"mutation": mutation, "error": "timeout"})
@@ -170,7 +171,7 @@ def _query_clinical_trials_impl(mutation: str, min_rank: int = 1, max_rank: int 
                 "action": "api_request_timeout"
             })
             return {"error": "The request to clinicaltrials.gov timed out", "studies": []}
-        except requests.exceptions.ConnectionError as e:
+        except requests_exceptions.ConnectionError as e:
             request_duration = time.time() - start_time
             increment("clinicaltrials_api_errors", tags={"error_type": "connection_error"})
             histogram("clinicaltrials_api_request_duration", request_duration, tags={"mutation": mutation, "error": "connection"})
@@ -193,7 +194,7 @@ def _query_clinical_trials_impl(mutation: str, min_rank: int = 1, max_rank: int 
             })
             return {"error": f"Error querying clinicaltrials.gov: {e}", "studies": []}
 
-def query_clinical_trials(mutation: str, min_rank: int = 1, max_rank: int = 10, timeout: int = 10) -> Dict[str, Any]:
+def query_clinical_trials(mutation: Union[str, None], min_rank: int = 1, max_rank: int = 10, timeout: int = 10) -> Dict[str, Any]:
     """
     Query clinicaltrials.gov for clinical trials related to a given mutation.
     

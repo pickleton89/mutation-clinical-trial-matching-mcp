@@ -5,6 +5,7 @@ Unit tests for clinicaltrials.query
 import unittest
 from unittest.mock import patch, Mock
 import requests
+from requests import exceptions as requests_exceptions
 from clinicaltrials.query import query_clinical_trials, clear_cache
 from clinicaltrials.config import reset_global_config
 
@@ -183,7 +184,7 @@ class TestQueryClinicalTrials(unittest.TestCase):
     def test_timeout_error(self, mock_get):
         """Test handling of request timeout."""
         # Mock timeout error
-        mock_get.side_effect = requests.exceptions.Timeout()
+        mock_get.side_effect = requests_exceptions.Timeout()
         
         # Call the function
         result = query_clinical_trials("BRAF V600E")
@@ -198,7 +199,7 @@ class TestQueryClinicalTrials(unittest.TestCase):
     def test_connection_error(self, mock_get):
         """Test handling of connection error."""
         # Mock connection error
-        mock_get.side_effect = requests.exceptions.ConnectionError("Connection failed")
+        mock_get.side_effect = requests_exceptions.ConnectionError("Connection failed")
         
         # Call the function
         result = query_clinical_trials("BRAF V600E")

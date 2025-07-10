@@ -93,7 +93,7 @@ class AsyncSemaphoreManager:
                 "semaphores": {
                     service: {
                         "value": semaphore._value,
-                        "waiters": len(semaphore._waiters) if hasattr(semaphore, '_waiters') else 0,
+                        "waiters": len(semaphore._waiters) if hasattr(semaphore, '_waiters') and semaphore._waiters is not None else 0,
                         "locked": semaphore._value == 0
                     }
                     for service, semaphore in _semaphores.items()

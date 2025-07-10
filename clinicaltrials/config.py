@@ -4,7 +4,7 @@ Configuration management for the Clinical Trials MCP Server.
 
 import os
 import logging
-from typing import Optional
+from typing import Optional, cast
 from dataclasses import dataclass
 from dotenv import load_dotenv
 
@@ -347,7 +347,7 @@ def get_global_config() -> APIConfig:
     global _config
     if _config is None:
         _config = get_config()
-    return _config
+    return cast(APIConfig, _config)
 
 
 def reset_global_config() -> None:

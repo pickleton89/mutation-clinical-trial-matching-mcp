@@ -232,7 +232,7 @@ class Flow:
         self.nodes = {}
         self._auto_register_nodes(start)
     
-    def _auto_register_nodes(self, node: Node, visited: set = None):
+    def _auto_register_nodes(self, node: Node, visited: Optional[set] = None):
         """
         Automatically register nodes from chaining and branching.
         
@@ -269,7 +269,7 @@ class Flow:
         """
         self.nodes[node_id] = node
     
-    def run(self, shared: Dict[str, Any] = None) -> Dict[str, Any]:
+    def run(self, shared: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """
         Run the flow starting from the start node.
         
@@ -485,7 +485,7 @@ class AsyncFlow:
         self.nodes = {}
         self._auto_register_nodes(start)
     
-    def _auto_register_nodes(self, node: AsyncNode, visited: set = None):
+    def _auto_register_nodes(self, node: AsyncNode, visited: Optional[set] = None):
         """
         Automatically register async nodes from chaining and branching.
         
@@ -522,7 +522,7 @@ class AsyncFlow:
         """
         self.nodes[node_id] = node
     
-    async def run(self, shared: Dict[str, Any] = None) -> Dict[str, Any]:
+    async def run(self, shared: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """
         Run the async flow starting from the start node.
         

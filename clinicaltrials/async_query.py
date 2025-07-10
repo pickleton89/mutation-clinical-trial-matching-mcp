@@ -5,8 +5,9 @@ Async functions to query clinicaltrials.gov for trials matching a mutation.
 import asyncio
 import logging
 import time
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, cast
 import requests
+from requests import exceptions as requests_exceptions
 from concurrent.futures import ThreadPoolExecutor
 from utils.retry import async_exponential_backoff_retry
 from utils.circuit_breaker import async_circuit_breaker
@@ -25,12 +26,12 @@ def get_executor() -> ThreadPoolExecutor:
     if _executor is None:
         config = get_global_config()
         _executor = ThreadPoolExecutor(max_workers=config.http_max_connections)
-    return _executor
+    return cast(ThreadPoolExecutor, _executor)
 
 async def close_executor():
     """Close the global thread pool executor."""
     global _executor
-    if _executor:
+    if _executor is not None:
         _executor.shutdown(wait=True)
         _executor = None
 
@@ -134,7 +135,7 @@ def _sync_query_clinical_trials_impl(
             logger.debug("Response content: %s", response.text[:500] + "..." if len(response.text) > 500 else response.text)
             return {"error": f"Failed to parse API response: {json_err}", "studies": []}
             
-    except requests.exceptions.Timeout:
+    except requests_exceptions.Timeout:
         request_duration = time.time() - start_time
         logger.error(f"Timeout ({timeout}s) when querying clinicaltrials.gov", extra={
             "mutation": mutation,
@@ -144,7 +145,7 @@ def _sync_query_clinical_trials_impl(
         })
         return {"error": "The request to clinicaltrials.gov timed out", "studies": []}
         
-    except requests.exceptions.ConnectionError as e:
+    except requests_exceptions.ConnectionError as e:
         request_duration = time.time() - start_time
         logger.error(f"Connection error: {e}", extra={
             "mutation": mutation,
@@ -154,7 +155,7 @@ def _sync_query_clinical_trials_impl(
         })
         return {"error": "Failed to connect to clinicaltrials.gov", "studies": []}
         
-    except requests.exceptions.RequestException as e:
+    except requests_exceptions.RequestException as e:
         request_duration = time.time() - start_time
         logger.error(f"Request error: {e}", extra={
             "mutation": mutation,

@@ -41,6 +41,7 @@ async def get_anthropic_async_client() -> httpx.AsyncClient:
                 max_keepalive_connections=config.http_max_keepalive_connections
             )
         )
+    assert _anthropic_async_client is not None  # Type narrowing
     return _anthropic_async_client
 
 async def close_anthropic_async_client():

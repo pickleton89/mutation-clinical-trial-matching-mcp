@@ -7,7 +7,7 @@ import hashlib
 import json
 import logging
 import time
-from typing import Any, Dict, Optional, Union, List
+from typing import Any, Dict, Optional, Union, List, Callable
 from dataclasses import dataclass, asdict
 from functools import wraps
 import redis
@@ -24,7 +24,7 @@ class CacheEntry:
     timestamp: float
     ttl: int
     hit_count: int = 0
-    last_accessed: float = None
+    last_accessed: float = 0.0
     
     def is_expired(self) -> bool:
         """Check if the cache entry is expired."""
@@ -119,6 +119,9 @@ class DistributedCache:
     def _deserialize_entry(self, data: str) -> CacheEntry:
         """Deserialize cache entry from JSON string."""
         entry_dict = json.loads(data)
+        # Ensure required fields with defaults
+        entry_dict.setdefault('hit_count', 0)
+        entry_dict.setdefault('last_accessed', 0.0)
         return CacheEntry(**entry_dict)
     
     def get(self, key: str) -> Optional[Any]:
@@ -440,10 +443,11 @@ def get_cache() -> DistributedCache:
             redis_url=redis_url,
             default_ttl=default_ttl
         )
+    assert _cache_instance is not None  # Type narrowing
     return _cache_instance
 
 
-def cached(ttl: Optional[int] = None, key_func: Optional[callable] = None):
+def cached(ttl: Optional[int] = None, key_func: Optional[Callable] = None):
     """
     Decorator for caching function results.
     
@@ -460,7 +464,7 @@ def cached(ttl: Optional[int] = None, key_func: Optional[callable] = None):
             if key_func:
                 cache_key = key_func(*args, **kwargs)
             else:
-                cache_key = f"{func.__name__}:{cache._hash_key(str(args) + str(kwargs))}"
+                cache_key = f"{getattr(func, '__name__', 'unknown')}:{cache._hash_key(str(args) + str(kwargs))}"
             
             # Try to get from cache
             cached_result = cache.get(cache_key)
@@ -476,7 +480,7 @@ def cached(ttl: Optional[int] = None, key_func: Optional[callable] = None):
     return decorator
 
 
-def async_cached(ttl: Optional[int] = None, key_func: Optional[callable] = None):
+def async_cached(ttl: Optional[int] = None, key_func: Optional[Callable] = None):
     """
     Decorator for caching async function results.
     
@@ -493,7 +497,7 @@ def async_cached(ttl: Optional[int] = None, key_func: Optional[callable] = None)
             if key_func:
                 cache_key = key_func(*args, **kwargs)
             else:
-                cache_key = f"{func.__name__}:{cache._hash_key(str(args) + str(kwargs))}"
+                cache_key = f"{getattr(func, '__name__', 'unknown')}:{cache._hash_key(str(args) + str(kwargs))}"
             
             # Try to get from cache
             cached_result = await cache.get_async(cache_key)

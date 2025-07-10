@@ -3,9 +3,10 @@ Unit tests for utils.retry module
 """
 
 import unittest
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, patch, call
 import time
 import requests
+from requests import exceptions as requests_exceptions
 from utils.retry import exponential_backoff_retry, _calculate_delay, get_retry_stats
 
 
@@ -30,7 +31,7 @@ class TestExponentialBackoffRetry(unittest.TestCase):
             nonlocal call_count
             call_count += 1
             if call_count < 3:
-                raise requests.exceptions.ConnectionError("Connection failed")
+                raise requests_exceptions.ConnectionError("Connection failed")
             return "success after retries"
         
         result = failing_function()
@@ -45,9 +46,9 @@ class TestExponentialBackoffRetry(unittest.TestCase):
         def always_failing_function():
             nonlocal call_count
             call_count += 1
-            raise requests.exceptions.ConnectionError("Always fails")
+            raise requests_exceptions.ConnectionError("Always fails")
         
-        with self.assertRaises(requests.exceptions.ConnectionError):
+        with self.assertRaises(requests_exceptions.ConnectionError):
             always_failing_function()
         
         self.assertEqual(call_count, 3)  # Initial call + 2 retries
@@ -144,14 +145,14 @@ class TestExponentialBackoffRetry(unittest.TestCase):
             nonlocal call_count
             call_count += 1
             if call_count < 3:
-                raise requests.exceptions.ConnectionError("Timing test")
+                raise requests_exceptions.ConnectionError("Timing test")
             return "success"
         
         result = timing_function()
         self.assertEqual(result, "success")
         
         # Should have slept twice: 1.0s and 2.0s
-        expected_calls = [unittest.mock.call(1.0), unittest.mock.call(2.0)]
+        expected_calls = [call(1.0), call(2.0)]
         mock_sleep.assert_has_calls(expected_calls)
 
 

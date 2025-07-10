@@ -7,9 +7,10 @@ import time
 import logging
 import random
 from functools import wraps
-from typing import Callable, Type, Tuple, Any
+from typing import Callable, Type, Tuple, Any, cast
 import httpx
 import requests
+from requests import exceptions as requests_exceptions
 
 logger = logging.getLogger(__name__)
 
@@ -22,10 +23,10 @@ DEFAULT_JITTER = True
 
 # Exceptions that should trigger retries (legacy - use ASYNC_RETRIABLE_EXCEPTIONS)
 RETRIABLE_EXCEPTIONS = (
-    requests.exceptions.Timeout,
-    requests.exceptions.ConnectionError,
-    requests.exceptions.HTTPError,
-    requests.exceptions.RequestException,
+    requests_exceptions.Timeout,
+    requests_exceptions.ConnectionError,
+    requests_exceptions.HTTPError,
+    requests_exceptions.RequestException,
 )
 
 # Async exceptions that should trigger retries
@@ -78,7 +79,7 @@ def exponential_backoff_retry(
                                 f"HTTP {result.status_code} received, retrying in {delay:.2f}s "
                                 f"(attempt {attempt + 1}/{max_retries + 1})",
                                 extra={
-                                    "function": func.__name__,
+                                    "function": getattr(func, '__name__', 'unknown'),
                                     "attempt": attempt + 1,
                                     "max_retries": max_retries + 1,
                                     "delay": delay,
@@ -92,9 +93,9 @@ def exponential_backoff_retry(
                     # Success case
                     if attempt > 0:
                         logger.info(
-                            f"Function {func.__name__} succeeded after {attempt} retries",
+                            f"Function {getattr(func, '__name__', 'unknown')} succeeded after {attempt} retries",
                             extra={
-                                "function": func.__name__,
+                                "function": getattr(func, '__name__', 'unknown'),
                                 "attempts": attempt + 1,
                                 "action": "retry_success"
                             }
@@ -106,10 +107,10 @@ def exponential_backoff_retry(
                     if attempt < max_retries:
                         delay = _calculate_delay(attempt, initial_delay, backoff_factor, max_delay, jitter)
                         logger.warning(
-                            f"Exception {type(e).__name__} in {func.__name__}, retrying in {delay:.2f}s "
+                            f"Exception {type(e).__name__} in {getattr(func, '__name__', 'unknown')}, retrying in {delay:.2f}s "
                             f"(attempt {attempt + 1}/{max_retries + 1}): {str(e)}",
                             extra={
-                                "function": func.__name__,
+                                "function": getattr(func, '__name__', 'unknown'),
                                 "attempt": attempt + 1,
                                 "max_retries": max_retries + 1,
                                 "delay": delay,
@@ -121,9 +122,9 @@ def exponential_backoff_retry(
                         time.sleep(delay)
                     else:
                         logger.error(
-                            f"Function {func.__name__} failed after {max_retries} retries: {str(e)}",
+                            f"Function {getattr(func, '__name__', 'unknown')} failed after {max_retries} retries: {str(e)}",
                             extra={
-                                "function": func.__name__,
+                                "function": getattr(func, '__name__', 'unknown'),
                                 "max_retries": max_retries,
                                 "exception": str(e),
                                 "exception_type": type(e).__name__,
@@ -134,9 +135,9 @@ def exponential_backoff_retry(
                 except Exception as e:
                     # Non-retriable exceptions should be raised immediately
                     logger.error(
-                        f"Non-retriable exception in {func.__name__}: {str(e)}",
+                        f"Non-retriable exception in {getattr(func, '__name__', 'unknown')}: {str(e)}",
                         extra={
-                            "function": func.__name__,
+                            "function": getattr(func, '__name__', 'unknown'),
                             "exception": str(e),
                             "exception_type": type(e).__name__,
                             "action": "non_retriable_exception"
@@ -226,7 +227,7 @@ def async_exponential_backoff_retry(
                                 f"Async HTTP {result.status_code} received, retrying in {delay:.2f}s "
                                 f"(attempt {attempt + 1}/{max_retries + 1})",
                                 extra={
-                                    "function": func.__name__,
+                                    "function": getattr(func, '__name__', 'unknown'),
                                     "attempt": attempt + 1,
                                     "max_retries": max_retries + 1,
                                     "delay": delay,
@@ -240,9 +241,9 @@ def async_exponential_backoff_retry(
                     # Success case
                     if attempt > 0:
                         logger.info(
-                            f"Async function {func.__name__} succeeded after {attempt} retries",
+                            f"Async function {getattr(func, '__name__', 'unknown')} succeeded after {attempt} retries",
                             extra={
-                                "function": func.__name__,
+                                "function": getattr(func, '__name__', 'unknown'),
                                 "attempts": attempt + 1,
                                 "action": "async_retry_success"
                             }
@@ -254,10 +255,10 @@ def async_exponential_backoff_retry(
                     if attempt < max_retries:
                         delay = _calculate_delay(attempt, initial_delay, backoff_factor, max_delay, jitter)
                         logger.warning(
-                            f"Async exception {type(e).__name__} in {func.__name__}, retrying in {delay:.2f}s "
+                            f"Async exception {type(e).__name__} in {getattr(func, '__name__', 'unknown')}, retrying in {delay:.2f}s "
                             f"(attempt {attempt + 1}/{max_retries + 1}): {str(e)}",
                             extra={
-                                "function": func.__name__,
+                                "function": getattr(func, '__name__', 'unknown'),
                                 "attempt": attempt + 1,
                                 "max_retries": max_retries + 1,
                                 "delay": delay,
@@ -269,9 +270,9 @@ def async_exponential_backoff_retry(
                         await asyncio.sleep(delay)
                     else:
                         logger.error(
-                            f"Async function {func.__name__} failed after {max_retries} retries: {str(e)}",
+                            f"Async function {getattr(func, '__name__', 'unknown')} failed after {max_retries} retries: {str(e)}",
                             extra={
-                                "function": func.__name__,
+                                "function": getattr(func, '__name__', 'unknown'),
                                 "max_retries": max_retries,
                                 "exception": str(e),
                                 "exception_type": type(e).__name__,
@@ -282,9 +283,9 @@ def async_exponential_backoff_retry(
                 except Exception as e:
                     # Non-retriable exceptions should be raised immediately
                     logger.error(
-                        f"Non-retriable async exception in {func.__name__}: {str(e)}",
+                        f"Non-retriable async exception in {getattr(func, '__name__', 'unknown')}: {str(e)}",
                         extra={
-                            "function": func.__name__,
+                            "function": getattr(func, '__name__', 'unknown'),
                             "exception": str(e),
                             "exception_type": type(e).__name__,
                             "action": "async_non_retriable_exception"
@@ -320,7 +321,7 @@ def get_retry_stats(func: Callable) -> dict:
             "average_retries": 0.0
         }
     
-    stats = func._retry_stats
+    stats = cast(dict, func._retry_stats)
     total_calls = stats.get("total_calls", 0)
     return {
         "total_calls": total_calls,
