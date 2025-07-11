@@ -23,6 +23,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class CacheEntry:
     """Represents a cache entry with metadata."""
+
     value: Any
     timestamp: float
     ttl: int
@@ -59,7 +60,7 @@ class DistributedCache:
         redis_url: str = "redis://localhost:6379",
         key_prefix: str = "clinical_trials",
         default_ttl: int = 3600,
-        max_retries: int = 3
+        max_retries: int = 3,
     ):
         self.redis_url = redis_url
         self.key_prefix = key_prefix
@@ -71,13 +72,7 @@ class DistributedCache:
         self._async_client = None
 
         # Cache statistics
-        self._stats = {
-            "hits": 0,
-            "misses": 0,
-            "sets": 0,
-            "errors": 0,
-            "invalidations": 0
-        }
+        self._stats = {"hits": 0, "misses": 0, "sets": 0, "errors": 0, "invalidations": 0}
 
     def _get_sync_client(self) -> redis.Redis:
         """Get or create sync Redis client."""
@@ -87,7 +82,7 @@ class DistributedCache:
                 decode_responses=True,
                 socket_timeout=5,
                 socket_connect_timeout=5,
-                retry_on_timeout=True
+                retry_on_timeout=True,
             )
         return self._sync_client
 
@@ -99,7 +94,7 @@ class DistributedCache:
                 decode_responses=True,
                 socket_timeout=5,
                 socket_connect_timeout=5,
-                retry_on_timeout=True
+                retry_on_timeout=True,
             )
         return self._async_client
 
@@ -123,8 +118,8 @@ class DistributedCache:
         """Deserialize cache entry from JSON string."""
         entry_dict = json.loads(data)
         # Ensure required fields with defaults
-        entry_dict.setdefault('hit_count', 0)
-        entry_dict.setdefault('last_accessed', 0.0)
+        entry_dict.setdefault("hit_count", 0)
+        entry_dict.setdefault("last_accessed", 0.0)
         return CacheEntry(**entry_dict)
 
     def get(self, key: str) -> Any | None:
@@ -226,11 +221,7 @@ class DistributedCache:
             if ttl is None:
                 ttl = self.default_ttl
 
-            entry = CacheEntry(
-                value=value,
-                timestamp=time.time(),
-                ttl=ttl
-            )
+            entry = CacheEntry(value=value, timestamp=time.time(), ttl=ttl)
 
             client.set(cache_key, self._serialize_entry(entry), ex=ttl)
             self._stats["sets"] += 1
@@ -260,11 +251,7 @@ class DistributedCache:
             if ttl is None:
                 ttl = self.default_ttl
 
-            entry = CacheEntry(
-                value=value,
-                timestamp=time.time(),
-                ttl=ttl
-            )
+            entry = CacheEntry(value=value, timestamp=time.time(), ttl=ttl)
 
             await client.set(cache_key, self._serialize_entry(entry), ex=ttl)
             self._stats["sets"] += 1
@@ -383,11 +370,7 @@ class DistributedCache:
         total_requests = self._stats["hits"] + self._stats["misses"]
         hit_rate = self._stats["hits"] / total_requests if total_requests > 0 else 0
 
-        return {
-            **self._stats,
-            "hit_rate": hit_rate,
-            "total_requests": total_requests
-        }
+        return {**self._stats, "hit_rate": hit_rate, "total_requests": total_requests}
 
     async def warm_cache(self, warm_data: dict[str, Any]) -> int:
         """
@@ -435,17 +418,14 @@ def get_cache() -> DistributedCache:
     if _cache_instance is None:
         try:
             config = get_global_config()
-            redis_url = getattr(config, 'redis_url', 'redis://localhost:6379')
-            default_ttl = getattr(config, 'cache_ttl', 3600)
+            redis_url = getattr(config, "redis_url", "redis://localhost:6379")
+            default_ttl = getattr(config, "cache_ttl", 3600)
         except Exception:
             # Fallback for testing
-            redis_url = 'redis://localhost:6379'
+            redis_url = "redis://localhost:6379"
             default_ttl = 3600
 
-        _cache_instance = DistributedCache(
-            redis_url=redis_url,
-            default_ttl=default_ttl
-        )
+        _cache_instance = DistributedCache(redis_url=redis_url, default_ttl=default_ttl)
     assert _cache_instance is not None  # Type narrowing
     return _cache_instance
 
@@ -458,6 +438,7 @@ def cached(ttl: int | None = None, key_func: Callable | None = None):
         ttl: Time to live in seconds
         key_func: Function to generate cache key from arguments
     """
+
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
@@ -479,7 +460,9 @@ def cached(ttl: int | None = None, key_func: Callable | None = None):
             cache.set(cache_key, result, ttl)
 
             return result
+
         return wrapper
+
     return decorator
 
 
@@ -491,6 +474,7 @@ def async_cached(ttl: int | None = None, key_func: Callable | None = None):
         ttl: Time to live in seconds
         key_func: Function to generate cache key from arguments
     """
+
     def decorator(func):
         @wraps(func)
         async def wrapper(*args, **kwargs):
@@ -512,5 +496,7 @@ def async_cached(ttl: int | None = None, key_func: Callable | None = None):
             await cache.set_async(cache_key, result, ttl)
 
             return result
+
         return wrapper
+
     return decorator

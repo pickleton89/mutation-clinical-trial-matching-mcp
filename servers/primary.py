@@ -31,10 +31,8 @@ from utils.node import AsyncFlow
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.StreamHandler(sys.stderr)
-    ]
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[logging.StreamHandler(sys.stderr)],
 )
 logger = logging.getLogger(__name__)
 
@@ -53,6 +51,7 @@ mcp = FastMCP("Clinical Trials Async MCP Server")
 async_flow = None
 async_batch_flow = None
 
+
 def initialize_async_flow():
     """Initialize the async flow with nodes using new chaining syntax."""
     global async_flow
@@ -69,6 +68,7 @@ def initialize_async_flow():
 
     logger.info("Async flow initialized with query and summarize nodes using >> chaining")
 
+
 def initialize_async_batch_flow():
     """Initialize the async batch flow for multiple mutations using new chaining syntax."""
     global async_batch_flow
@@ -83,7 +83,10 @@ def initialize_async_batch_flow():
     # Create async batch flow with automatic node registration
     async_batch_flow = AsyncFlow(batch_query_node)
 
-    logger.info("Async batch flow initialized with batch query and summarize nodes using >> chaining")
+    logger.info(
+        "Async batch flow initialized with batch query and summarize nodes using >> chaining"
+    )
+
 
 async def _summarize_trials_async_impl(mutation: str) -> str:
     """
@@ -107,10 +110,7 @@ async def _summarize_trials_async_impl(mutation: str) -> str:
         if not mutation or not isinstance(mutation, str) or not mutation.strip():
             logger.error("Invalid mutation parameter provided")
             raise McpError(
-                ErrorData(
-                    code=-1,
-                    message="Mutation parameter must be a non-empty string"
-                )
+                ErrorData(code=-1, message="Mutation parameter must be a non-empty string")
             )
 
         if async_flow is None:
@@ -123,7 +123,7 @@ async def _summarize_trials_async_impl(mutation: str) -> str:
             "mutation": mutation.strip(),
             "min_rank": 1,
             "max_rank": 20,  # Get more results for better summary
-            "timeout": 15
+            "timeout": 15,
         }
 
         logger.info(f"Starting async flow for mutation: {mutation}")
@@ -139,19 +139,13 @@ async def _summarize_trials_async_impl(mutation: str) -> str:
             # Handle known errors from the flow
             logger.error(f"Async flow execution failed: {result['error']}")
             raise McpError(
-                ErrorData(
-                    code=-2,
-                    message=f"Failed to process mutation query: {result['error']}"
-                )
+                ErrorData(code=-2, message=f"Failed to process mutation query: {result['error']}")
             )
         else:
             # Handle unexpected flow result
             logger.error(f"Unexpected async flow result: {result}")
             raise McpError(
-                ErrorData(
-                    code=-3,
-                    message="No trials found or unexpected error in processing"
-                )
+                ErrorData(code=-3, message="No trials found or unexpected error in processing")
             )
 
     except McpError:
@@ -160,19 +154,12 @@ async def _summarize_trials_async_impl(mutation: str) -> str:
     except ValueError as e:
         logger.error(f"Validation error: {e}")
         raise McpError(
-            ErrorData(
-                code=-4,
-                message=f"Invalid input or configuration: {str(e)}"
-            )
+            ErrorData(code=-4, message=f"Invalid input or configuration: {str(e)}")
         ) from e
     except Exception as e:
         logger.error(f"Unexpected error in async summarize_trials: {e}", exc_info=True)
-        raise McpError(
-            ErrorData(
-                code=-5,
-                message=f"An unexpected error occurred: {str(e)}"
-            )
-        ) from e
+        raise McpError(ErrorData(code=-5, message=f"An unexpected error occurred: {str(e)}")) from e
+
 
 @mcp.tool()
 async def summarize_trials_async(mutation: str) -> str:
@@ -192,6 +179,7 @@ async def summarize_trials_async(mutation: str) -> str:
         McpError: If there's an error in processing the mutation query
     """
     return await _summarize_trials_async_impl(mutation)
+
 
 @mcp.tool()
 async def summarize_multiple_trials_async(mutations: str) -> str:
@@ -217,7 +205,7 @@ async def summarize_multiple_trials_async(mutations: str) -> str:
             return "Error: Too many mutations (max 10)"
 
         # Initialize batch flow if needed
-        if 'async_batch_flow' not in globals():
+        if "async_batch_flow" not in globals():
             initialize_async_batch_flow()
 
         assert async_batch_flow is not None, "async_batch_flow should be initialized"
@@ -228,7 +216,7 @@ async def summarize_multiple_trials_async(mutations: str) -> str:
             "min_rank": 1,
             "max_rank": 10,  # Fewer results per mutation for batch
             "timeout": 15,
-            "max_concurrent": 5
+            "max_concurrent": 5,
         }
 
         logger.info(f"Starting async batch flow for {len(mutation_list)} mutations")
@@ -251,6 +239,7 @@ async def summarize_multiple_trials_async(mutations: str) -> str:
         logger.error(f"Unexpected error in async batch summarize_trials: {e}", exc_info=True)
         return f"Error: {str(e)}"
 
+
 @mcp.tool()
 async def summarize_trials(mutation: str) -> str:
     """
@@ -271,6 +260,7 @@ async def summarize_trials(mutation: str) -> str:
     except Exception as e:
         logger.error(f"Error in wrapper: {e}", exc_info=True)
         return f"Error: {str(e)}"
+
 
 @mcp.tool()
 async def get_health_status() -> str:
@@ -310,7 +300,7 @@ async def get_health_status() -> str:
                 "batch_processing": True,
                 "distributed_caching": True,
                 "cache_warming": True,
-                "smart_invalidation": True
+                "smart_invalidation": True,
             },
             "circuit_breakers": {
                 name: {
@@ -318,7 +308,7 @@ async def get_health_status() -> str:
                     "success_count": stats.success_count,
                     "total_calls": stats.total_calls,
                     "last_failure_time": stats.last_failure_time,
-                    "last_success_time": stats.last_success_time
+                    "last_success_time": stats.last_success_time,
                 }
                 for name, stats in cb_stats.items()
             },
@@ -326,19 +316,16 @@ async def get_health_status() -> str:
             "metrics_summary": {
                 "total_counters": len(metrics.get("counters", {})),
                 "total_gauges": len(metrics.get("gauges", {})),
-                "total_histograms": len(metrics.get("histograms", {}))
-            }
+                "total_histograms": len(metrics.get("histograms", {})),
+            },
         }
 
         return json.dumps(health_status, indent=2)
 
     except Exception as e:
         logger.error(f"Error getting health status: {e}")
-        return json.dumps({
-            "status": "error",
-            "error": str(e),
-            "timestamp": time.time()
-        })
+        return json.dumps({"status": "error", "error": str(e), "timestamp": time.time()})
+
 
 @mcp.tool()
 def get_metrics_json() -> str:
@@ -357,10 +344,10 @@ def get_metrics_json() -> str:
         return export_json()
     except Exception as e:
         logger.error(f"Error exporting metrics as JSON: {e}")
-        return json.dumps({
-            "error": f"Failed to export metrics: {str(e)}",
-            "timestamp": time.time()
-        })
+        return json.dumps(
+            {"error": f"Failed to export metrics: {str(e)}", "timestamp": time.time()}
+        )
+
 
 @mcp.tool()
 def get_metrics_prometheus() -> str:
@@ -377,6 +364,7 @@ def get_metrics_prometheus() -> str:
         logger.error(f"Error exporting metrics as Prometheus: {e}")
         return f"# Error exporting metrics: {str(e)}"
 
+
 @mcp.tool()
 def get_circuit_breaker_status() -> str:
     """
@@ -392,10 +380,7 @@ def get_circuit_breaker_status() -> str:
     try:
         cb_stats = get_all_circuit_breaker_stats()
 
-        status = {
-            "timestamp": time.time(),
-            "circuit_breakers": {}
-        }
+        status = {"timestamp": time.time(), "circuit_breakers": {}}
 
         for name, stats in cb_stats.items():
             status["circuit_breakers"][name] = {
@@ -405,18 +390,22 @@ def get_circuit_breaker_status() -> str:
                 "state_changes": stats.state_changes,
                 "last_failure_time": stats.last_failure_time,
                 "last_success_time": stats.last_success_time,
-                "last_failure_age_seconds": time.time() - stats.last_failure_time if stats.last_failure_time else None,
-                "last_success_age_seconds": time.time() - stats.last_success_time if stats.last_success_time else None
+                "last_failure_age_seconds": time.time() - stats.last_failure_time
+                if stats.last_failure_time
+                else None,
+                "last_success_age_seconds": time.time() - stats.last_success_time
+                if stats.last_success_time
+                else None,
             }
 
         return json.dumps(status, indent=2)
 
     except Exception as e:
         logger.error(f"Error getting circuit breaker status: {e}")
-        return json.dumps({
-            "error": f"Failed to get circuit breaker status: {str(e)}",
-            "timestamp": time.time()
-        })
+        return json.dumps(
+            {"error": f"Failed to get circuit breaker status: {str(e)}", "timestamp": time.time()}
+        )
+
 
 @mcp.tool()
 async def get_cache_analytics() -> str:
@@ -445,17 +434,17 @@ async def get_cache_analytics() -> str:
             "timestamp": time.time(),
             "comprehensive_stats": stats,
             "efficiency_analysis": efficiency,
-            "cache_health": "healthy" if efficiency["efficiency_score"] > 70 else "degraded"
+            "cache_health": "healthy" if efficiency["efficiency_score"] > 70 else "degraded",
         }
 
         return json.dumps(cache_analytics, indent=2)
 
     except Exception as e:
         logger.error(f"Error getting cache analytics: {e}")
-        return json.dumps({
-            "error": f"Failed to get cache analytics: {str(e)}",
-            "timestamp": time.time()
-        })
+        return json.dumps(
+            {"error": f"Failed to get cache analytics: {str(e)}", "timestamp": time.time()}
+        )
+
 
 @mcp.tool()
 async def get_cache_report() -> str:
@@ -473,6 +462,7 @@ async def get_cache_report() -> str:
     except Exception as e:
         logger.error(f"Error generating cache report: {e}")
         return f"# Cache Report Error\n\nFailed to generate cache report: {str(e)}"
+
 
 @mcp.tool()
 async def warm_cache() -> str:
@@ -501,17 +491,15 @@ async def warm_cache() -> str:
             "common_mutations_warmed": common_results,
             "trending_mutations_warmed": trending_results,
             "warming_statistics": stats,
-            "status": "completed"
+            "status": "completed",
         }
 
         return json.dumps(results, indent=2)
 
     except Exception as e:
         logger.error(f"Error warming cache: {e}")
-        return json.dumps({
-            "error": f"Failed to warm cache: {str(e)}",
-            "timestamp": time.time()
-        })
+        return json.dumps({"error": f"Failed to warm cache: {str(e)}", "timestamp": time.time()})
+
 
 @mcp.tool()
 async def invalidate_cache(pattern: str = "*") -> str:
@@ -540,22 +528,23 @@ async def invalidate_cache(pattern: str = "*") -> str:
             "timestamp": time.time(),
             "pattern": pattern,
             "invalidated_count": invalidated,
-            "status": "completed"
+            "status": "completed",
         }
 
         return json.dumps(results, indent=2)
 
     except Exception as e:
         logger.error(f"Error invalidating cache: {e}")
-        return json.dumps({
-            "error": f"Failed to invalidate cache: {str(e)}",
-            "timestamp": time.time()
-        })
+        return json.dumps(
+            {"error": f"Failed to invalidate cache: {str(e)}", "timestamp": time.time()}
+        )
+
 
 async def cleanup():
     """Clean up async resources."""
     await cleanup_async_clients()
     # No longer need to close executor - using pure async httpx
+
 
 async def startup_tasks():
     """Perform startup tasks including cache warming."""
@@ -569,10 +558,13 @@ async def startup_tasks():
         common_count = await warmer.warm_common_mutations()
         trending_count = await warmer.warm_trending_mutations()
 
-        logger.info(f"Cache warming completed: {common_count} common, {trending_count} trending mutations")
+        logger.info(
+            f"Cache warming completed: {common_count} common, {trending_count} trending mutations"
+        )
 
     except Exception as e:
         logger.warning(f"Startup tasks failed (non-critical): {e}")
+
 
 def main():
     """Main entry point for the primary async MCP server."""
@@ -589,7 +581,6 @@ def main():
         except Exception as e:
             logger.warning(f"Startup tasks failed: {e}")
 
-
         # Run the server
         mcp.run()
 
@@ -603,6 +594,7 @@ def main():
             asyncio.run(cleanup())
         except Exception as e:
             logger.error(f"Error during cleanup: {e}")
+
 
 if __name__ == "__main__":
     main()

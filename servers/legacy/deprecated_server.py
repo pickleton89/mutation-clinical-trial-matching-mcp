@@ -22,18 +22,17 @@ import warnings
 warnings.warn(
     "clinicaltrials_mcp_server.py is deprecated. Use clinicaltrials_async_mcp_server.py instead.",
     DeprecationWarning,
-    stacklevel=2
+    stacklevel=2,
 )
 
 # Configure logging
 logging.basicConfig(
     level=logging.WARNING,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.StreamHandler(sys.stderr)
-    ]
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[logging.StreamHandler(sys.stderr)],
 )
 logger = logging.getLogger(__name__)
+
 
 def main():
     """Main entry point that shows deprecation notice."""
@@ -59,6 +58,7 @@ def main():
 
     # Exit with error code to prevent accidental usage
     sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

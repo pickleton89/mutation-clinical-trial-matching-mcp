@@ -45,7 +45,9 @@ class TestLoadConfig(unittest.TestCase):
             config = load_config()
 
             # Should have default values
-            self.assertEqual(config.clinicaltrials_api_url, "https://clinicaltrials.gov/api/v2/studies")
+            self.assertEqual(
+                config.clinicaltrials_api_url, "https://clinicaltrials.gov/api/v2/studies"
+            )
             self.assertEqual(config.max_retries, 3)
             self.assertEqual(config.cache_size, 100)
             self.assertEqual(config.anthropic_api_key, "")
@@ -58,14 +60,16 @@ class TestLoadConfig(unittest.TestCase):
             "MAX_RETRIES": "5",
             "CACHE_SIZE": "200",
             "RETRY_INITIAL_DELAY": "2.0",
-            "RETRY_JITTER": "false"
+            "RETRY_JITTER": "false",
         }
 
         with patch.dict(os.environ, test_env, clear=True):
             config = load_config()
 
             self.assertEqual(config.anthropic_api_key, "test-key-123")
-            self.assertEqual(config.clinicaltrials_api_url, "https://test.clinicaltrials.gov/api/v2/studies")
+            self.assertEqual(
+                config.clinicaltrials_api_url, "https://test.clinicaltrials.gov/api/v2/studies"
+            )
             self.assertEqual(config.max_retries, 5)
             self.assertEqual(config.cache_size, 200)
             self.assertEqual(config.retry_initial_delay, 2.0)
@@ -183,11 +187,15 @@ class TestGetConfig(unittest.TestCase):
 
     def test_get_config_multiple_errors(self):
         """Test that multiple validation errors are reported."""
-        with patch.dict(os.environ, {
-            "CLINICALTRIALS_API_URL": "not-a-url",
-            "ANTHROPIC_API_URL": "also-not-a-url",
-            "CLINICALTRIALS_TIMEOUT": "-1"
-        }, clear=True):
+        with patch.dict(
+            os.environ,
+            {
+                "CLINICALTRIALS_API_URL": "not-a-url",
+                "ANTHROPIC_API_URL": "also-not-a-url",
+                "CLINICALTRIALS_TIMEOUT": "-1",
+            },
+            clear=True,
+        ):
             with self.assertRaises(ValueError) as context:
                 get_config()
 
@@ -208,10 +216,12 @@ class TestGlobalConfig(unittest.TestCase):
     def test_global_config_lazy_loading(self):
         """Test that global config is lazy-loaded."""
         from clinicaltrials.config import _config
+
         self.assertIsNone(_config)
 
         with patch.dict(os.environ, {"ANTHROPIC_API_KEY": "test-key-123"}, clear=True):
             from clinicaltrials.config import get_global_config
+
             config = get_global_config()
             self.assertEqual(config.anthropic_api_key, "test-key-123")
 
@@ -219,6 +229,7 @@ class TestGlobalConfig(unittest.TestCase):
         """Test that global config can be reset."""
         with patch.dict(os.environ, {"ANTHROPIC_API_KEY": "test-key-123"}, clear=True):
             from clinicaltrials.config import get_global_config
+
             config1 = get_global_config()
 
             reset_global_config()
@@ -228,5 +239,5 @@ class TestGlobalConfig(unittest.TestCase):
             self.assertEqual(config1.anthropic_api_key, config2.anthropic_api_key)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

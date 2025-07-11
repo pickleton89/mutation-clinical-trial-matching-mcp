@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 # Global async client for Anthropic API
 _anthropic_async_client: httpx.AsyncClient | None = None
 
+
 async def get_anthropic_async_client() -> httpx.AsyncClient:
     """Get or create the global async HTTP client for Anthropic API."""
     global _anthropic_async_client
@@ -28,21 +29,22 @@ async def get_anthropic_async_client() -> httpx.AsyncClient:
             headers={
                 "content-type": "application/json",
                 "anthropic-version": "2023-06-01",
-                "User-Agent": config.user_agent
+                "User-Agent": config.user_agent,
             },
             timeout=httpx.Timeout(
                 connect=config.http_connect_timeout,
                 read=config.anthropic_timeout,
                 write=config.http_write_timeout,
-                pool=config.http_pool_timeout
+                pool=config.http_pool_timeout,
             ),
             limits=httpx.Limits(
                 max_connections=config.http_max_connections,
-                max_keepalive_connections=config.http_max_keepalive_connections
-            )
+                max_keepalive_connections=config.http_max_keepalive_connections,
+            ),
         )
     assert _anthropic_async_client is not None  # Type narrowing
     return _anthropic_async_client
+
 
 async def close_anthropic_async_client():
     """Close the global async HTTP client for Anthropic API."""
@@ -51,10 +53,12 @@ async def close_anthropic_async_client():
         await _anthropic_async_client.aclose()
         _anthropic_async_client = None
 
+
 @response_validator("anthropic_api")
 async def _validate_anthropic_response_async(response_data: dict) -> dict:
     """Validate Anthropic API response structure."""
     return response_data
+
 
 async def call_llm_async(prompt: str) -> str:
     """
@@ -72,7 +76,7 @@ async def call_llm_async(prompt: str) -> str:
     @async_circuit_breaker(
         name="anthropic_api_async",
         failure_threshold=config.circuit_breaker_failure_threshold,
-        recovery_timeout=config.circuit_breaker_recovery_timeout
+        recovery_timeout=config.circuit_breaker_recovery_timeout,
     )
     @async_exponential_backoff_retry(
         max_retries=config.max_retries,
@@ -80,12 +84,13 @@ async def call_llm_async(prompt: str) -> str:
         backoff_factor=config.retry_backoff_factor,
         max_delay=config.retry_max_delay,
         jitter=config.retry_jitter,
-        retry_on_status_codes=(429, 500, 502, 503, 504)
+        retry_on_status_codes=(429, 500, 502, 503, 504),
     )
     async def _retry_wrapper():
         return await _call_llm_async_impl(prompt, config)
 
     return await _retry_wrapper()
+
 
 async def _call_llm_async_impl(prompt: str, config) -> str:
     """
@@ -93,7 +98,9 @@ async def _call_llm_async_impl(prompt: str, config) -> str:
     """
     # Track LLM call metrics
     increment("anthropic_api_calls_total_async", tags={"model": config.anthropic_model})
-    histogram("anthropic_api_prompt_length_async", len(prompt), tags={"model": config.anthropic_model})
+    histogram(
+        "anthropic_api_prompt_length_async", len(prompt), tags={"model": config.anthropic_model}
+    )
 
     with timer("anthropic_api_request_async", tags={"model": config.anthropic_model}):
         try:
@@ -109,17 +116,18 @@ async def _call_llm_async_impl(prompt: str, config) -> str:
             }
 
             start_time = time.time()
-            logger.info("Sending async request to Anthropic API", extra={
-                "model": data["model"],
-                "max_tokens": data["max_tokens"],
-                "prompt_length": len(prompt),
-                "action": "async_llm_request_start"
-            })
+            logger.info(
+                "Sending async request to Anthropic API",
+                extra={
+                    "model": data["model"],
+                    "max_tokens": data["max_tokens"],
+                    "prompt_length": len(prompt),
+                    "action": "async_llm_request_start",
+                },
+            )
 
             response = await client.post(
-                config.anthropic_api_url,
-                json=data,
-                timeout=config.anthropic_timeout
+                config.anthropic_api_url, json=data, timeout=config.anthropic_timeout
             )
             request_duration = time.time() - start_time
 
@@ -133,51 +141,80 @@ async def _call_llm_async_impl(prompt: str, config) -> str:
 
             # Record success metrics
             increment("anthropic_api_success_async", tags={"model": config.anthropic_model})
-            histogram("anthropic_api_request_duration_async", request_duration, tags={"model": config.anthropic_model})
-            histogram("anthropic_api_response_length_async", len(response_text), tags={"model": config.anthropic_model})
+            histogram(
+                "anthropic_api_request_duration_async",
+                request_duration,
+                tags={"model": config.anthropic_model},
+            )
+            histogram(
+                "anthropic_api_response_length_async",
+                len(response_text),
+                tags={"model": config.anthropic_model},
+            )
             gauge("anthropic_api_last_request_duration_async", request_duration)
             gauge("anthropic_api_last_response_length_async", len(response_text))
 
-            logger.info(f"Async Anthropic API request completed in {request_duration:.2f}s", extra={
-                "model": data["model"],
-                "request_duration": request_duration,
-                "prompt_length": len(prompt),
-                "response_length": len(response_text),
-                "action": "async_llm_request_success"
-            })
+            logger.info(
+                f"Async Anthropic API request completed in {request_duration:.2f}s",
+                extra={
+                    "model": data["model"],
+                    "request_duration": request_duration,
+                    "prompt_length": len(prompt),
+                    "response_length": len(response_text),
+                    "action": "async_llm_request_success",
+                },
+            )
 
             return response_text
 
         except httpx.RequestError as e:
             request_duration = time.time() - start_time
-            increment("anthropic_api_errors_async", tags={"error_type": "request_exception", "model": config.anthropic_model})
-            histogram("anthropic_api_request_duration_async", request_duration, tags={"model": config.anthropic_model, "error": "request_exception"})
-            logger.error(f"Async Anthropic API request failed: {str(e)}", extra={
-                "model": data.get("model", "unknown"),
-                "request_duration": request_duration,
-                "prompt_length": len(prompt),
-                "error": str(e),
-                "action": "async_llm_request_error"
-            })
+            increment(
+                "anthropic_api_errors_async",
+                tags={"error_type": "request_exception", "model": config.anthropic_model},
+            )
+            histogram(
+                "anthropic_api_request_duration_async",
+                request_duration,
+                tags={"model": config.anthropic_model, "error": "request_exception"},
+            )
+            logger.error(
+                f"Async Anthropic API request failed: {str(e)}",
+                extra={
+                    "model": data.get("model", "unknown"),
+                    "request_duration": request_duration,
+                    "prompt_length": len(prompt),
+                    "error": str(e),
+                    "action": "async_llm_request_error",
+                },
+            )
             return f"[API ERROR: {str(e)}]"
 
         except Exception as e:
             request_duration = time.time() - start_time
-            increment("anthropic_api_errors_async", tags={"error_type": "unexpected_error", "model": config.anthropic_model})
-            histogram("anthropic_api_request_duration_async", request_duration, tags={"model": config.anthropic_model, "error": "unexpected"})
-            logger.error(f"Unexpected error in async LLM call: {str(e)}", extra={
-                "model": data.get("model", "unknown"),
-                "request_duration": request_duration,
-                "prompt_length": len(prompt),
-                "error": str(e),
-                "action": "async_llm_request_unexpected_error"
-            })
+            increment(
+                "anthropic_api_errors_async",
+                tags={"error_type": "unexpected_error", "model": config.anthropic_model},
+            )
+            histogram(
+                "anthropic_api_request_duration_async",
+                request_duration,
+                tags={"model": config.anthropic_model, "error": "unexpected"},
+            )
+            logger.error(
+                f"Unexpected error in async LLM call: {str(e)}",
+                extra={
+                    "model": data.get("model", "unknown"),
+                    "request_duration": request_duration,
+                    "prompt_length": len(prompt),
+                    "error": str(e),
+                    "action": "async_llm_request_unexpected_error",
+                },
+            )
             return f"[API ERROR: {str(e)}]"
 
-async def call_llm_batch_async(
-    prompts: list[str],
-    max_concurrent: int = 3
-) -> list[str]:
+
+async def call_llm_batch_async(prompts: list[str], max_concurrent: int = 3) -> list[str]:
     """
     Process multiple prompts concurrently for improved performance.
 
@@ -201,17 +238,22 @@ async def call_llm_batch_async(
 
     # Execute all calls concurrently
     start_time = time.time()
-    logger.info(f"Starting batch async LLM processing for {len(prompts)} prompts", extra={
-        "batch_size": len(prompts),
-        "max_concurrent": max_concurrent,
-        "action": "batch_llm_start"
-    })
+    logger.info(
+        f"Starting batch async LLM processing for {len(prompts)} prompts",
+        extra={
+            "batch_size": len(prompts),
+            "max_concurrent": max_concurrent,
+            "action": "batch_llm_start",
+        },
+    )
 
     tasks = [_call_with_semaphore(prompt, i) for i, prompt in enumerate(prompts)]
     results = await asyncio.gather(*tasks, return_exceptions=True)
 
     batch_duration = time.time() - start_time
-    histogram("anthropic_api_batch_duration", batch_duration, tags={"batch_size": str(len(prompts))})
+    histogram(
+        "anthropic_api_batch_duration", batch_duration, tags={"batch_size": str(len(prompts))}
+    )
     gauge("anthropic_api_last_batch_duration", batch_duration)
 
     # Process results and handle exceptions
@@ -220,11 +262,14 @@ async def call_llm_batch_async(
 
     for result in results:
         if isinstance(result, Exception):
-            logger.error(f"Batch LLM call exception: {result}", extra={
-                "batch_size": len(prompts),
-                "error": str(result),
-                "action": "batch_llm_exception"
-            })
+            logger.error(
+                f"Batch LLM call exception: {result}",
+                extra={
+                    "batch_size": len(prompts),
+                    "error": str(result),
+                    "action": "batch_llm_exception",
+                },
+            )
             increment("anthropic_api_batch_errors", tags={"error_type": "exception"})
             continue
 
@@ -236,21 +281,32 @@ async def call_llm_batch_async(
             successful_calls += 1
 
     # Record batch success metrics
-    histogram("anthropic_api_batch_success_count", successful_calls, tags={"batch_size": str(len(prompts))})
-    gauge("anthropic_api_last_batch_success_rate", successful_calls / len(prompts) if prompts else 0)
+    histogram(
+        "anthropic_api_batch_success_count",
+        successful_calls,
+        tags={"batch_size": str(len(prompts))},
+    )
+    gauge(
+        "anthropic_api_last_batch_success_rate", successful_calls / len(prompts) if prompts else 0
+    )
 
-    logger.info(f"Batch async LLM processing completed: {successful_calls}/{len(prompts)} successful in {batch_duration:.2f}s", extra={
-        "batch_size": len(prompts),
-        "successful_calls": successful_calls,
-        "batch_duration": batch_duration,
-        "action": "batch_llm_complete"
-    })
+    logger.info(
+        f"Batch async LLM processing completed: {successful_calls}/{len(prompts)} successful in {batch_duration:.2f}s",
+        extra={
+            "batch_size": len(prompts),
+            "successful_calls": successful_calls,
+            "batch_duration": batch_duration,
+            "action": "batch_llm_complete",
+        },
+    )
 
     return responses
+
 
 async def cleanup_async_clients():
     """Clean up all async clients."""
     await close_anthropic_async_client()
     # Import here to avoid circular import
     from utils.async_http_client import cleanup_all_clients
+
     await cleanup_all_clients()

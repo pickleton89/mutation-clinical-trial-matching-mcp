@@ -28,10 +28,7 @@ class TestCircuitBreaker(unittest.TestCase):
         """Set up test fixtures."""
         reset_all_circuit_breakers()
         self.circuit_breaker = CircuitBreaker(
-            name="test_cb",
-            failure_threshold=3,
-            recovery_timeout=1,
-            success_threshold=2
+            name="test_cb", failure_threshold=3, recovery_timeout=1, success_threshold=2
         )
 
     def tearDown(self):
@@ -175,6 +172,7 @@ class TestCircuitBreaker(unittest.TestCase):
 
     def test_decorator_usage(self):
         """Test circuit breaker used as decorator."""
+
         @self.circuit_breaker
         def test_function(arg1, kwarg1=None):
             return f"result: {arg1}, {kwarg1}"
@@ -280,10 +278,7 @@ class TestCircuitBreakerRegistry(unittest.TestCase):
     def test_get_circuit_breaker_with_custom_params(self):
         """Test get_circuit_breaker with custom parameters."""
         cb = get_circuit_breaker(
-            "test_custom",
-            failure_threshold=10,
-            recovery_timeout=30,
-            success_threshold=3
+            "test_custom", failure_threshold=10, recovery_timeout=30, success_threshold=3
         )
 
         self.assertEqual(cb.failure_threshold, 10)
@@ -306,9 +301,9 @@ class TestCircuitBreakerRegistry(unittest.TestCase):
         self.assertEqual(cb.stats.success_count, 1)
         self.assertEqual(cb.failure_threshold, 2)
 
-    @patch('utils.circuit_breaker._metrics_available', True)
-    @patch('utils.circuit_breaker.increment')
-    @patch('utils.circuit_breaker.gauge')
+    @patch("utils.circuit_breaker._metrics_available", True)
+    @patch("utils.circuit_breaker.increment")
+    @patch("utils.circuit_breaker.gauge")
     def test_metrics_integration(self, mock_gauge, mock_increment):
         """Test that circuit breaker integrates with metrics system."""
         cb = CircuitBreaker("test_metrics")
@@ -327,5 +322,5 @@ class TestCircuitBreakerRegistry(unittest.TestCase):
         self.assertIn(("circuit_breaker_success_calls",), increment_calls)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

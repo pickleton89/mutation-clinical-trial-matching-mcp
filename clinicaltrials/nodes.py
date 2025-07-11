@@ -56,10 +56,7 @@ class QueryTrialsNode(Node[str, dict[str, Any]]):
             The API response data
         """
         return query_clinical_trials(
-            mutation=mutation,
-            min_rank=self.min_rank,
-            max_rank=self.max_rank,
-            timeout=self.timeout
+            mutation=mutation, min_rank=self.min_rank, max_rank=self.max_rank, timeout=self.timeout
         )
 
     def post(self, shared: dict[str, Any], mutation: str, result: dict[str, Any]) -> str | None:
@@ -115,7 +112,9 @@ class SummarizeTrialsNode(Node[list[dict[str, Any]], str]):
         """
         return format_trial_summary(studies)
 
-    def post(self, shared: dict[str, Any], studies: list[dict[str, Any]], summary: str) -> str | None:
+    def post(
+        self, shared: dict[str, Any], studies: list[dict[str, Any]], summary: str
+    ) -> str | None:
         """
         Store the summary in the shared context.
 

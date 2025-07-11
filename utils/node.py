@@ -16,8 +16,8 @@ from typing import Any, Optional, TypeVar
 
 logger = logging.getLogger(__name__)
 
-T = TypeVar('T')  # Input type
-R = TypeVar('R')  # Result type
+T = TypeVar("T")  # Input type
+R = TypeVar("R")  # Result type
 
 
 class NodeConnection:
@@ -25,13 +25,15 @@ class NodeConnection:
     Represents a connection between nodes, supporting both simple chaining and branching.
     """
 
-    def __init__(self, source_node: 'Node', target_node: Optional['Node'] = None, action: str | None = None):
+    def __init__(
+        self, source_node: "Node", target_node: Optional["Node"] = None, action: str | None = None
+    ):
         self.source_node = source_node
         self.target_node = target_node
         self.action = action
         self.connections = {}  # For branching: action -> target_node
 
-    def __rshift__(self, other: 'Node') -> 'NodeConnection':
+    def __rshift__(self, other: "Node") -> "NodeConnection":
         """Support node >> node chaining."""
         if self.target_node is None:
             # Simple chaining case
@@ -41,7 +43,7 @@ class NodeConnection:
             # Return new connection for the target node
             return NodeConnection(other)
 
-    def __sub__(self, action: str) -> 'BranchConnection':
+    def __sub__(self, action: str) -> "BranchConnection":
         """Support node - "action" >> target branching."""
         return BranchConnection(self.source_node, action)
 
@@ -51,14 +53,14 @@ class BranchConnection:
     Represents a branching connection for conditional flows.
     """
 
-    def __init__(self, source_node: 'Node', action: str):
+    def __init__(self, source_node: "Node", action: str):
         self.source_node = source_node
         self.action = action
 
-    def __rshift__(self, target_node: 'Node') -> 'Node':
+    def __rshift__(self, target_node: "Node") -> "Node":
         """Support node - "action" >> target branching."""
         # Store the branching information in the source node
-        if not hasattr(self.source_node, '_branches'):
+        if not hasattr(self.source_node, "_branches"):
             self.source_node._branches = {}
         self.source_node._branches[self.action] = target_node
         return target_node
@@ -114,7 +116,7 @@ class Node[T, R]:
         """
         raise NotImplementedError("post method must be implemented by subclasses")
 
-    def __rshift__(self, other: 'Node') -> 'Node':
+    def __rshift__(self, other: "Node") -> "Node":
         """
         Support node >> node chaining syntax.
 
@@ -127,7 +129,7 @@ class Node[T, R]:
         self._next_node = other
         return other
 
-    def __sub__(self, action: str) -> 'BranchConnection':
+    def __sub__(self, action: str) -> "BranchConnection":
         """
         Support node - "action" >> target branching syntax.
 
@@ -251,11 +253,11 @@ class Flow:
         self.nodes[node_id] = node
 
         # Register chained node
-        if hasattr(node, '_next_node') and node._next_node:
+        if hasattr(node, "_next_node") and node._next_node:
             self._auto_register_nodes(node._next_node, visited)
 
         # Register branched nodes
-        if hasattr(node, '_branches'):
+        if hasattr(node, "_branches"):
             for target_node in node._branches.values():
                 self._auto_register_nodes(target_node, visited)
 
@@ -366,7 +368,7 @@ class AsyncNode[T, R]:
         """
         raise NotImplementedError("post method must be implemented by subclasses")
 
-    def __rshift__(self, other: 'AsyncNode') -> 'AsyncNode':
+    def __rshift__(self, other: "AsyncNode") -> "AsyncNode":
         """
         Support async node >> node chaining syntax.
 
@@ -379,7 +381,7 @@ class AsyncNode[T, R]:
         self._next_node = other
         return other
 
-    def __sub__(self, action: str) -> 'BranchConnection':
+    def __sub__(self, action: str) -> "BranchConnection":
         """
         Support async node - "action" >> target branching syntax.
 
@@ -504,11 +506,11 @@ class AsyncFlow:
         self.nodes[node_id] = node
 
         # Register chained node
-        if hasattr(node, '_next_node') and node._next_node:
+        if hasattr(node, "_next_node") and node._next_node:
             self._auto_register_nodes(node._next_node, visited)
 
         # Register branched nodes
-        if hasattr(node, '_branches'):
+        if hasattr(node, "_branches"):
             for target_node in node._branches.values():
                 self._auto_register_nodes(target_node, visited)
 

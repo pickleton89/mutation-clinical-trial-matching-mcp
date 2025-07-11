@@ -2,7 +2,6 @@
 Functions to summarize clinical trial results using Claude via MCP.
 """
 
-
 from utils.call_llm import call_llm
 
 
@@ -73,7 +72,10 @@ def summarize_trials(trials: list[dict]) -> str:
 
             # Get interventions
             interventions_module = protocol.get("armsInterventionsModule", {})
-            interventions = [intervention.get("name", "") for intervention in interventions_module.get("interventions", [])]
+            interventions = [
+                intervention.get("name", "")
+                for intervention in interventions_module.get("interventions", [])
+            ]
 
             # Get summary
             description_module = protocol.get("descriptionModule", {})
@@ -81,8 +83,10 @@ def summarize_trials(trials: list[dict]) -> str:
 
             # Get locations
             contacts_module = protocol.get("contactsLocationsModule", {})
-            locations = [f"{location.get('facility', '')} ({location.get('city', '')}, {location.get('country', '')})"
-                        for location in contacts_module.get("locations", [])[:3]]  # Limit to 3 locations
+            locations = [
+                f"{location.get('facility', '')} ({location.get('city', '')}, {location.get('country', '')})"
+                for location in contacts_module.get("locations", [])[:3]
+            ]  # Limit to 3 locations
 
             # Format the trial information
             summary += f"### {title}\n"
@@ -95,7 +99,9 @@ def summarize_trials(trials: list[dict]) -> str:
                 summary += f"- **Summary:** {brief_summary}\n"
 
             if conditions:
-                summary += f"- **Conditions:** {', '.join(conditions[:5])}\n"  # Limit to 5 conditions
+                summary += (
+                    f"- **Conditions:** {', '.join(conditions[:5])}\n"  # Limit to 5 conditions
+                )
 
             if interventions:
                 summary += f"- **Interventions:** {', '.join(interventions[:5])}\n"  # Limit to 5 interventions

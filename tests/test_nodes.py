@@ -12,14 +12,12 @@ from utils.node import Flow
 class TestQueryTrialsNode(unittest.TestCase):
     """Test the QueryTrialsNode class."""
 
-    @patch('clinicaltrials.nodes.query_clinical_trials')
+    @patch("clinicaltrials.nodes.query_clinical_trials")
     def test_query_trials_node(self, mock_query):
         """Test the QueryTrialsNode workflow."""
         # Setup mock
         mock_response = {
-            "studies": [
-                {"protocolSection": {"identificationModule": {"briefTitle": "Test Trial"}}}
-            ]
+            "studies": [{"protocolSection": {"identificationModule": {"briefTitle": "Test Trial"}}}]
         }
         mock_query.return_value = mock_response
 
@@ -35,10 +33,7 @@ class TestQueryTrialsNode(unittest.TestCase):
         exec_result = node.exec(prep_result)
         self.assertEqual(exec_result, mock_response)
         mock_query.assert_called_once_with(
-            mutation="BRAF V600E",
-            min_rank=1,
-            max_rank=10,
-            timeout=10
+            mutation="BRAF V600E", min_rank=1, max_rank=10, timeout=10
         )
 
         # Test post
@@ -51,7 +46,7 @@ class TestQueryTrialsNode(unittest.TestCase):
 class TestSummarizeTrialsNode(unittest.TestCase):
     """Test the SummarizeTrialsNode class."""
 
-    @patch('clinicaltrials.nodes.format_trial_summary')
+    @patch("clinicaltrials.nodes.format_trial_summary")
     def test_summarize_trials_node(self, mock_summarize):
         """Test the SummarizeTrialsNode workflow."""
         # Setup mock
@@ -59,9 +54,7 @@ class TestSummarizeTrialsNode(unittest.TestCase):
         mock_summarize.return_value = mock_summary
 
         # Test data
-        studies = [
-            {"protocolSection": {"identificationModule": {"briefTitle": "Test Trial"}}}
-        ]
+        studies = [{"protocolSection": {"identificationModule": {"briefTitle": "Test Trial"}}}]
 
         # Create node and test
         node = SummarizeTrialsNode()
@@ -107,5 +100,5 @@ class TestFlow(unittest.TestCase):
         summarize_node.process.assert_called_once_with(shared)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

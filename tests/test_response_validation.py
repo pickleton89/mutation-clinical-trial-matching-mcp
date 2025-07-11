@@ -35,7 +35,7 @@ class TestValidationError(unittest.TestCase):
             field_path="user.name",
             expected_type="string",
             actual_value=123,
-            error_message="Expected string, got integer"
+            error_message="Expected string, got integer",
         )
 
         self.assertEqual(error.field_path, "user.name")
@@ -51,7 +51,7 @@ class TestValidationError(unittest.TestCase):
             expected_type="string",
             actual_value=None,
             error_message="Optional field missing",
-            severity="warning"
+            severity="warning",
         )
 
         self.assertEqual(error.severity, "warning")
@@ -62,12 +62,7 @@ class TestValidationResult(unittest.TestCase):
 
     def test_validation_result_valid(self):
         """Test ValidationResult for valid response."""
-        result = ValidationResult(
-            is_valid=True,
-            errors=[],
-            warnings=[],
-            schema_version="1.0"
-        )
+        result = ValidationResult(is_valid=True, errors=[], warnings=[], schema_version="1.0")
 
         self.assertTrue(result.is_valid)
         self.assertFalse(result.has_errors)
@@ -77,11 +72,7 @@ class TestValidationResult(unittest.TestCase):
     def test_validation_result_with_errors(self):
         """Test ValidationResult with errors."""
         error = ValidationError("field", "string", 123, "Type error")
-        result = ValidationResult(
-            is_valid=False,
-            errors=[error],
-            warnings=[]
-        )
+        result = ValidationResult(is_valid=False, errors=[error], warnings=[])
 
         self.assertFalse(result.is_valid)
         self.assertTrue(result.has_errors)
@@ -91,11 +82,7 @@ class TestValidationResult(unittest.TestCase):
     def test_validation_result_with_warnings(self):
         """Test ValidationResult with warnings."""
         warning = ValidationError("field", "string", None, "Optional field missing", "warning")
-        result = ValidationResult(
-            is_valid=True,
-            errors=[],
-            warnings=[warning]
-        )
+        result = ValidationResult(is_valid=True, errors=[], warnings=[warning])
 
         self.assertTrue(result.is_valid)
         self.assertFalse(result.has_errors)
@@ -360,14 +347,7 @@ class TestResponseSchema(unittest.TestCase):
         schema.add_field("user.profile.name", TypeValidator(str))
         schema.add_field("user.profile.age", TypeValidator(int))
 
-        response = {
-            "user": {
-                "profile": {
-                    "name": "John",
-                    "age": 30
-                }
-            }
-        }
+        response = {"user": {"profile": {"name": "John", "age": 30}}}
         result = schema.validate(response)
 
         self.assertTrue(result.is_valid)
@@ -438,9 +418,10 @@ class TestResponseValidatorDecorator(unittest.TestCase):
         schema.add_field("data", TypeValidator(dict))
         register_schema(schema)
 
-    @patch('utils.response_validation.logger')
+    @patch("utils.response_validation.logger")
     def test_response_validator_success(self, mock_logger):
         """Test response validator with valid response."""
+
         @response_validator("test_api")
         def api_function():
             return {"status": "success", "data": {"key": "value"}}
@@ -453,9 +434,10 @@ class TestResponseValidatorDecorator(unittest.TestCase):
         # Should not log any errors
         mock_logger.error.assert_not_called()
 
-    @patch('utils.response_validation.logger')
+    @patch("utils.response_validation.logger")
     def test_response_validator_with_errors(self, mock_logger):
         """Test response validator with validation errors."""
+
         @response_validator("test_api")
         def api_function():
             return {"status": 123, "data": "not a dict"}
@@ -468,9 +450,10 @@ class TestResponseValidatorDecorator(unittest.TestCase):
         # Should log validation errors
         mock_logger.error.assert_called()
 
-    @patch('utils.response_validation.logger')
+    @patch("utils.response_validation.logger")
     def test_response_validator_with_warnings(self, mock_logger):
         """Test response validator with warnings."""
+
         @response_validator("test_api", log_warnings=True)
         def api_function():
             return {"status": "success", "data": {"key": "value"}}
@@ -482,6 +465,7 @@ class TestResponseValidatorDecorator(unittest.TestCase):
 
     def test_response_validator_non_dict_response(self):
         """Test response validator with non-dict response."""
+
         @response_validator("test_api")
         def api_function():
             return "not a dict"
@@ -550,17 +534,13 @@ class TestPreDefinedSchemas(unittest.TestCase):
                     "protocolSection": {
                         "identificationModule": {
                             "nctId": "NCT12345678",
-                            "briefTitle": "Test Trial"
+                            "briefTitle": "Test Trial",
                         },
-                        "statusModule": {
-                            "overallStatus": "Recruiting"
-                        },
-                        "designModule": {
-                            "phases": ["Phase 1", "Phase 2"]
-                        }
+                        "statusModule": {"overallStatus": "Recruiting"},
+                        "designModule": {"phases": ["Phase 1", "Phase 2"]},
                     }
                 }
-            ]
+            ],
         }
 
         result = validate_response(valid_response, "clinical_trials_api")
@@ -571,17 +551,9 @@ class TestPreDefinedSchemas(unittest.TestCase):
     def test_anthropic_api_schema_validation(self):
         """Test Anthropic API schema validation."""
         valid_response = {
-            "content": [
-                {
-                    "type": "text",
-                    "text": "This is a response"
-                }
-            ],
+            "content": [{"type": "text", "text": "This is a response"}],
             "model": "claude-3-opus-20240229",
-            "usage": {
-                "input_tokens": 100,
-                "output_tokens": 50
-            }
+            "usage": {"input_tokens": 100, "output_tokens": 50},
         }
 
         result = validate_response(valid_response, "anthropic_api")
@@ -591,5 +563,5 @@ class TestPreDefinedSchemas(unittest.TestCase):
         self.assertEqual(len(result.errors), 0)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

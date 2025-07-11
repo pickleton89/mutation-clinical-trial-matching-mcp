@@ -23,35 +23,22 @@ class TestSummarizeTrials(unittest.TestCase):
             "protocolSection": {
                 "identificationModule": {
                     "briefTitle": "Test Trial for BRAF V600E",
-                    "nctId": "NCT12345678"
+                    "nctId": "NCT12345678",
                 },
-                "phaseModule": {
-                    "phase": "Phase 2"
-                },
-                "statusModule": {
-                    "overallStatus": "RECRUITING"
-                },
-                "conditionsModule": {
-                    "conditions": ["Melanoma", "Skin Cancer"]
-                },
+                "phaseModule": {"phase": "Phase 2"},
+                "statusModule": {"overallStatus": "RECRUITING"},
+                "conditionsModule": {"conditions": ["Melanoma", "Skin Cancer"]},
                 "armsInterventionsModule": {
-                    "interventions": [
-                        {"name": "Dabrafenib"},
-                        {"name": "Trametinib"}
-                    ]
+                    "interventions": [{"name": "Dabrafenib"}, {"name": "Trametinib"}]
                 },
                 "descriptionModule": {
                     "briefSummary": "This is a test trial for BRAF V600E mutation."
                 },
                 "contactsLocationsModule": {
                     "locations": [
-                        {
-                            "facility": "Test Hospital",
-                            "city": "Boston",
-                            "country": "United States"
-                        }
+                        {"facility": "Test Hospital", "city": "Boston", "country": "United States"}
                     ]
-                }
+                },
             }
         }
 
@@ -73,56 +60,26 @@ class TestSummarizeTrials(unittest.TestCase):
         mock_trials = [
             {
                 "protocolSection": {
-                    "identificationModule": {
-                        "briefTitle": "Phase 1 Trial",
-                        "nctId": "NCT11111111"
-                    },
-                    "phaseModule": {
-                        "phase": "Phase 1"
-                    },
-                    "statusModule": {
-                        "overallStatus": "RECRUITING"
-                    },
-                    "conditionsModule": {
-                        "conditions": ["Cancer"]
-                    },
-                    "armsInterventionsModule": {
-                        "interventions": [{"name": "Drug A"}]
-                    },
-                    "descriptionModule": {
-                        "briefSummary": "Phase 1 trial summary"
-                    },
-                    "contactsLocationsModule": {
-                        "locations": []
-                    }
+                    "identificationModule": {"briefTitle": "Phase 1 Trial", "nctId": "NCT11111111"},
+                    "phaseModule": {"phase": "Phase 1"},
+                    "statusModule": {"overallStatus": "RECRUITING"},
+                    "conditionsModule": {"conditions": ["Cancer"]},
+                    "armsInterventionsModule": {"interventions": [{"name": "Drug A"}]},
+                    "descriptionModule": {"briefSummary": "Phase 1 trial summary"},
+                    "contactsLocationsModule": {"locations": []},
                 }
             },
             {
                 "protocolSection": {
-                    "identificationModule": {
-                        "briefTitle": "Phase 2 Trial",
-                        "nctId": "NCT22222222"
-                    },
-                    "phaseModule": {
-                        "phase": "Phase 2"
-                    },
-                    "statusModule": {
-                        "overallStatus": "COMPLETED"
-                    },
-                    "conditionsModule": {
-                        "conditions": ["Melanoma"]
-                    },
-                    "armsInterventionsModule": {
-                        "interventions": [{"name": "Drug B"}]
-                    },
-                    "descriptionModule": {
-                        "briefSummary": "Phase 2 trial summary"
-                    },
-                    "contactsLocationsModule": {
-                        "locations": []
-                    }
+                    "identificationModule": {"briefTitle": "Phase 2 Trial", "nctId": "NCT22222222"},
+                    "phaseModule": {"phase": "Phase 2"},
+                    "statusModule": {"overallStatus": "COMPLETED"},
+                    "conditionsModule": {"conditions": ["Melanoma"]},
+                    "armsInterventionsModule": {"interventions": [{"name": "Drug B"}]},
+                    "descriptionModule": {"briefSummary": "Phase 2 trial summary"},
+                    "contactsLocationsModule": {"locations": []},
                 }
-            }
+            },
         ]
 
         result = summarize_trials(mock_trials)
@@ -142,24 +99,14 @@ class TestSummarizeTrials(unittest.TestCase):
             "protocolSection": {
                 "identificationModule": {
                     "briefTitle": "Unknown Phase Trial",
-                    "nctId": "NCT99999999"
+                    "nctId": "NCT99999999",
                 },
                 # Missing phaseModule
-                "statusModule": {
-                    "overallStatus": "RECRUITING"
-                },
-                "conditionsModule": {
-                    "conditions": ["Test Condition"]
-                },
-                "armsInterventionsModule": {
-                    "interventions": [{"name": "Test Drug"}]
-                },
-                "descriptionModule": {
-                    "briefSummary": "Unknown phase trial"
-                },
-                "contactsLocationsModule": {
-                    "locations": []
-                }
+                "statusModule": {"overallStatus": "RECRUITING"},
+                "conditionsModule": {"conditions": ["Test Condition"]},
+                "armsInterventionsModule": {"interventions": [{"name": "Test Drug"}]},
+                "descriptionModule": {"briefSummary": "Unknown phase trial"},
+                "contactsLocationsModule": {"locations": []},
             }
         }
 
@@ -173,10 +120,7 @@ class TestSummarizeTrials(unittest.TestCase):
         """Test handling of trials with missing optional fields."""
         mock_trial = {
             "protocolSection": {
-                "identificationModule": {
-                    "briefTitle": "Minimal Trial",
-                    "nctId": "NCT00000000"
-                }
+                "identificationModule": {"briefTitle": "Minimal Trial", "nctId": "NCT00000000"}
                 # Missing most optional modules
             }
         }
@@ -198,26 +142,14 @@ class TestSummarizeTrials(unittest.TestCase):
             "protocolSection": {
                 "identificationModule": {
                     "briefTitle": "Long Summary Trial",
-                    "nctId": "NCT55555555"
+                    "nctId": "NCT55555555",
                 },
-                "phaseModule": {
-                    "phase": "Phase 1"
-                },
-                "statusModule": {
-                    "overallStatus": "RECRUITING"
-                },
-                "conditionsModule": {
-                    "conditions": ["Cancer"]
-                },
-                "armsInterventionsModule": {
-                    "interventions": [{"name": "Drug"}]
-                },
-                "descriptionModule": {
-                    "briefSummary": long_summary
-                },
-                "contactsLocationsModule": {
-                    "locations": []
-                }
+                "phaseModule": {"phase": "Phase 1"},
+                "statusModule": {"overallStatus": "RECRUITING"},
+                "conditionsModule": {"conditions": ["Cancer"]},
+                "armsInterventionsModule": {"interventions": [{"name": "Drug"}]},
+                "descriptionModule": {"briefSummary": long_summary},
+                "contactsLocationsModule": {"locations": []},
             }
         }
 
@@ -233,29 +165,33 @@ class TestSummarizeTrials(unittest.TestCase):
             "protocolSection": {
                 "identificationModule": {
                     "briefTitle": "Many Conditions Trial",
-                    "nctId": "NCT66666666"
+                    "nctId": "NCT66666666",
                 },
-                "phaseModule": {
-                    "phase": "Phase 2"
-                },
-                "statusModule": {
-                    "overallStatus": "RECRUITING"
-                },
+                "phaseModule": {"phase": "Phase 2"},
+                "statusModule": {"overallStatus": "RECRUITING"},
                 "conditionsModule": {
-                    "conditions": ["Condition1", "Condition2", "Condition3", "Condition4", "Condition5", "Condition6", "Condition7"]
+                    "conditions": [
+                        "Condition1",
+                        "Condition2",
+                        "Condition3",
+                        "Condition4",
+                        "Condition5",
+                        "Condition6",
+                        "Condition7",
+                    ]
                 },
                 "armsInterventionsModule": {
                     "interventions": [
-                        {"name": "Drug1"}, {"name": "Drug2"}, {"name": "Drug3"},
-                        {"name": "Drug4"}, {"name": "Drug5"}, {"name": "Drug6"}
+                        {"name": "Drug1"},
+                        {"name": "Drug2"},
+                        {"name": "Drug3"},
+                        {"name": "Drug4"},
+                        {"name": "Drug5"},
+                        {"name": "Drug6"},
                     ]
                 },
-                "descriptionModule": {
-                    "briefSummary": "Test trial"
-                },
-                "contactsLocationsModule": {
-                    "locations": []
-                }
+                "descriptionModule": {"briefSummary": "Test trial"},
+                "contactsLocationsModule": {"locations": []},
             }
         }
 
@@ -275,31 +211,21 @@ class TestSummarizeTrials(unittest.TestCase):
             "protocolSection": {
                 "identificationModule": {
                     "briefTitle": "Many Locations Trial",
-                    "nctId": "NCT77777777"
+                    "nctId": "NCT77777777",
                 },
-                "phaseModule": {
-                    "phase": "Phase 3"
-                },
-                "statusModule": {
-                    "overallStatus": "RECRUITING"
-                },
-                "conditionsModule": {
-                    "conditions": ["Cancer"]
-                },
-                "armsInterventionsModule": {
-                    "interventions": [{"name": "Drug"}]
-                },
-                "descriptionModule": {
-                    "briefSummary": "Test trial"
-                },
+                "phaseModule": {"phase": "Phase 3"},
+                "statusModule": {"overallStatus": "RECRUITING"},
+                "conditionsModule": {"conditions": ["Cancer"]},
+                "armsInterventionsModule": {"interventions": [{"name": "Drug"}]},
+                "descriptionModule": {"briefSummary": "Test trial"},
                 "contactsLocationsModule": {
                     "locations": [
                         {"facility": "Hospital1", "city": "City1", "country": "Country1"},
                         {"facility": "Hospital2", "city": "City2", "country": "Country2"},
                         {"facility": "Hospital3", "city": "City3", "country": "Country3"},
-                        {"facility": "Hospital4", "city": "City4", "country": "Country4"}
+                        {"facility": "Hospital4", "city": "City4", "country": "Country4"},
                     ]
-                }
+                },
             }
         }
 
@@ -325,7 +251,7 @@ class TestSummarizeTrials(unittest.TestCase):
 class TestCallClaudeViaMcp(unittest.TestCase):
     """Test the call_claude_via_mcp function."""
 
-    @patch('llm.summarize.call_llm')
+    @patch("llm.summarize.call_llm")
     def test_call_claude_via_mcp(self, mock_call_llm):
         """Test that call_claude_via_mcp calls the call_llm function."""
         mock_call_llm.return_value = "Test response"
@@ -336,5 +262,5 @@ class TestCallClaudeViaMcp(unittest.TestCase):
         mock_call_llm.assert_called_once_with("Test prompt")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

@@ -5,6 +5,7 @@ from llm.summarize import summarize_trials
 
 # Main workflow for clinical trial search and summarization.
 
+
 def main():
     """
     Main function to accept a mutation, query clinicaltrials.gov, parse results, and summarize with Claude.
@@ -16,6 +17,7 @@ def main():
     if not raw_results or "studies" not in raw_results or not raw_results["studies"]:
         sys.exit(0)
     summarize_trials(raw_results["studies"])
+
 
 if __name__ == "__main__":
     main()

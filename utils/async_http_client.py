@@ -73,59 +73,69 @@ class AsyncHttpClientManager:
         base_config = {
             "timeout": httpx.Timeout(
                 connect=config.http_connect_timeout,
-                read=kwargs.get('read_timeout', config.http_read_timeout),
+                read=kwargs.get("read_timeout", config.http_read_timeout),
                 write=config.http_write_timeout,
-                pool=config.http_pool_timeout
+                pool=config.http_pool_timeout,
             ),
             "limits": httpx.Limits(
                 max_connections=config.http_max_connections,
                 max_keepalive_connections=config.http_max_keepalive_connections,
-                keepalive_expiry=config.http_keepalive_expiry
+                keepalive_expiry=config.http_keepalive_expiry,
             ),
-            "follow_redirects": kwargs.get('follow_redirects', True),
-            "headers": kwargs.get('headers', {}),
-            "http2": config.enable_http2
+            "follow_redirects": kwargs.get("follow_redirects", True),
+            "headers": kwargs.get("headers", {}),
+            "http2": config.enable_http2,
             # Note: retries are handled by our retry decorator, not httpx client
         }
 
         # Service-specific configurations
-        if service == 'clinicaltrials':
-            base_config['headers'].update({
-                "Accept": "application/json",
-                "User-Agent": config.user_agent
-            })
+        if service == "clinicaltrials":
+            base_config["headers"].update(
+                {"Accept": "application/json", "User-Agent": config.user_agent}
+            )
             # Use standard read timeout for clinical trials API
-            base_config['timeout'] = httpx.Timeout(
+            base_config["timeout"] = httpx.Timeout(
                 connect=config.http_connect_timeout,
                 read=config.http_read_timeout,
                 write=config.http_write_timeout,
-                pool=config.http_pool_timeout
+                pool=config.http_pool_timeout,
             )
 
-        elif service == 'anthropic':
-            base_config['headers'].update({
-                "content-type": "application/json",
-                "anthropic-version": "2023-06-01",
-                "User-Agent": config.user_agent
-            })
+        elif service == "anthropic":
+            base_config["headers"].update(
+                {
+                    "content-type": "application/json",
+                    "anthropic-version": "2023-06-01",
+                    "User-Agent": config.user_agent,
+                }
+            )
             # Use longer timeout for Anthropic API
-            base_config['timeout'] = httpx.Timeout(
+            base_config["timeout"] = httpx.Timeout(
                 connect=config.http_connect_timeout,
                 read=config.anthropic_timeout,
                 write=config.http_write_timeout,
-                pool=config.http_pool_timeout
+                pool=config.http_pool_timeout,
             )
 
         # Override with any additional kwargs
-        base_config.update({k: v for k, v in kwargs.items() if k not in ['read_timeout', 'follow_redirects', 'headers']})
+        base_config.update(
+            {
+                k: v
+                for k, v in kwargs.items()
+                if k not in ["read_timeout", "follow_redirects", "headers"]
+            }
+        )
 
-        logger.info(f"Creating async HTTP client for service: {service}", extra={
-            "service": service,
-            "connect_timeout": base_config['timeout'].connect,
-            "read_timeout": base_config['timeout'].read,
-            "max_connections": base_config['limits'].max_connections,
-            "action": "http_client_creation"
-        })
+        logger.info(
+            f"Creating async HTTP client for service: {service}",
+            extra={
+                "service": service,
+                "connect_timeout": base_config["timeout"].connect,
+                "read_timeout": base_config["timeout"].read,
+                "max_connections": base_config["limits"].max_connections,
+                "action": "http_client_creation",
+            },
+        )
 
         return httpx.AsyncClient(**base_config)
 
@@ -141,10 +151,10 @@ class AsyncHttpClientManager:
             if service in _clients:
                 await _clients[service].aclose()
                 del _clients[service]
-                logger.info(f"Closed async HTTP client for service: {service}", extra={
-                    "service": service,
-                    "action": "http_client_cleanup"
-                })
+                logger.info(
+                    f"Closed async HTTP client for service: {service}",
+                    extra={"service": service, "action": "http_client_cleanup"},
+                )
 
     @staticmethod
     async def close_all_clients() -> None:
@@ -152,14 +162,14 @@ class AsyncHttpClientManager:
         async with _client_lock:
             for service, client in _clients.items():
                 await client.aclose()
-                logger.info(f"Closed async HTTP client for service: {service}", extra={
-                    "service": service,
-                    "action": "http_client_cleanup"
-                })
+                logger.info(
+                    f"Closed async HTTP client for service: {service}",
+                    extra={"service": service, "action": "http_client_cleanup"},
+                )
             _clients.clear()
-            logger.info("All async HTTP clients closed", extra={
-                "action": "http_clients_cleanup_complete"
-            })
+            logger.info(
+                "All async HTTP clients closed", extra={"action": "http_clients_cleanup_complete"}
+            )
 
     @staticmethod
     async def get_client_info() -> dict[str, Any]:
@@ -180,21 +190,33 @@ class AsyncHttpClientManager:
                             "connect": client.timeout.connect,
                             "read": client.timeout.read,
                             "write": client.timeout.write,
-                            "pool": client.timeout.pool
+                            "pool": client.timeout.pool,
                         },
                         "limits": {
-                            "max_connections": getattr(client, '_limits', {}).get('max_connections', 'N/A'),
-                            "max_keepalive_connections": getattr(client, '_limits', {}).get('max_keepalive_connections', 'N/A'),
-                            "keepalive_expiry": getattr(client, '_limits', {}).get('keepalive_expiry', 'N/A')
+                            "max_connections": getattr(client, "_limits", {}).get(
+                                "max_connections", "N/A"
+                            ),
+                            "max_keepalive_connections": getattr(client, "_limits", {}).get(
+                                "max_keepalive_connections", "N/A"
+                            ),
+                            "keepalive_expiry": getattr(client, "_limits", {}).get(
+                                "keepalive_expiry", "N/A"
+                            ),
                         },
                         "features": {
-                            "http2_enabled": getattr(client, '_transport', {}).get('_pool', {}).get('_http2', False),
-                            "connection_pool_size": len(getattr(client, '_transport', {}).get('_pool', {}).get('_connections', [])),
-                            "follow_redirects": getattr(client, '_follow_redirects', True)
-                        }
+                            "http2_enabled": getattr(client, "_transport", {})
+                            .get("_pool", {})
+                            .get("_http2", False),
+                            "connection_pool_size": len(
+                                getattr(client, "_transport", {})
+                                .get("_pool", {})
+                                .get("_connections", [])
+                            ),
+                            "follow_redirects": getattr(client, "_follow_redirects", True),
+                        },
                     }
                     for service, client in _clients.items()
-                }
+                },
             }
 
 
@@ -210,27 +232,27 @@ async def get_clinicaltrials_client() -> httpx.AsyncClient:
             connect=config.http_connect_timeout,
             read=config.http_read_timeout,
             write=config.http_write_timeout,
-            pool=config.http_pool_timeout
+            pool=config.http_pool_timeout,
         ),
         limits=httpx.Limits(
             max_connections=config.http_max_connections,
             max_keepalive_connections=config.http_max_keepalive_connections,
-            keepalive_expiry=config.http_keepalive_expiry
+            keepalive_expiry=config.http_keepalive_expiry,
         ),
         headers={
             "Accept": "application/json",
             "User-Agent": config.user_agent,
             "Referer": "https://clinicaltrials.gov/",
-            "Accept-Language": "en-US,en;q=0.9"
+            "Accept-Language": "en-US,en;q=0.9",
         },
         follow_redirects=True,
-        http2=config.enable_http2
+        http2=config.enable_http2,
     )
 
 
 async def get_anthropic_client() -> httpx.AsyncClient:
     """Get the async HTTP client for Anthropic API."""
-    return await AsyncHttpClientManager.get_client('anthropic')
+    return await AsyncHttpClientManager.get_client("anthropic")
 
 
 async def cleanup_all_clients() -> None:

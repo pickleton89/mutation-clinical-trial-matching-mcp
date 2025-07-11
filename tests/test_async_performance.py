@@ -23,19 +23,14 @@ class TestAsyncPerformance(unittest.TestCase):
             "studies": [
                 {
                     "protocolSection": {
-                        "identificationModule": {
-                            "briefTitle": "Test Study",
-                            "nctId": "NCT123456"
-                        },
-                        "statusModule": {
-                            "overallStatus": "Recruiting"
-                        }
+                        "identificationModule": {"briefTitle": "Test Study", "nctId": "NCT123456"},
+                        "statusModule": {"overallStatus": "Recruiting"},
                     }
                 }
             ]
         }
 
-    @patch('clinicaltrials.async_query.get_async_client')
+    @patch("clinicaltrials.async_query.get_async_client")
     async def test_async_query_performance(self, mock_get_client):
         """Test that async query performs well."""
         # Mock async client
@@ -55,7 +50,7 @@ class TestAsyncPerformance(unittest.TestCase):
         self.assertIn("studies", result)
         self.assertLess(single_duration, 1.0)  # Should complete within 1 second
 
-    @patch('clinicaltrials.async_query.get_async_client')
+    @patch("clinicaltrials.async_query.get_async_client")
     async def test_batch_query_performance(self, mock_get_client):
         """Test that batch queries are faster than sequential queries."""
         # Mock async client
@@ -82,16 +77,14 @@ class TestAsyncPerformance(unittest.TestCase):
         self.assertLess(batch_duration, sequential_duration * 0.8)
         self.assertEqual(len(batch_result), len(self.test_mutations))
 
-    @patch('utils.async_call_llm.get_anthropic_async_client')
+    @patch("utils.async_call_llm.get_anthropic_async_client")
     async def test_llm_batch_performance(self, mock_get_client):
         """Test that batch LLM calls are faster than sequential calls."""
         # Mock async client
         mock_client = AsyncMock()
         mock_response = AsyncMock()
         mock_response.status_code = 200
-        mock_response.json.return_value = {
-            "content": [{"text": "Mock response"}]
-        }
+        mock_response.json.return_value = {"content": [{"text": "Mock response"}]}
         mock_response.raise_for_status = MagicMock()
         mock_client.post.return_value = mock_response
         mock_get_client.return_value = mock_client
@@ -115,8 +108,8 @@ class TestAsyncPerformance(unittest.TestCase):
         self.assertLess(batch_duration, sequential_duration * 0.8)
         self.assertEqual(len(batch_results), len(prompts))
 
-    @patch('clinicaltrials.async_query.get_async_client')
-    @patch('utils.async_call_llm.get_anthropic_async_client')
+    @patch("clinicaltrials.async_query.get_async_client")
+    @patch("utils.async_call_llm.get_anthropic_async_client")
     async def test_async_flow_performance(self, mock_llm_client, mock_api_client):
         """Test performance of async flow execution."""
         # Mock API client
@@ -128,9 +121,7 @@ class TestAsyncPerformance(unittest.TestCase):
         # Mock LLM client
         mock_llm_response = AsyncMock()
         mock_llm_response.status_code = 200
-        mock_llm_response.json.return_value = {
-            "content": [{"text": "Mock summary"}]
-        }
+        mock_llm_response.json.return_value = {"content": [{"text": "Mock summary"}]}
         mock_llm_response.raise_for_status = MagicMock()
         mock_llm_client.return_value.post.return_value = mock_llm_response
 
@@ -148,7 +139,7 @@ class TestAsyncPerformance(unittest.TestCase):
         self.assertIn("trials_data", result)
         self.assertLess(flow_duration, 2.0)  # Should complete within 2 seconds
 
-    @patch('clinicaltrials.async_query.get_async_client')
+    @patch("clinicaltrials.async_query.get_async_client")
     async def test_concurrent_request_limits(self, mock_get_client):
         """Test that concurrent request limits are respected."""
         # Mock async client with delay to test concurrency
@@ -194,6 +185,7 @@ class TestAsyncPerformance(unittest.TestCase):
 
         from clinicaltrials.async_query import query_clinical_trials_async
         from clinicaltrials.query import query_clinical_trials
+
         sync_sig = inspect.signature(query_clinical_trials)
         async_sig = inspect.signature(query_clinical_trials_async)
 

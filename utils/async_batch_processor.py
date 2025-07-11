@@ -19,8 +19,8 @@ from utils.metrics import gauge, histogram, increment
 
 logger = logging.getLogger(__name__)
 
-T = TypeVar('T')
-R = TypeVar('R')
+T = TypeVar("T")
+R = TypeVar("R")
 
 
 class BatchProcessor:
@@ -42,7 +42,7 @@ class BatchProcessor:
         max_concurrent: int = 5,
         adaptive_sizing: bool = True,
         min_batch_size: int = 1,
-        target_latency_ms: float = 1000.0
+        target_latency_ms: float = 1000.0,
     ):
         """
         Initialize the batch processor.
@@ -78,7 +78,7 @@ class BatchProcessor:
         self,
         items: list[T],
         processor_func: Callable[[T], Awaitable[R]],
-        error_handler: Callable[[T, Exception], Awaitable[R]] | None = None
+        error_handler: Callable[[T, Exception], Awaitable[R]] | None = None,
     ) -> list[R]:
         """
         Process a batch of items with optimal concurrency and error handling.
@@ -102,36 +102,38 @@ class BatchProcessor:
         else:
             batch_size = min(self.current_batch_size, len(items))
 
-        logger.info(f"Starting batch processing: {len(items)} items with batch size {batch_size}", extra={
-            "service": self.service_name,
-            "operation": self.operation_name,
-            "total_items": len(items),
-            "batch_size": batch_size,
-            "max_concurrent": self.max_concurrent,
-            "action": "batch_start"
-        })
+        logger.info(
+            f"Starting batch processing: {len(items)} items with batch size {batch_size}",
+            extra={
+                "service": self.service_name,
+                "operation": self.operation_name,
+                "total_items": len(items),
+                "batch_size": batch_size,
+                "max_concurrent": self.max_concurrent,
+                "action": "batch_start",
+            },
+        )
 
         # Track batch metrics
-        increment("batch_processor_batches_total", tags={
-            "service": self.service_name,
-            "operation": self.operation_name
-        })
-        gauge("batch_processor_batch_size", batch_size, tags={
-            "service": self.service_name,
-            "operation": self.operation_name
-        })
+        increment(
+            "batch_processor_batches_total",
+            tags={"service": self.service_name, "operation": self.operation_name},
+        )
+        gauge(
+            "batch_processor_batch_size",
+            batch_size,
+            tags={"service": self.service_name, "operation": self.operation_name},
+        )
 
         # Create batches
-        batches = [items[i:i + batch_size] for i in range(0, len(items), batch_size)]
+        batches = [items[i : i + batch_size] for i in range(0, len(items), batch_size)]
 
         # Process batches concurrently
         results = []
         batch_tasks = []
 
         for batch_idx, batch in enumerate(batches):
-            task = self._process_single_batch(
-                batch, batch_idx, processor_func, error_handler
-            )
+            task = self._process_single_batch(batch, batch_idx, processor_func, error_handler)
             batch_tasks.append(task)
 
         # Execute batches with concurrency limit
@@ -151,28 +153,34 @@ class BatchProcessor:
             self._update_adaptive_sizing(total_duration, len(items))
 
         # Record comprehensive metrics
-        histogram("batch_processor_duration", total_duration, tags={
-            "service": self.service_name,
-            "operation": self.operation_name
-        })
-        histogram("batch_processor_items_per_second", len(items) / total_duration, tags={
-            "service": self.service_name,
-            "operation": self.operation_name
-        })
-        gauge("batch_processor_total_processed", self.total_processed, tags={
-            "service": self.service_name,
-            "operation": self.operation_name
-        })
+        histogram(
+            "batch_processor_duration",
+            total_duration,
+            tags={"service": self.service_name, "operation": self.operation_name},
+        )
+        histogram(
+            "batch_processor_items_per_second",
+            len(items) / total_duration,
+            tags={"service": self.service_name, "operation": self.operation_name},
+        )
+        gauge(
+            "batch_processor_total_processed",
+            self.total_processed,
+            tags={"service": self.service_name, "operation": self.operation_name},
+        )
 
-        logger.info(f"Batch processing completed: {len(items)} items in {total_duration:.2f}s", extra={
-            "service": self.service_name,
-            "operation": self.operation_name,
-            "total_items": len(items),
-            "duration": total_duration,
-            "items_per_second": len(items) / total_duration,
-            "batch_count": len(batches),
-            "action": "batch_complete"
-        })
+        logger.info(
+            f"Batch processing completed: {len(items)} items in {total_duration:.2f}s",
+            extra={
+                "service": self.service_name,
+                "operation": self.operation_name,
+                "total_items": len(items),
+                "duration": total_duration,
+                "items_per_second": len(items) / total_duration,
+                "batch_count": len(batches),
+                "action": "batch_complete",
+            },
+        )
 
         return results
 
@@ -181,7 +189,7 @@ class BatchProcessor:
         batch: list[T],
         batch_idx: int,
         processor_func: Callable[[T], Awaitable[R]],
-        error_handler: Callable[[T, Exception], Awaitable[R]] | None = None
+        error_handler: Callable[[T, Exception], Awaitable[R]] | None = None,
     ) -> list[R]:
         """Process a single batch of items."""
         batch_start_time = time.time()
@@ -191,26 +199,32 @@ class BatchProcessor:
                 return await processor_func(item)
             except Exception as e:
                 self.total_errors += 1
-                increment("batch_processor_errors_total", tags={
-                    "service": self.service_name,
-                    "operation": self.operation_name,
-                    "error_type": type(e).__name__
-                })
+                increment(
+                    "batch_processor_errors_total",
+                    tags={
+                        "service": self.service_name,
+                        "operation": self.operation_name,
+                        "error_type": type(e).__name__,
+                    },
+                )
 
                 if error_handler:
                     return await error_handler(item, e)
                 else:
-                    logger.error(f"Error processing item in batch {batch_idx}: {e}", extra={
-                        "service": self.service_name,
-                        "operation": self.operation_name,
-                        "batch_idx": batch_idx,
-                        "error": str(e),
-                        "action": "batch_item_error"
-                    })
+                    logger.error(
+                        f"Error processing item in batch {batch_idx}: {e}",
+                        extra={
+                            "service": self.service_name,
+                            "operation": self.operation_name,
+                            "batch_idx": batch_idx,
+                            "error": str(e),
+                            "action": "batch_item_error",
+                        },
+                    )
                     raise
 
         # Process batch items concurrently with semaphore control
-        async with SemaphoreContext(self.service_name, f'{self.operation_name}_batch'):
+        async with SemaphoreContext(self.service_name, f"{self.operation_name}_batch"):
             tasks = [_process_item_with_error_handling(item) for item in batch]
             results = await asyncio.gather(*tasks, return_exceptions=True)
 
@@ -218,14 +232,17 @@ class BatchProcessor:
         processed_results = []
         for i, result in enumerate(results):
             if isinstance(result, Exception):
-                logger.error(f"Unhandled exception in batch {batch_idx}, item {i}: {result}", extra={
-                    "service": self.service_name,
-                    "operation": self.operation_name,
-                    "batch_idx": batch_idx,
-                    "item_idx": i,
-                    "error": str(result),
-                    "action": "batch_item_exception"
-                })
+                logger.error(
+                    f"Unhandled exception in batch {batch_idx}, item {i}: {result}",
+                    extra={
+                        "service": self.service_name,
+                        "operation": self.operation_name,
+                        "batch_idx": batch_idx,
+                        "item_idx": i,
+                        "error": str(result),
+                        "action": "batch_item_exception",
+                    },
+                )
                 # Re-raise or provide default value based on error handling strategy
                 if error_handler is None:
                     raise result
@@ -237,14 +254,17 @@ class BatchProcessor:
                 processed_results.append(result)
 
         batch_duration = time.time() - batch_start_time
-        histogram("batch_processor_single_batch_duration", batch_duration, tags={
-            "service": self.service_name,
-            "operation": self.operation_name
-        })
+        histogram(
+            "batch_processor_single_batch_duration",
+            batch_duration,
+            tags={"service": self.service_name, "operation": self.operation_name},
+        )
 
         return processed_results
 
-    async def _execute_batches_concurrently(self, batch_tasks: list[Awaitable[list[R]]]) -> list[list[R]]:
+    async def _execute_batches_concurrently(
+        self, batch_tasks: list[Awaitable[list[R]]]
+    ) -> list[list[R]]:
         """Execute batch tasks with concurrency control."""
         # Use semaphore to limit concurrent batch operations
         semaphore = asyncio.Semaphore(self.max_concurrent)
@@ -278,14 +298,17 @@ class BatchProcessor:
 
         self.current_batch_size = min(new_size, total_items)
 
-        logger.debug(f"Adaptive batch sizing: {self.current_batch_size} (avg_latency: {avg_latency:.2f}ms)", extra={
-            "service": self.service_name,
-            "operation": self.operation_name,
-            "current_batch_size": self.current_batch_size,
-            "avg_latency": avg_latency,
-            "target_latency": self.target_latency_ms,
-            "action": "adaptive_sizing"
-        })
+        logger.debug(
+            f"Adaptive batch sizing: {self.current_batch_size} (avg_latency: {avg_latency:.2f}ms)",
+            extra={
+                "service": self.service_name,
+                "operation": self.operation_name,
+                "current_batch_size": self.current_batch_size,
+                "avg_latency": avg_latency,
+                "target_latency": self.target_latency_ms,
+                "action": "adaptive_sizing",
+            },
+        )
 
         return self.current_batch_size
 
@@ -305,13 +328,15 @@ class BatchProcessor:
             "batch_count": self.batch_count,
             "current_batch_size": self.current_batch_size,
             "error_rate": self.total_errors / max(self.total_processed, 1),
-            "avg_latency_ms": sum(self.recent_latencies) / len(self.recent_latencies) if self.recent_latencies else 0,
+            "avg_latency_ms": sum(self.recent_latencies) / len(self.recent_latencies)
+            if self.recent_latencies
+            else 0,
             "configuration": {
                 "max_batch_size": self.max_batch_size,
                 "max_concurrent": self.max_concurrent,
                 "adaptive_sizing": self.adaptive_sizing,
-                "target_latency_ms": self.target_latency_ms
-            }
+                "target_latency_ms": self.target_latency_ms,
+            },
         }
 
 
@@ -321,7 +346,7 @@ async def process_batch_simple(
     processor_func: Callable[[T], Awaitable[R]],
     service_name: str = "default",
     operation_name: str = "batch_process",
-    max_concurrent: int = 5
+    max_concurrent: int = 5,
 ) -> list[R]:
     """
     Simple batch processing function for basic use cases.
@@ -340,7 +365,7 @@ async def process_batch_simple(
         service_name=service_name,
         operation_name=operation_name,
         max_concurrent=max_concurrent,
-        adaptive_sizing=False  # Keep it simple for the basic function
+        adaptive_sizing=False,  # Keep it simple for the basic function
     )
 
     return await processor.process_batch(items, processor_func)

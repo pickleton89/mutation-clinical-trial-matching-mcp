@@ -21,12 +21,11 @@ class ExampleQueryNode(Node):
 
     def exec(self, prep_result: str) -> dict[str, Any]:
         # Simulate query execution
-        return {
-            "results": [f"result_{i}" for i in range(3)],
-            "query": prep_result
-        }
+        return {"results": [f"result_{i}" for i in range(3)], "query": prep_result}
 
-    def post(self, shared: dict[str, Any], prep_result: str, exec_result: dict[str, Any]) -> str | None:
+    def post(
+        self, shared: dict[str, Any], prep_result: str, exec_result: dict[str, Any]
+    ) -> str | None:
         shared["query_results"] = exec_result
         return self.get_next_node_id()
 
@@ -46,7 +45,9 @@ class ExampleProcessNode(Node):
         processed = [f"processed_{item}" for item in results]
         return {"processed_results": processed}
 
-    def post(self, shared: dict[str, Any], prep_result: dict[str, Any], exec_result: dict[str, Any]) -> str | None:
+    def post(
+        self, shared: dict[str, Any], prep_result: dict[str, Any], exec_result: dict[str, Any]
+    ) -> str | None:
         shared["processed_data"] = exec_result
         return self.get_next_node_id()
 
@@ -70,7 +71,9 @@ class ExampleReviewNode(Node):
         else:
             return "rejected"
 
-    def post(self, shared: dict[str, Any], prep_result: dict[str, Any], exec_result: str) -> str | None:
+    def post(
+        self, shared: dict[str, Any], prep_result: dict[str, Any], exec_result: str
+    ) -> str | None:
         shared["decision"] = exec_result
         return self.get_next_node_id(exec_result)
 
@@ -87,7 +90,9 @@ class ExampleApprovalNode(Node):
     def exec(self, prep_result: dict[str, Any]) -> str:
         return "Results approved and finalized"
 
-    def post(self, shared: dict[str, Any], prep_result: dict[str, Any], exec_result: str) -> str | None:
+    def post(
+        self, shared: dict[str, Any], prep_result: dict[str, Any], exec_result: str
+    ) -> str | None:
         shared["final_result"] = exec_result
         return self.get_next_node_id()
 
@@ -104,7 +109,9 @@ class ExampleRevisionNode(Node):
     def exec(self, prep_result: dict[str, Any]) -> str:
         return "Results revised"
 
-    def post(self, shared: dict[str, Any], prep_result: dict[str, Any], exec_result: str) -> str | None:
+    def post(
+        self, shared: dict[str, Any], prep_result: dict[str, Any], exec_result: str
+    ) -> str | None:
         shared["revision_result"] = exec_result
         return self.get_next_node_id()
 
@@ -121,7 +128,9 @@ class ExampleRejectionNode(Node):
     def exec(self, prep_result: dict[str, Any]) -> str:
         return "Results rejected"
 
-    def post(self, shared: dict[str, Any], prep_result: dict[str, Any], exec_result: str) -> str | None:
+    def post(
+        self, shared: dict[str, Any], prep_result: dict[str, Any], exec_result: str
+    ) -> str | None:
         shared["final_result"] = exec_result
         return self.get_next_node_id()
 
@@ -148,7 +157,6 @@ def example_simple_chaining():
     # Run the flow
     shared = {"query": "example query"}
     result = flow.run(shared)
-
 
     return result
 
@@ -190,7 +198,7 @@ def example_branching_pattern():
     scenarios = [
         {"query": "big query", "expected": "approved"},
         {"query": "small", "expected": "needs_revision"},
-        {"query": "", "expected": "rejected"}
+        {"query": "", "expected": "rejected"},
     ]
 
     for scenario in scenarios:
@@ -217,10 +225,12 @@ def example_complex_workflow():
             # Simulate document loading
             return {
                 "content": f"Document content from {prep_result}",
-                "size": len(prep_result) * 100
+                "size": len(prep_result) * 100,
             }
 
-        def post(self, shared: dict[str, Any], prep_result: str, exec_result: dict[str, Any]) -> str | None:
+        def post(
+            self, shared: dict[str, Any], prep_result: str, exec_result: dict[str, Any]
+        ) -> str | None:
             shared["document"] = exec_result
             return self.get_next_node_id()
 
@@ -240,7 +250,9 @@ def example_complex_workflow():
             else:
                 return "small_document"
 
-        def post(self, shared: dict[str, Any], prep_result: dict[str, Any], exec_result: str) -> str | None:
+        def post(
+            self, shared: dict[str, Any], prep_result: dict[str, Any], exec_result: str
+        ) -> str | None:
             shared["document_type"] = exec_result
             return self.get_next_node_id(exec_result)
 
@@ -254,7 +266,9 @@ def example_complex_workflow():
         def exec(self, prep_result: dict[str, Any]) -> str:
             return "Large document processed with special handling"
 
-        def post(self, shared: dict[str, Any], prep_result: dict[str, Any], exec_result: str) -> str | None:
+        def post(
+            self, shared: dict[str, Any], prep_result: dict[str, Any], exec_result: str
+        ) -> str | None:
             shared["processing_result"] = exec_result
             return self.get_next_node_id()
 
@@ -268,7 +282,9 @@ def example_complex_workflow():
         def exec(self, prep_result: dict[str, Any]) -> str:
             return "Medium document processed normally"
 
-        def post(self, shared: dict[str, Any], prep_result: dict[str, Any], exec_result: str) -> str | None:
+        def post(
+            self, shared: dict[str, Any], prep_result: dict[str, Any], exec_result: str
+        ) -> str | None:
             shared["processing_result"] = exec_result
             return self.get_next_node_id()
 
@@ -282,7 +298,9 @@ def example_complex_workflow():
         def exec(self, prep_result: dict[str, Any]) -> str:
             return "Small document processed quickly"
 
-        def post(self, shared: dict[str, Any], prep_result: dict[str, Any], exec_result: str) -> str | None:
+        def post(
+            self, shared: dict[str, Any], prep_result: dict[str, Any], exec_result: str
+        ) -> str | None:
             shared["processing_result"] = exec_result
             return self.get_next_node_id()
 
@@ -308,7 +326,7 @@ def example_complex_workflow():
     test_cases = [
         {"document_path": "large_document.pdf", "expected": "large"},
         {"document_path": "medium.docx", "expected": "medium"},
-        {"document_path": "small.txt", "expected": "small"}
+        {"document_path": "small.txt", "expected": "small"},
     ]
 
     for test_case in test_cases:
@@ -327,4 +345,3 @@ if __name__ == "__main__":
     example_simple_chaining()
     example_branching_pattern()
     example_complex_workflow()
-

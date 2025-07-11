@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class CacheWarmingStrategy:
     """Configuration for cache warming strategy."""
+
     name: str
     mutations: list[str]
     priority: int = 1
@@ -39,7 +40,7 @@ class CacheWarmer:
             "successful": 0,
             "failed": 0,
             "last_warming_time": None,
-            "warming_duration": 0
+            "warming_duration": 0,
         }
 
     def add_strategy(self, strategy: CacheWarmingStrategy):
@@ -70,7 +71,7 @@ class CacheWarmer:
             "MET exon 14 skipping",
             "NTRK fusion",
             "RET fusion",
-            "ERBB2 amplification"
+            "ERBB2 amplification",
         ]
 
         strategy = CacheWarmingStrategy(
@@ -78,7 +79,7 @@ class CacheWarmer:
             mutations=common_mutations,
             priority=1,
             max_concurrent=5,
-            ttl=7200  # 2 hours for common mutations
+            ttl=7200,  # 2 hours for common mutations
         )
 
         return await self.execute_strategy(strategy)
@@ -97,7 +98,7 @@ class CacheWarmer:
             "TP53 R273H",
             "PTEN loss",
             "CDKN2A deletion",
-            "FGFR2 fusion"
+            "FGFR2 fusion",
         ]
 
         strategy = CacheWarmingStrategy(
@@ -105,7 +106,7 @@ class CacheWarmer:
             mutations=trending_mutations,
             priority=2,
             max_concurrent=3,
-            ttl=3600  # 1 hour for trending mutations
+            ttl=3600,  # 1 hour for trending mutations
         )
 
         return await self.execute_strategy(strategy)
@@ -172,8 +173,10 @@ class CacheWarmer:
         self.warming_stats["last_warming_time"] = time.time()
         self.warming_stats["warming_duration"] = duration
 
-        logger.info(f"Cache warming strategy '{strategy.name}' completed: "
-                   f"{successful}/{len(strategy.mutations)} successful in {duration:.2f}s")
+        logger.info(
+            f"Cache warming strategy '{strategy.name}' completed: "
+            f"{successful}/{len(strategy.mutations)} successful in {duration:.2f}s"
+        )
 
         return successful
 
@@ -187,10 +190,7 @@ class CacheWarmer:
         results = {}
 
         # Sort strategies by priority
-        sorted_strategies = sorted(
-            self.strategies.values(),
-            key=lambda s: s.priority
-        )
+        sorted_strategies = sorted(self.strategies.values(), key=lambda s: s.priority)
 
         for strategy in sorted_strategies:
             results[strategy.name] = await self.execute_strategy(strategy)
@@ -214,7 +214,7 @@ class SmartInvalidator:
             "total_invalidations": 0,
             "pattern_invalidations": 0,
             "dependency_invalidations": 0,
-            "last_invalidation_time": None
+            "last_invalidation_time": None,
         }
 
     def add_invalidation_rule(self, trigger: str, rule: Callable[[str], list[str]]):
@@ -241,11 +241,7 @@ class SmartInvalidator:
         Returns:
             Number of cache entries invalidated
         """
-        patterns = [
-            f"query:{mutation}:*",
-            f"summary:{mutation}:*",
-            f"batch:*{mutation}*"
-        ]
+        patterns = [f"query:{mutation}:*", f"summary:{mutation}:*", f"batch:*{mutation}*"]
 
         total_invalidated = 0
 
@@ -313,7 +309,9 @@ class SmartInvalidator:
                         if success:
                             total_invalidated += 1
 
-                    logger.info(f"Invalidated {len(keys_to_invalidate)} entries for trigger: {trigger}")
+                    logger.info(
+                        f"Invalidated {len(keys_to_invalidate)} entries for trigger: {trigger}"
+                    )
 
                 except Exception as e:
                     logger.error(f"Error in invalidation rule for trigger {trigger}: {e}")
@@ -373,7 +371,7 @@ class CacheAnalytics:
             "cache": cache_stats,
             "warming": warming_stats,
             "invalidation": invalidation_stats,
-            "timestamp": time.time()
+            "timestamp": time.time(),
         }
 
     async def analyze_cache_efficiency(self) -> dict[str, Any]:
@@ -406,7 +404,7 @@ class CacheAnalytics:
             "hit_rate": hit_rate,
             "error_rate": error_rate,
             "recommendations": recommendations,
-            "efficiency_score": (hit_rate * 100) - (error_rate * 100)
+            "efficiency_score": (hit_rate * 100) - (error_rate * 100),
         }
 
     async def generate_cache_report(self) -> str:
@@ -423,32 +421,32 @@ class CacheAnalytics:
 # Cache Performance Report
 
 ## Cache Statistics
-- Hit Rate: {stats['cache']['hit_rate']:.2%}
-- Total Requests: {stats['cache']['total_requests']:,}
-- Cache Hits: {stats['cache']['hits']:,}
-- Cache Misses: {stats['cache']['misses']:,}
-- Cache Sets: {stats['cache']['sets']:,}
-- Errors: {stats['cache']['errors']:,}
+- Hit Rate: {stats["cache"]["hit_rate"]:.2%}
+- Total Requests: {stats["cache"]["total_requests"]:,}
+- Cache Hits: {stats["cache"]["hits"]:,}
+- Cache Misses: {stats["cache"]["misses"]:,}
+- Cache Sets: {stats["cache"]["sets"]:,}
+- Errors: {stats["cache"]["errors"]:,}
 
 ## Cache Warming
-- Total Warmed: {stats['warming']['total_warmed']:,}
-- Successful: {stats['warming']['successful']:,}
-- Failed: {stats['warming']['failed']:,}
-- Last Warming: {stats['warming']['last_warming_time']}
+- Total Warmed: {stats["warming"]["total_warmed"]:,}
+- Successful: {stats["warming"]["successful"]:,}
+- Failed: {stats["warming"]["failed"]:,}
+- Last Warming: {stats["warming"]["last_warming_time"]}
 
 ## Cache Invalidation
-- Total Invalidations: {stats['invalidation']['total_invalidations']:,}
-- Pattern Invalidations: {stats['invalidation']['pattern_invalidations']:,}
-- Dependency Invalidations: {stats['invalidation']['dependency_invalidations']:,}
+- Total Invalidations: {stats["invalidation"]["total_invalidations"]:,}
+- Pattern Invalidations: {stats["invalidation"]["pattern_invalidations"]:,}
+- Dependency Invalidations: {stats["invalidation"]["dependency_invalidations"]:,}
 
 ## Efficiency Analysis
-- Efficiency Score: {efficiency['efficiency_score']:.1f}
-- Error Rate: {efficiency['error_rate']:.2%}
+- Efficiency Score: {efficiency["efficiency_score"]:.1f}
+- Error Rate: {efficiency["error_rate"]:.2%}
 
 ## Recommendations
 """
 
-        for rec in efficiency['recommendations']:
+        for rec in efficiency["recommendations"]:
             report += f"- {rec}\n"
 
         return report

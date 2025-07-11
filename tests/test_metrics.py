@@ -159,7 +159,9 @@ class TestMetricsCollector(unittest.TestCase):
 
     def test_prometheus_export(self):
         """Test Prometheus format export."""
-        self.collector.increment("http_requests_total", 10.0, tags={"method": "GET", "status": "200"})
+        self.collector.increment(
+            "http_requests_total", 10.0, tags={"method": "GET", "status": "200"}
+        )
         self.collector.gauge("memory_usage_bytes", 1024.5)
         self.collector.histogram("response_time_seconds", 0.1)
 
@@ -167,7 +169,7 @@ class TestMetricsCollector(unittest.TestCase):
 
         # Check that output contains expected elements
         self.assertIn("# TYPE http_requests_total counter", prometheus_output)
-        self.assertIn("http_requests_total{method=\"GET\",status=\"200\"} 10.0", prometheus_output)
+        self.assertIn('http_requests_total{method="GET",status="200"} 10.0', prometheus_output)
         self.assertIn("# TYPE memory_usage_bytes gauge", prometheus_output)
         self.assertIn("memory_usage_bytes 1024.5", prometheus_output)
         self.assertIn("# TYPE response_time_seconds histogram", prometheus_output)
@@ -182,6 +184,7 @@ class TestMetricsCollector(unittest.TestCase):
 
         # Parse JSON and check contents
         import json
+
         data = json.loads(json_output)
 
         self.assertIn("counters", data)
@@ -301,6 +304,7 @@ class TestGlobalMetricsAPI(unittest.TestCase):
 
     def test_timed_decorator(self):
         """Test timed decorator."""
+
         @timed("decorated_function")
         def slow_function():
             time.sleep(0.05)
@@ -316,6 +320,7 @@ class TestGlobalMetricsAPI(unittest.TestCase):
 
     def test_timed_decorator_with_exception(self):
         """Test timed decorator with exception."""
+
         @timed("failing_function")
         def failing_function():
             raise ValueError("Test error")
@@ -329,6 +334,7 @@ class TestGlobalMetricsAPI(unittest.TestCase):
 
     def test_timed_decorator_with_custom_name(self):
         """Test timed decorator with custom name."""
+
         @timed("custom_metric_name", tags={"version": "1.0"})
         def test_function():
             return "success"
@@ -395,5 +401,5 @@ class TestTimer(unittest.TestCase):
         self.assertEqual(metrics["counters"]["tagged_timer_success[env=test]"], 1.0)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

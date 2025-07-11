@@ -21,23 +21,26 @@ logger = logging.getLogger(__name__)
 # Import metrics at module level with fallback
 try:
     from utils.metrics import gauge, increment
+
     _metrics_available = True
 except ImportError:
     _metrics_available = False
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 class CircuitBreakerState(Enum):
     """Circuit breaker states."""
-    CLOSED = "closed"      # Normal operation
-    OPEN = "open"          # Circuit is open, failing fast
+
+    CLOSED = "closed"  # Normal operation
+    OPEN = "open"  # Circuit is open, failing fast
     HALF_OPEN = "half_open"  # Testing if service has recovered
 
 
 @dataclass
 class CircuitBreakerStats:
     """Circuit breaker statistics."""
+
     failure_count: int = 0
     success_count: int = 0
     last_failure_time: float | None = None
@@ -62,10 +65,7 @@ class CircuitBreakerError(Exception):
                 f"Last failure: {time_since_failure:.1f}s ago"
             )
         else:
-            super().__init__(
-                f"Circuit breaker '{name}' is OPEN. "
-                f"Failure count: {failure_count}"
-            )
+            super().__init__(f"Circuit breaker '{name}' is OPEN. Failure count: {failure_count}")
 
 
 class CircuitBreaker[T]:
@@ -89,7 +89,7 @@ class CircuitBreaker[T]:
         name: str,
         failure_threshold: int = 5,
         recovery_timeout: int = 60,
-        success_threshold: int = 1
+        success_threshold: int = 1,
     ):
         self.name = name
         self.failure_threshold = failure_threshold
@@ -107,8 +107,8 @@ class CircuitBreaker[T]:
                 "failure_threshold": failure_threshold,
                 "recovery_timeout": recovery_timeout,
                 "success_threshold": success_threshold,
-                "action": "circuit_breaker_initialized"
-            }
+                "action": "circuit_breaker_initialized",
+            },
         )
 
     @property
@@ -132,8 +132,10 @@ class CircuitBreaker[T]:
 
             if self._state == CircuitBreakerState.OPEN:
                 # Check if recovery timeout has elapsed
-                if (self._stats.last_failure_time and
-                    time.time() - self._stats.last_failure_time >= self.recovery_timeout):
+                if (
+                    self._stats.last_failure_time
+                    and time.time() - self._stats.last_failure_time >= self.recovery_timeout
+                ):
                     self._transition_to_half_open()
                     return True
                 return False
@@ -147,7 +149,9 @@ class CircuitBreaker[T]:
 
         # Record metrics if available
         if _metrics_available:
-            increment("circuit_breaker_state_changes", tags={"name": self.name, "new_state": "half_open"})
+            increment(
+                "circuit_breaker_state_changes", tags={"name": self.name, "new_state": "half_open"}
+            )
             gauge(f"circuit_breaker_state_{self.name}", 1)  # 1 for HALF_OPEN
 
         logger.info(
@@ -156,8 +160,8 @@ class CircuitBreaker[T]:
                 "circuit_breaker_name": self.name,
                 "new_state": "half_open",
                 "failure_count": self._stats.failure_count,
-                "action": "circuit_breaker_state_change"
-            }
+                "action": "circuit_breaker_state_change",
+            },
         )
 
     def _transition_to_open(self) -> None:
@@ -167,7 +171,9 @@ class CircuitBreaker[T]:
 
         # Record metrics if available
         if _metrics_available:
-            increment("circuit_breaker_state_changes", tags={"name": self.name, "new_state": "open"})
+            increment(
+                "circuit_breaker_state_changes", tags={"name": self.name, "new_state": "open"}
+            )
             increment("circuit_breaker_open_events", tags={"name": self.name})
             gauge(f"circuit_breaker_state_{self.name}", 2)  # 2 for OPEN
 
@@ -178,8 +184,8 @@ class CircuitBreaker[T]:
                 "new_state": "open",
                 "failure_count": self._stats.failure_count,
                 "failure_threshold": self.failure_threshold,
-                "action": "circuit_breaker_state_change"
-            }
+                "action": "circuit_breaker_state_change",
+            },
         )
 
     def _transition_to_closed(self) -> None:
@@ -190,7 +196,9 @@ class CircuitBreaker[T]:
 
         # Record metrics if available
         if _metrics_available:
-            increment("circuit_breaker_state_changes", tags={"name": self.name, "new_state": "closed"})
+            increment(
+                "circuit_breaker_state_changes", tags={"name": self.name, "new_state": "closed"}
+            )
             increment("circuit_breaker_recovery_events", tags={"name": self.name})
             gauge(f"circuit_breaker_state_{self.name}", 0)  # 0 for CLOSED
 
@@ -200,8 +208,8 @@ class CircuitBreaker[T]:
                 "circuit_breaker_name": self.name,
                 "new_state": "closed",
                 "success_count": self._stats.success_count,
-                "action": "circuit_breaker_state_change"
-            }
+                "action": "circuit_breaker_state_change",
+            },
         )
 
     def _record_success(self) -> None:
@@ -266,9 +274,7 @@ class CircuitBreaker[T]:
             if _metrics_available:
                 increment("circuit_breaker_rejected_calls", tags={"name": self.name})
             raise CircuitBreakerError(
-                self.name,
-                self._stats.failure_count,
-                self._stats.last_failure_time
+                self.name, self._stats.failure_count, self._stats.last_failure_time
             )
 
         try:
@@ -289,6 +295,7 @@ class CircuitBreaker[T]:
         Returns:
             Wrapped function with circuit breaker protection
         """
+
         @functools.wraps(func)
         def wrapper(*args, **kwargs) -> T:
             return self.call(func, *args, **kwargs)
@@ -303,10 +310,7 @@ class CircuitBreaker[T]:
 
             logger.info(
                 f"Circuit breaker '{self.name}' reset",
-                extra={
-                    "circuit_breaker_name": self.name,
-                    "action": "circuit_breaker_reset"
-                }
+                extra={"circuit_breaker_name": self.name, "action": "circuit_breaker_reset"},
             )
 
 
@@ -316,10 +320,7 @@ _registry_lock = Lock()
 
 
 def get_circuit_breaker(
-    name: str,
-    failure_threshold: int = 5,
-    recovery_timeout: int = 60,
-    success_threshold: int = 1
+    name: str, failure_threshold: int = 5, recovery_timeout: int = 60, success_threshold: int = 1
 ) -> CircuitBreaker:
     """
     Get or create a circuit breaker instance.
@@ -339,7 +340,7 @@ def get_circuit_breaker(
                 name=name,
                 failure_threshold=failure_threshold,
                 recovery_timeout=recovery_timeout,
-                success_threshold=success_threshold
+                success_threshold=success_threshold,
             )
         return _circuit_breakers[name]
 
@@ -364,10 +365,7 @@ def get_all_circuit_breaker_stats() -> dict[str, CircuitBreakerStats]:
 
 
 def circuit_breaker(
-    name: str,
-    failure_threshold: int = 5,
-    recovery_timeout: int = 60,
-    success_threshold: int = 1
+    name: str, failure_threshold: int = 5, recovery_timeout: int = 60, success_threshold: int = 1
 ) -> Callable[[Callable[..., T]], Callable[..., T]]:
     """
     Decorator to add circuit breaker protection to a function.
@@ -381,12 +379,13 @@ def circuit_breaker(
     Returns:
         Decorator function
     """
+
     def decorator(func: Callable[..., T]) -> Callable[..., T]:
         cb = get_circuit_breaker(
             name=name,
             failure_threshold=failure_threshold,
             recovery_timeout=recovery_timeout,
-            success_threshold=success_threshold
+            success_threshold=success_threshold,
         )
         return cb(func)
 
@@ -394,10 +393,7 @@ def circuit_breaker(
 
 
 def async_circuit_breaker(
-    name: str,
-    failure_threshold: int = 5,
-    recovery_timeout: int = 60,
-    success_threshold: int = 1
+    name: str, failure_threshold: int = 5, recovery_timeout: int = 60, success_threshold: int = 1
 ) -> Callable[[Callable[..., Awaitable[T]]], Callable[..., Awaitable[T]]]:
     """
     Async decorator to add circuit breaker protection to an async function.
@@ -411,12 +407,13 @@ def async_circuit_breaker(
     Returns:
         Async decorator function
     """
+
     def decorator(func: Callable[..., Awaitable[T]]) -> Callable[..., Awaitable[T]]:
         cb = get_circuit_breaker(
             name=name,
             failure_threshold=failure_threshold,
             recovery_timeout=recovery_timeout,
-            success_threshold=success_threshold
+            success_threshold=success_threshold,
         )
 
         @functools.wraps(func)
@@ -433,9 +430,7 @@ def async_circuit_breaker(
                 if _metrics_available:
                     increment("circuit_breaker_rejected_calls", tags={"name": cb.name})
                 raise CircuitBreakerError(
-                    cb.name,
-                    cb._stats.failure_count,
-                    cb._stats.last_failure_time
+                    cb.name, cb._stats.failure_count, cb._stats.last_failure_time
                 )
 
             try:

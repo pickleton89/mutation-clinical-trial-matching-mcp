@@ -63,6 +63,7 @@ def exponential_backoff_retry(
     Returns:
         Decorator function that applies retry logic
     """
+
     def decorator(func: Callable) -> Callable:
         @wraps(func)
         def wrapper(*args, **kwargs) -> Any:
@@ -73,20 +74,25 @@ def exponential_backoff_retry(
                     result = func(*args, **kwargs)
 
                     # Check if we have a response object with status code
-                    if hasattr(result, 'status_code') and result.status_code in retry_on_status_codes:
+                    if (
+                        hasattr(result, "status_code")
+                        and result.status_code in retry_on_status_codes
+                    ):
                         if attempt < max_retries:
-                            delay = _calculate_delay(attempt, initial_delay, backoff_factor, max_delay, jitter)
+                            delay = _calculate_delay(
+                                attempt, initial_delay, backoff_factor, max_delay, jitter
+                            )
                             logger.warning(
                                 f"HTTP {result.status_code} received, retrying in {delay:.2f}s "
                                 f"(attempt {attempt + 1}/{max_retries + 1})",
                                 extra={
-                                    "function": getattr(func, '__name__', 'unknown'),
+                                    "function": getattr(func, "__name__", "unknown"),
                                     "attempt": attempt + 1,
                                     "max_retries": max_retries + 1,
                                     "delay": delay,
                                     "status_code": result.status_code,
-                                    "action": "retry_on_status_code"
-                                }
+                                    "action": "retry_on_status_code",
+                                },
                             )
                             time.sleep(delay)
                             continue
@@ -96,41 +102,43 @@ def exponential_backoff_retry(
                         logger.info(
                             f"Function {getattr(func, '__name__', 'unknown')} succeeded after {attempt} retries",
                             extra={
-                                "function": getattr(func, '__name__', 'unknown'),
+                                "function": getattr(func, "__name__", "unknown"),
                                 "attempts": attempt + 1,
-                                "action": "retry_success"
-                            }
+                                "action": "retry_success",
+                            },
                         )
                     return result
 
                 except retriable_exceptions as e:
                     last_exception = e
                     if attempt < max_retries:
-                        delay = _calculate_delay(attempt, initial_delay, backoff_factor, max_delay, jitter)
+                        delay = _calculate_delay(
+                            attempt, initial_delay, backoff_factor, max_delay, jitter
+                        )
                         logger.warning(
                             f"Exception {type(e).__name__} in {getattr(func, '__name__', 'unknown')}, retrying in {delay:.2f}s "
                             f"(attempt {attempt + 1}/{max_retries + 1}): {str(e)}",
                             extra={
-                                "function": getattr(func, '__name__', 'unknown'),
+                                "function": getattr(func, "__name__", "unknown"),
                                 "attempt": attempt + 1,
                                 "max_retries": max_retries + 1,
                                 "delay": delay,
                                 "exception": str(e),
                                 "exception_type": type(e).__name__,
-                                "action": "retry_on_exception"
-                            }
+                                "action": "retry_on_exception",
+                            },
                         )
                         time.sleep(delay)
                     else:
                         logger.error(
                             f"Function {getattr(func, '__name__', 'unknown')} failed after {max_retries} retries: {str(e)}",
                             extra={
-                                "function": getattr(func, '__name__', 'unknown'),
+                                "function": getattr(func, "__name__", "unknown"),
                                 "max_retries": max_retries,
                                 "exception": str(e),
                                 "exception_type": type(e).__name__,
-                                "action": "retry_exhausted"
-                            }
+                                "action": "retry_exhausted",
+                            },
                         )
                         raise
                 except Exception as e:
@@ -138,11 +146,11 @@ def exponential_backoff_retry(
                     logger.error(
                         f"Non-retriable exception in {getattr(func, '__name__', 'unknown')}: {str(e)}",
                         extra={
-                            "function": getattr(func, '__name__', 'unknown'),
+                            "function": getattr(func, "__name__", "unknown"),
                             "exception": str(e),
                             "exception_type": type(e).__name__,
-                            "action": "non_retriable_exception"
-                        }
+                            "action": "non_retriable_exception",
+                        },
                     )
                     raise
 
@@ -152,15 +160,12 @@ def exponential_backoff_retry(
                 raise last_exception
 
         return wrapper
+
     return decorator
 
 
 def _calculate_delay(
-    attempt: int,
-    initial_delay: float,
-    backoff_factor: float,
-    max_delay: float,
-    jitter: bool
+    attempt: int, initial_delay: float, backoff_factor: float, max_delay: float, jitter: bool
 ) -> float:
     """
     Calculate delay for exponential backoff with optional jitter.
@@ -175,7 +180,7 @@ def _calculate_delay(
     Returns:
         Calculated delay in seconds
     """
-    delay = initial_delay * (backoff_factor ** attempt)
+    delay = initial_delay * (backoff_factor**attempt)
     delay = min(delay, max_delay)
 
     if jitter:
@@ -211,6 +216,7 @@ def async_exponential_backoff_retry(
     Returns:
         Async decorator function that applies retry logic
     """
+
     def decorator(func: Callable) -> Callable:
         @wraps(func)
         async def wrapper(*args, **kwargs) -> Any:
@@ -221,20 +227,25 @@ def async_exponential_backoff_retry(
                     result = await func(*args, **kwargs)
 
                     # Check if we have a response object with status code
-                    if hasattr(result, 'status_code') and result.status_code in retry_on_status_codes:
+                    if (
+                        hasattr(result, "status_code")
+                        and result.status_code in retry_on_status_codes
+                    ):
                         if attempt < max_retries:
-                            delay = _calculate_delay(attempt, initial_delay, backoff_factor, max_delay, jitter)
+                            delay = _calculate_delay(
+                                attempt, initial_delay, backoff_factor, max_delay, jitter
+                            )
                             logger.warning(
                                 f"Async HTTP {result.status_code} received, retrying in {delay:.2f}s "
                                 f"(attempt {attempt + 1}/{max_retries + 1})",
                                 extra={
-                                    "function": getattr(func, '__name__', 'unknown'),
+                                    "function": getattr(func, "__name__", "unknown"),
                                     "attempt": attempt + 1,
                                     "max_retries": max_retries + 1,
                                     "delay": delay,
                                     "status_code": result.status_code,
-                                    "action": "async_retry_on_status_code"
-                                }
+                                    "action": "async_retry_on_status_code",
+                                },
                             )
                             await asyncio.sleep(delay)
                             continue
@@ -244,41 +255,43 @@ def async_exponential_backoff_retry(
                         logger.info(
                             f"Async function {getattr(func, '__name__', 'unknown')} succeeded after {attempt} retries",
                             extra={
-                                "function": getattr(func, '__name__', 'unknown'),
+                                "function": getattr(func, "__name__", "unknown"),
                                 "attempts": attempt + 1,
-                                "action": "async_retry_success"
-                            }
+                                "action": "async_retry_success",
+                            },
                         )
                     return result
 
                 except retriable_exceptions as e:
                     last_exception = e
                     if attempt < max_retries:
-                        delay = _calculate_delay(attempt, initial_delay, backoff_factor, max_delay, jitter)
+                        delay = _calculate_delay(
+                            attempt, initial_delay, backoff_factor, max_delay, jitter
+                        )
                         logger.warning(
                             f"Async exception {type(e).__name__} in {getattr(func, '__name__', 'unknown')}, retrying in {delay:.2f}s "
                             f"(attempt {attempt + 1}/{max_retries + 1}): {str(e)}",
                             extra={
-                                "function": getattr(func, '__name__', 'unknown'),
+                                "function": getattr(func, "__name__", "unknown"),
                                 "attempt": attempt + 1,
                                 "max_retries": max_retries + 1,
                                 "delay": delay,
                                 "exception": str(e),
                                 "exception_type": type(e).__name__,
-                                "action": "async_retry_on_exception"
-                            }
+                                "action": "async_retry_on_exception",
+                            },
                         )
                         await asyncio.sleep(delay)
                     else:
                         logger.error(
                             f"Async function {getattr(func, '__name__', 'unknown')} failed after {max_retries} retries: {str(e)}",
                             extra={
-                                "function": getattr(func, '__name__', 'unknown'),
+                                "function": getattr(func, "__name__", "unknown"),
                                 "max_retries": max_retries,
                                 "exception": str(e),
                                 "exception_type": type(e).__name__,
-                                "action": "async_retry_exhausted"
-                            }
+                                "action": "async_retry_exhausted",
+                            },
                         )
                         raise
                 except Exception as e:
@@ -286,11 +299,11 @@ def async_exponential_backoff_retry(
                     logger.error(
                         f"Non-retriable async exception in {getattr(func, '__name__', 'unknown')}: {str(e)}",
                         extra={
-                            "function": getattr(func, '__name__', 'unknown'),
+                            "function": getattr(func, "__name__", "unknown"),
                             "exception": str(e),
                             "exception_type": type(e).__name__,
-                            "action": "async_non_retriable_exception"
-                        }
+                            "action": "async_non_retriable_exception",
+                        },
                     )
                     raise
 
@@ -300,6 +313,7 @@ def async_exponential_backoff_retry(
                 raise last_exception
 
         return wrapper
+
     return decorator
 
 
@@ -313,13 +327,13 @@ def get_retry_stats(func: Callable) -> dict:
     Returns:
         Dictionary with retry statistics
     """
-    if not hasattr(func, '_retry_stats'):
+    if not hasattr(func, "_retry_stats"):
         return {
             "total_calls": 0,
             "successful_calls": 0,
             "failed_calls": 0,
             "total_retries": 0,
-            "average_retries": 0.0
+            "average_retries": 0.0,
         }
 
     stats = cast(dict, func._retry_stats)
@@ -329,5 +343,5 @@ def get_retry_stats(func: Callable) -> dict:
         "successful_calls": stats.get("successful_calls", 0),
         "failed_calls": stats.get("failed_calls", 0),
         "total_retries": stats.get("total_retries", 0),
-        "average_retries": stats.get("total_retries", 0) / total_calls if total_calls > 0 else 0.0
+        "average_retries": stats.get("total_retries", 0) / total_calls if total_calls > 0 else 0.0,
     }

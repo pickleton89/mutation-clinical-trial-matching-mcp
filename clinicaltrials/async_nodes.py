@@ -34,17 +34,16 @@ class AsyncQueryTrialsNode(AsyncNode):
         if not mutation:
             raise ValueError("Mutation not found in shared context")
 
-        logger.info(f"Async querying trials for mutation: {mutation}", extra={
-            "mutation": mutation,
-            "node": self.__class__.__name__,
-            "action": "prep"
-        })
+        logger.info(
+            f"Async querying trials for mutation: {mutation}",
+            extra={"mutation": mutation, "node": self.__class__.__name__, "action": "prep"},
+        )
 
         return {
             "mutation": mutation,
             "min_rank": shared.get("min_rank", 1),
             "max_rank": shared.get("max_rank", 10),
-            "timeout": shared.get("timeout", 10)
+            "timeout": shared.get("timeout", 10),
         }
 
     async def exec(self, prep_result: dict[str, Any]) -> dict[str, Any]:
@@ -62,26 +61,28 @@ class AsyncQueryTrialsNode(AsyncNode):
         max_rank = prep_result.get("max_rank", 10)
         timeout = prep_result.get("timeout", 10)
 
-        logger.info(f"Async executing query for mutation: {mutation}", extra={
-            "mutation": mutation,
-            "min_rank": min_rank,
-            "max_rank": max_rank,
-            "timeout": timeout,
-            "node": self.__class__.__name__,
-            "action": "exec"
-        })
+        logger.info(
+            f"Async executing query for mutation: {mutation}",
+            extra={
+                "mutation": mutation,
+                "min_rank": min_rank,
+                "max_rank": max_rank,
+                "timeout": timeout,
+                "node": self.__class__.__name__,
+                "action": "exec",
+            },
+        )
 
         # Query clinical trials asynchronously
         result = await query_clinical_trials_async(
-            mutation=mutation,
-            min_rank=min_rank,
-            max_rank=max_rank,
-            timeout=timeout
+            mutation=mutation, min_rank=min_rank, max_rank=max_rank, timeout=timeout
         )
 
         return result
 
-    async def post(self, shared: dict[str, Any], prep_result: dict[str, Any], exec_result: dict[str, Any]) -> str | None:
+    async def post(
+        self, shared: dict[str, Any], prep_result: dict[str, Any], exec_result: dict[str, Any]
+    ) -> str | None:
         """
         Update shared context with query results.
 
@@ -100,12 +101,15 @@ class AsyncQueryTrialsNode(AsyncNode):
         shared["studies"] = exec_result.get("studies", [])
 
         study_count = len(shared["studies"])
-        logger.info(f"Async query completed for {mutation}: {study_count} studies found", extra={
-            "mutation": mutation,
-            "study_count": study_count,
-            "node": self.__class__.__name__,
-            "action": "post"
-        })
+        logger.info(
+            f"Async query completed for {mutation}: {study_count} studies found",
+            extra={
+                "mutation": mutation,
+                "study_count": study_count,
+                "node": self.__class__.__name__,
+                "action": "post",
+            },
+        )
 
         # Return next node ID using new chaining logic
         return self.get_next_node_id()
@@ -133,19 +137,22 @@ class AsyncBatchQueryTrialsNode(AsyncBatchNode):
         if not mutations:
             raise ValueError("Mutations not found in shared context")
 
-        logger.info(f"Async batch querying trials for {len(mutations)} mutations", extra={
-            "mutations": mutations,
-            "batch_size": len(mutations),
-            "node": self.__class__.__name__,
-            "action": "prep"
-        })
+        logger.info(
+            f"Async batch querying trials for {len(mutations)} mutations",
+            extra={
+                "mutations": mutations,
+                "batch_size": len(mutations),
+                "node": self.__class__.__name__,
+                "action": "prep",
+            },
+        )
 
         return {
             "mutations": mutations,
             "min_rank": shared.get("min_rank", 1),
             "max_rank": shared.get("max_rank", 10),
             "timeout": shared.get("timeout", 10),
-            "max_concurrent": shared.get("max_concurrent", 5)
+            "max_concurrent": shared.get("max_concurrent", 5),
         }
 
     async def exec(self, prep_result: dict[str, Any]) -> dict[str, Any]:
@@ -164,16 +171,19 @@ class AsyncBatchQueryTrialsNode(AsyncBatchNode):
         timeout = prep_result.get("timeout", 10)
         max_concurrent = prep_result.get("max_concurrent", 5)
 
-        logger.info(f"Async batch executing query for {len(mutations)} mutations", extra={
-            "mutations": mutations,
-            "batch_size": len(mutations),
-            "min_rank": min_rank,
-            "max_rank": max_rank,
-            "timeout": timeout,
-            "max_concurrent": max_concurrent,
-            "node": self.__class__.__name__,
-            "action": "exec"
-        })
+        logger.info(
+            f"Async batch executing query for {len(mutations)} mutations",
+            extra={
+                "mutations": mutations,
+                "batch_size": len(mutations),
+                "min_rank": min_rank,
+                "max_rank": max_rank,
+                "timeout": timeout,
+                "max_concurrent": max_concurrent,
+                "node": self.__class__.__name__,
+                "action": "exec",
+            },
+        )
 
         # Query clinical trials for multiple mutations concurrently
         results = await query_multiple_mutations_async(
@@ -181,12 +191,14 @@ class AsyncBatchQueryTrialsNode(AsyncBatchNode):
             min_rank=min_rank,
             max_rank=max_rank,
             timeout=timeout,
-            max_concurrent=max_concurrent
+            max_concurrent=max_concurrent,
         )
 
         return results
 
-    async def post(self, shared: dict[str, Any], prep_result: dict[str, Any], exec_result: dict[str, Any]) -> str | None:
+    async def post(
+        self, shared: dict[str, Any], prep_result: dict[str, Any], exec_result: dict[str, Any]
+    ) -> str | None:
         """
         Update shared context with batch query results.
 
@@ -217,14 +229,17 @@ class AsyncBatchQueryTrialsNode(AsyncBatchNode):
         total_studies = len(all_studies)
         successful_mutations = sum(1 for result in exec_result.values() if "error" not in result)
 
-        logger.info(f"Async batch query completed: {successful_mutations}/{len(mutations)} mutations, {total_studies} total studies", extra={
-            "mutations": mutations,
-            "batch_size": len(mutations),
-            "successful_mutations": successful_mutations,
-            "total_studies": total_studies,
-            "node": self.__class__.__name__,
-            "action": "post"
-        })
+        logger.info(
+            f"Async batch query completed: {successful_mutations}/{len(mutations)} mutations, {total_studies} total studies",
+            extra={
+                "mutations": mutations,
+                "batch_size": len(mutations),
+                "successful_mutations": successful_mutations,
+                "total_studies": total_studies,
+                "node": self.__class__.__name__,
+                "action": "post",
+            },
+        )
 
         # Return next node ID using new chaining logic
         return self.get_next_node_id()
@@ -252,23 +267,22 @@ class AsyncSummarizeTrialsNode(AsyncNode):
         mutation = shared.get("mutation", "unknown")
 
         if not studies:
-            logger.warning("No studies found for summarization", extra={
+            logger.warning(
+                "No studies found for summarization",
+                extra={"mutation": mutation, "node": self.__class__.__name__, "action": "prep"},
+            )
+
+        logger.info(
+            f"Async preparing to summarize {len(studies)} studies for mutation: {mutation}",
+            extra={
                 "mutation": mutation,
+                "study_count": len(studies),
                 "node": self.__class__.__name__,
-                "action": "prep"
-            })
+                "action": "prep",
+            },
+        )
 
-        logger.info(f"Async preparing to summarize {len(studies)} studies for mutation: {mutation}", extra={
-            "mutation": mutation,
-            "study_count": len(studies),
-            "node": self.__class__.__name__,
-            "action": "prep"
-        })
-
-        return {
-            "studies": studies,
-            "mutation": mutation
-        }
+        return {"studies": studies, "mutation": mutation}
 
     async def exec(self, prep_result: dict[str, Any]) -> dict[str, Any]:
         """
@@ -286,12 +300,15 @@ class AsyncSummarizeTrialsNode(AsyncNode):
         if not studies:
             return {"summary": f"No clinical trials found for mutation: {mutation}"}
 
-        logger.info(f"Async executing summarization for {len(studies)} studies", extra={
-            "mutation": mutation,
-            "study_count": len(studies),
-            "node": self.__class__.__name__,
-            "action": "exec"
-        })
+        logger.info(
+            f"Async executing summarization for {len(studies)} studies",
+            extra={
+                "mutation": mutation,
+                "study_count": len(studies),
+                "node": self.__class__.__name__,
+                "action": "exec",
+            },
+        )
 
         # Create prompt for LLM
         prompt = f"""Please summarize the following clinical trials for the mutation {mutation}:
@@ -300,9 +317,21 @@ Studies:
 """
 
         for i, study in enumerate(studies[:10], 1):  # Limit to first 10 studies
-            title = study.get("protocolSection", {}).get("identificationModule", {}).get("briefTitle", "Unknown Title")
-            nct_id = study.get("protocolSection", {}).get("identificationModule", {}).get("nctId", "Unknown ID")
-            status = study.get("protocolSection", {}).get("statusModule", {}).get("overallStatus", "Unknown Status")
+            title = (
+                study.get("protocolSection", {})
+                .get("identificationModule", {})
+                .get("briefTitle", "Unknown Title")
+            )
+            nct_id = (
+                study.get("protocolSection", {})
+                .get("identificationModule", {})
+                .get("nctId", "Unknown ID")
+            )
+            status = (
+                study.get("protocolSection", {})
+                .get("statusModule", {})
+                .get("overallStatus", "Unknown Status")
+            )
 
             prompt += f"""
 {i}. {title}
@@ -325,7 +354,9 @@ Keep the summary focused and actionable."""
 
         return {"summary": summary}
 
-    async def post(self, shared: dict[str, Any], prep_result: dict[str, Any], exec_result: dict[str, Any]) -> str | None:
+    async def post(
+        self, shared: dict[str, Any], prep_result: dict[str, Any], exec_result: dict[str, Any]
+    ) -> str | None:
         """
         Update shared context with summary.
 
@@ -343,12 +374,15 @@ Keep the summary focused and actionable."""
         # Update shared context with summary
         shared["summary"] = summary
 
-        logger.info(f"Async summarization completed for mutation: {mutation}", extra={
-            "mutation": mutation,
-            "summary_length": len(summary),
-            "node": self.__class__.__name__,
-            "action": "post"
-        })
+        logger.info(
+            f"Async summarization completed for mutation: {mutation}",
+            extra={
+                "mutation": mutation,
+                "summary_length": len(summary),
+                "node": self.__class__.__name__,
+                "action": "post",
+            },
+        )
 
         # This is typically the last node in the flow
         return None

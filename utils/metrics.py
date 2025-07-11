@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 
 class MetricType(Enum):
     """Types of metrics that can be collected."""
+
     COUNTER = "counter"
     GAUGE = "gauge"
     HISTOGRAM = "histogram"
@@ -33,6 +34,7 @@ class MetricType(Enum):
 @dataclass
 class MetricPoint:
     """Individual metric data point."""
+
     name: str
     value: float
     timestamp: float
@@ -43,10 +45,11 @@ class MetricPoint:
 @dataclass
 class HistogramStats:
     """Histogram statistics for timing and distribution metrics."""
+
     count: int = 0
     sum: float = 0.0
-    min: float = float('inf')
-    max: float = float('-inf')
+    min: float = float("inf")
+    max: float = float("-inf")
     p50: float = 0.0
     p95: float = 0.0
     p99: float = 0.0
@@ -75,10 +78,10 @@ class MetricsCollector:
         self._histogram_values: dict[str, deque] = defaultdict(lambda: deque(maxlen=1000))
         self._lock = Lock()
 
-        logger.info("Metrics collector initialized", extra={
-            "max_points": max_points,
-            "action": "metrics_collector_initialized"
-        })
+        logger.info(
+            "Metrics collector initialized",
+            extra={"max_points": max_points, "action": "metrics_collector_initialized"},
+        )
 
     def increment(self, name: str, value: float = 1.0, tags: dict[str, str] | None = None):
         """
@@ -99,7 +102,7 @@ class MetricsCollector:
                 value=value,
                 timestamp=time.time(),
                 tags=tags,
-                metric_type=MetricType.COUNTER
+                metric_type=MetricType.COUNTER,
             )
             self._points.append(point)
 
@@ -122,7 +125,7 @@ class MetricsCollector:
                 value=value,
                 timestamp=time.time(),
                 tags=tags,
-                metric_type=MetricType.GAUGE
+                metric_type=MetricType.GAUGE,
             )
             self._points.append(point)
 
@@ -146,7 +149,7 @@ class MetricsCollector:
                 value=value,
                 timestamp=time.time(),
                 tags=tags,
-                metric_type=MetricType.HISTOGRAM
+                metric_type=MetricType.HISTOGRAM,
             )
             self._points.append(point)
 
@@ -188,11 +191,7 @@ class MetricsCollector:
                 return sorted_values[f]
             return sorted_values[f] * (1 - c) + sorted_values[f + 1] * c
 
-        return {
-            "p50": percentile(0.5),
-            "p95": percentile(0.95),
-            "p99": percentile(0.99)
-        }
+        return {"p50": percentile(0.5), "p95": percentile(0.95), "p99": percentile(0.99)}
 
     def get_metrics(self) -> dict[str, Any]:
         """
@@ -205,7 +204,7 @@ class MetricsCollector:
             metrics = {
                 "counters": dict(self._counters),
                 "gauges": dict(self._gauges),
-                "histograms": {}
+                "histograms": {},
             }
 
             # Calculate histogram statistics
@@ -216,10 +215,10 @@ class MetricsCollector:
                 metrics["histograms"][key] = {
                     "count": hist.count,
                     "sum": hist.sum,
-                    "min": hist.min if hist.min != float('inf') else 0.0,
-                    "max": hist.max if hist.max != float('-inf') else 0.0,
+                    "min": hist.min if hist.min != float("inf") else 0.0,
+                    "max": hist.max if hist.max != float("-inf") else 0.0,
                     "avg": hist.sum / hist.count if hist.count > 0 else 0.0,
-                    **percentiles
+                    **percentiles,
                 }
 
             return metrics
@@ -247,9 +246,7 @@ class MetricsCollector:
             self._histograms.clear()
             self._histogram_values.clear()
 
-            logger.info("Metrics collector reset", extra={
-                "action": "metrics_collector_reset"
-            })
+            logger.info("Metrics collector reset", extra={"action": "metrics_collector_reset"})
 
     def export_prometheus(self) -> str:
         """
@@ -298,7 +295,11 @@ class MetricsCollector:
             lines.append(f"{name}_avg{tag_str} {hist['avg']}")
 
             # Add percentiles as separate metrics
-            for percentile, value in [("p50", hist["p50"]), ("p95", hist["p95"]), ("p99", hist["p99"])]:
+            for percentile, value in [
+                ("p50", hist["p50"]),
+                ("p95", hist["p95"]),
+                ("p99", hist["p99"]),
+            ]:
                 lines.append(f"{name}_{percentile}{tag_str} {value}")
 
         return "\n".join(lines)
@@ -430,8 +431,9 @@ def timed(name: str | None = None, tags: dict[str, str] | None = None):
         name: Optional metric name (defaults to function name)
         tags: Optional tags for the metric
     """
+
     def decorator(func: Callable) -> Callable:
-        metric_name = name or getattr(func, '__name__', 'unknown')
+        metric_name = name or getattr(func, "__name__", "unknown")
 
         def wrapper(*args, **kwargs):
             with timer(metric_name, tags):

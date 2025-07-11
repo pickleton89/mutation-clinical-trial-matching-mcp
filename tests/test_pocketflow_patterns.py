@@ -65,7 +65,9 @@ class MockBranchingNode(Node):
         else:
             return "low"
 
-    def post(self, shared: dict[str, Any], prep_result: dict[str, Any], exec_result: str) -> str | None:
+    def post(
+        self, shared: dict[str, Any], prep_result: dict[str, Any], exec_result: str
+    ) -> str | None:
         shared["decision"] = exec_result
 
         # Set input for target branch node if it exists
@@ -283,7 +285,9 @@ class TestPocketFlowPatterns(unittest.TestCase):
 
         # Verify results
         self.assertEqual(result["async1_result"], "async1_async_processed_async_test")
-        self.assertEqual(result["async2_result"], "async2_async_processed_async1_async_processed_async_test")
+        self.assertEqual(
+            result["async2_result"], "async2_async_processed_async1_async_processed_async_test"
+        )
 
     def test_node_auto_registration(self):
         """Test automatic node registration in flows."""
@@ -363,6 +367,7 @@ class TestPocketFlowPatterns(unittest.TestCase):
 
     def test_error_handling_in_chained_flow(self):
         """Test error handling in chained flows."""
+
         class ErrorNode(Node):
             def __init__(self):
                 super().__init__()
@@ -374,7 +379,9 @@ class TestPocketFlowPatterns(unittest.TestCase):
             def exec(self, prep_result: str) -> str:
                 raise ValueError("Test error")
 
-            def post(self, shared: dict[str, Any], prep_result: str, exec_result: str) -> str | None:
+            def post(
+                self, shared: dict[str, Any], prep_result: str, exec_result: str
+            ) -> str | None:
                 return self.get_next_node_id()
 
         node1 = MockNode("node1")

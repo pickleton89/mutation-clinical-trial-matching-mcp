@@ -15,6 +15,7 @@ class TestExponentialBackoffRetry(unittest.TestCase):
 
     def test_successful_function_no_retry(self):
         """Test that successful functions don't retry."""
+
         @exponential_backoff_retry(max_retries=3)
         def successful_function():
             return "success"
@@ -72,7 +73,9 @@ class TestExponentialBackoffRetry(unittest.TestCase):
         """Test retry behavior on specific HTTP status codes."""
         call_count = 0
 
-        @exponential_backoff_retry(max_retries=2, initial_delay=0.01, retry_on_status_codes=(500, 502))
+        @exponential_backoff_retry(
+            max_retries=2, initial_delay=0.01, retry_on_status_codes=(500, 502)
+        )
         def status_code_function():
             nonlocal call_count
             call_count += 1
@@ -93,9 +96,7 @@ class TestExponentialBackoffRetry(unittest.TestCase):
         call_count = 0
 
         @exponential_backoff_retry(
-            max_retries=2,
-            initial_delay=0.01,
-            retriable_exceptions=(ValueError,)
+            max_retries=2, initial_delay=0.01, retriable_exceptions=(ValueError,)
         )
         def custom_exception_function():
             nonlocal call_count
@@ -135,12 +136,14 @@ class TestExponentialBackoffRetry(unittest.TestCase):
         # (this could rarely fail due to randomness, but very unlikely)
         self.assertNotEqual(delay_jitter1, delay_jitter2)
 
-    @patch('time.sleep')
+    @patch("time.sleep")
     def test_retry_timing(self, mock_sleep):
         """Test that retry timing works correctly."""
         call_count = 0
 
-        @exponential_backoff_retry(max_retries=2, initial_delay=1.0, backoff_factor=2.0, jitter=False)
+        @exponential_backoff_retry(
+            max_retries=2, initial_delay=1.0, backoff_factor=2.0, jitter=False
+        )
         def timing_function():
             nonlocal call_count
             call_count += 1
@@ -161,6 +164,7 @@ class TestRetryStats(unittest.TestCase):
 
     def test_get_retry_stats_no_stats(self):
         """Test getting stats for function without retry stats."""
+
         def regular_function():
             return "test"
 
@@ -170,10 +174,10 @@ class TestRetryStats(unittest.TestCase):
             "successful_calls": 0,
             "failed_calls": 0,
             "total_retries": 0,
-            "average_retries": 0.0
+            "average_retries": 0.0,
         }
         self.assertEqual(stats, expected)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

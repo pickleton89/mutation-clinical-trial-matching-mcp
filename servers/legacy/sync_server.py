@@ -16,10 +16,8 @@ from utils.node import Flow
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.StreamHandler(sys.stderr)
-    ]
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[logging.StreamHandler(sys.stderr)],
 )
 logger = logging.getLogger(__name__)
 
@@ -33,6 +31,7 @@ except ValueError as e:
 
 # Initialize FastMCP server
 mcp = FastMCP("Clinical Trials MCP")
+
 
 @mcp.tool()
 def summarize_trials(mutation: str) -> str:
@@ -55,10 +54,7 @@ def summarize_trials(mutation: str) -> str:
         if not mutation or not isinstance(mutation, str) or not mutation.strip():
             logger.error("Invalid mutation parameter provided")
             raise McpError(
-                ErrorData(
-                    code=-1,
-                    message="Mutation parameter must be a non-empty string"
-                )
+                ErrorData(code=-1, message="Mutation parameter must be a non-empty string")
             )
 
         # Create nodes
@@ -81,19 +77,13 @@ def summarize_trials(mutation: str) -> str:
             # Handle known errors from the flow
             logger.error(f"Flow execution failed: {result['error']}")
             raise McpError(
-                ErrorData(
-                    code=-2,
-                    message=f"Failed to process mutation query: {result['error']}"
-                )
+                ErrorData(code=-2, message=f"Failed to process mutation query: {result['error']}")
             )
         else:
             # Handle unexpected flow result
             logger.error(f"Unexpected flow result: {result}")
             raise McpError(
-                ErrorData(
-                    code=-3,
-                    message="No trials found or unexpected error in processing"
-                )
+                ErrorData(code=-3, message="No trials found or unexpected error in processing")
             )
 
     except McpError:
@@ -102,19 +92,12 @@ def summarize_trials(mutation: str) -> str:
     except ValueError as e:
         logger.error(f"Validation error: {e}")
         raise McpError(
-            ErrorData(
-                code=-4,
-                message=f"Invalid input or configuration: {str(e)}"
-            )
+            ErrorData(code=-4, message=f"Invalid input or configuration: {str(e)}")
         ) from e
     except Exception as e:
         logger.error(f"Unexpected error in summarize_trials: {e}", exc_info=True)
-        raise McpError(
-            ErrorData(
-                code=-5,
-                message=f"An unexpected error occurred: {str(e)}"
-            )
-        ) from e
+        raise McpError(ErrorData(code=-5, message=f"An unexpected error occurred: {str(e)}")) from e
+
 
 @mcp.tool()
 def get_health_status() -> str:
@@ -149,26 +132,23 @@ def get_health_status() -> str:
                     "success_count": stats.success_count,
                     "total_calls": stats.total_calls,
                     "last_failure_time": stats.last_failure_time,
-                    "last_success_time": stats.last_success_time
+                    "last_success_time": stats.last_success_time,
                 }
                 for name, stats in cb_stats.items()
             },
             "metrics_summary": {
                 "total_counters": len(metrics.get("counters", {})),
                 "total_gauges": len(metrics.get("gauges", {})),
-                "total_histograms": len(metrics.get("histograms", {}))
-            }
+                "total_histograms": len(metrics.get("histograms", {})),
+            },
         }
 
         return json.dumps(health_status, indent=2)
 
     except Exception as e:
         logger.error(f"Error getting health status: {e}")
-        return json.dumps({
-            "status": "error",
-            "error": str(e),
-            "timestamp": time.time()
-        })
+        return json.dumps({"status": "error", "error": str(e), "timestamp": time.time()})
+
 
 @mcp.tool()
 def get_metrics_json() -> str:
@@ -185,10 +165,10 @@ def get_metrics_json() -> str:
         return export_json()
     except Exception as e:
         logger.error(f"Error exporting metrics as JSON: {e}")
-        return json.dumps({
-            "error": f"Failed to export metrics: {str(e)}",
-            "timestamp": time.time()
-        })
+        return json.dumps(
+            {"error": f"Failed to export metrics: {str(e)}", "timestamp": time.time()}
+        )
+
 
 @mcp.tool()
 def get_metrics_prometheus() -> str:
@@ -204,6 +184,7 @@ def get_metrics_prometheus() -> str:
     except Exception as e:
         logger.error(f"Error exporting metrics as Prometheus: {e}")
         return f"# Error exporting metrics: {str(e)}"
+
 
 @mcp.tool()
 def get_circuit_breaker_status() -> str:
@@ -223,10 +204,7 @@ def get_circuit_breaker_status() -> str:
 
         cb_stats = get_all_circuit_breaker_stats()
 
-        status = {
-            "timestamp": time.time(),
-            "circuit_breakers": {}
-        }
+        status = {"timestamp": time.time(), "circuit_breakers": {}}
 
         for name, stats in cb_stats.items():
             status["circuit_breakers"][name] = {
@@ -236,18 +214,22 @@ def get_circuit_breaker_status() -> str:
                 "state_changes": stats.state_changes,
                 "last_failure_time": stats.last_failure_time,
                 "last_success_time": stats.last_success_time,
-                "last_failure_age_seconds": time.time() - stats.last_failure_time if stats.last_failure_time else None,
-                "last_success_age_seconds": time.time() - stats.last_success_time if stats.last_success_time else None
+                "last_failure_age_seconds": time.time() - stats.last_failure_time
+                if stats.last_failure_time
+                else None,
+                "last_success_age_seconds": time.time() - stats.last_success_time
+                if stats.last_success_time
+                else None,
             }
 
         return json.dumps(status, indent=2)
 
     except Exception as e:
         logger.error(f"Error getting circuit breaker status: {e}")
-        return json.dumps({
-            "error": f"Failed to get circuit breaker status: {str(e)}",
-            "timestamp": time.time()
-        })
+        return json.dumps(
+            {"error": f"Failed to get circuit breaker status: {str(e)}", "timestamp": time.time()}
+        )
+
 
 def main():
     """
