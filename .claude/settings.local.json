@@ -35,7 +35,8 @@
       "Bash(true)",
       "mcp__pocketflow__fetch_PocketFlow_documentation",
       "Bash(uv sync:*)",
-      "Bash(timeout:*)"
+      "Bash(timeout:*)",
+      "Bash(git push:*)"
     ],
     "deny": []
   }
