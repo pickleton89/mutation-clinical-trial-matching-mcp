@@ -10,6 +10,7 @@ from unittest.mock import Mock, patch, AsyncMock
 from typing import Dict, Any
 
 import requests
+import requests.exceptions
 import httpx
 
 from utils.http_client import UnifiedHttpClient, HttpResponse, create_clinicaltrials_client, create_anthropic_client

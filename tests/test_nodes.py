@@ -83,9 +83,11 @@ class TestFlow(unittest.TestCase):
         # Create mock nodes
         query_node = MagicMock()
         query_node.process.return_value = "summarize"
+        query_node._next_node = None  # Prevent infinite recursion
 
         summarize_node = MagicMock()
         summarize_node.process.return_value = None
+        summarize_node._next_node = None  # Prevent infinite recursion
 
         # Create flow
         flow = Flow(start=query_node)

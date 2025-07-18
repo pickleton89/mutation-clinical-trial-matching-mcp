@@ -541,7 +541,7 @@ class UnifiedBatchNode(UnifiedNode[List[T], List[R]]):
                     return result
                 except Exception as e:
                     logger.error(f"Failed to process item {index + 1}: {str(e)}")
-                    return e
+                    raise
         
         # Process all items concurrently
         tasks = [

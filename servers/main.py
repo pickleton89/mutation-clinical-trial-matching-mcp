@@ -862,6 +862,7 @@ def create_server(async_mode: Optional[bool] = None) -> UnifiedMCPServer:
     global unified_server
     if unified_server is None:
         unified_server = UnifiedMCPServer(async_mode=async_mode)
+    assert unified_server is not None  # Type narrowing
     return unified_server
 
 

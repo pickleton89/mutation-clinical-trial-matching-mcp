@@ -474,7 +474,10 @@ def get_sync_llm_service() -> LLMService:
     global _sync_service
     if _sync_service is None:
         _sync_service = LLMService(async_mode=False)
-    return _sync_service
+    # Type narrowing by creating local variable
+    service = _sync_service
+    assert service is not None
+    return service
 
 
 @lru_cache(maxsize=1)
@@ -483,7 +486,10 @@ def get_async_llm_service() -> LLMService:
     global _async_service
     if _async_service is None:
         _async_service = LLMService(async_mode=True)
-    return _async_service
+    # Type narrowing by creating local variable
+    service = _async_service
+    assert service is not None
+    return service
 
 
 async def cleanup_services():

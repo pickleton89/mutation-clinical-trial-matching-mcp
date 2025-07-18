@@ -229,7 +229,10 @@ def get_server_config() -> ServerConfig:
     if _config is None:
         _config = ServerConfig()
         logger.info("Server configuration initialized")
-    return _config
+    # Type narrowing by creating local variable
+    config = _config
+    assert config is not None
+    return config
 
 
 def create_server_config(**overrides) -> ServerConfig:

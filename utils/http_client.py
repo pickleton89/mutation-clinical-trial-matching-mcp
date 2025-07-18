@@ -216,10 +216,19 @@ class UnifiedHttpClient:
     
     def _apply_circuit_breaker_decorator(self, func: Callable) -> Callable:
         """Apply appropriate circuit breaker decorator based on mode."""
+        config = self.circuit_breaker_config
         if self.async_mode:
-            return async_circuit_breaker(**self.circuit_breaker_config)(func)
+            return async_circuit_breaker(
+                name=config['name'],
+                failure_threshold=config.get('failure_threshold', 5),
+                recovery_timeout=config.get('recovery_timeout', 60)
+            )(func)
         else:
-            return circuit_breaker(**self.circuit_breaker_config)(func)
+            return circuit_breaker(
+                name=config['name'],
+                failure_threshold=config.get('failure_threshold', 5),
+                recovery_timeout=config.get('recovery_timeout', 60)
+            )(func)
     
     def request(
         self,

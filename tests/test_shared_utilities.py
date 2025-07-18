@@ -9,6 +9,7 @@ from unittest.mock import Mock, patch, AsyncMock
 from typing import Dict, Any
 
 import requests
+import requests.exceptions
 import httpx
 
 from utils.shared import (

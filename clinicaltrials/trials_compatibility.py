@@ -6,7 +6,7 @@ unified Clinical Trials service, ensuring existing code continues to work during
 """
 
 import warnings
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 from functools import lru_cache
 
 from clinicaltrials.service import get_sync_trials_service, get_async_trials_service
@@ -17,7 +17,7 @@ def query_trials_for_mutation(
     mutation: str,
     min_rank: int = 1,
     max_rank: int = 10,
-    custom_timeout: float = None
+    custom_timeout: Optional[float] = None
 ) -> Dict[str, Any]:
     """
     DEPRECATED: Use ClinicalTrialsService.query_trials() instead.

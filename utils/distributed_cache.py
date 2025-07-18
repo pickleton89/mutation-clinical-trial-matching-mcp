@@ -120,6 +120,13 @@ class DistributedCache:
         # Ensure required fields with defaults
         entry_dict.setdefault("hit_count", 0)
         entry_dict.setdefault("last_accessed", 0.0)
+        # Ensure all required fields are present
+        if "value" not in entry_dict:
+            entry_dict["value"] = None
+        if "timestamp" not in entry_dict:
+            entry_dict["timestamp"] = 0.0
+        if "ttl" not in entry_dict:
+            entry_dict["ttl"] = 3600  # Default 1 hour
         return CacheEntry(**entry_dict)
 
     def get(self, key: str) -> Any | None:

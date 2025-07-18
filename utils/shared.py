@@ -12,6 +12,7 @@ from typing import Any, Dict, List, Optional, Union, Callable
 from functools import wraps
 
 import requests
+import requests.exceptions
 import httpx
 
 from utils.metrics import increment, gauge, histogram
