@@ -423,6 +423,7 @@ class TestUnifiedIntegration:
                 # Clear cache
                 trials_service.clear_cache()
                 cache_info_after_clear = trials_service.get_cache_info()
+                assert cache_info_after_clear is not None  # Type narrowing
                 assert cache_info_after_clear["hits"] == 0
                 
                 trials_service.close()

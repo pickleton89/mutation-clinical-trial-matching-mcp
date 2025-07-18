@@ -50,7 +50,7 @@ class TestValidationFunctions:
     def test_validate_mutation_input_none_mutation(self):
         """Test None mutation input."""
         with patch('utils.metrics.increment') as mock_increment:
-            result = validate_mutation_input(None)
+            result = validate_mutation_input(None)  # type: ignore[arg-type]
             
             assert result["valid"] is False
             assert "non-empty string" in result["error"]
@@ -450,7 +450,7 @@ class TestResponseProcessing:
         with patch('utils.metrics.increment') as mock_increment, \
              patch('utils.metrics.gauge') as mock_gauge:
             
-            studies = extract_studies_from_response(response_data)
+            studies = extract_studies_from_response(response_data)  # type: ignore[arg-type]
             
             assert len(studies) == 0
             mock_increment.assert_called_with("response_processing_errors", tags={"error_type": "studies_extraction"})

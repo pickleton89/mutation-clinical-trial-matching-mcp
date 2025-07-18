@@ -513,6 +513,7 @@ class TestPreDefinedSchemas(unittest.TestCase):
         schema = registry.get_schema("clinical_trials_api")
 
         self.assertIsNotNone(schema)
+        assert schema is not None  # Type narrowing
         self.assertEqual(schema.name, "clinical_trials_api")
         self.assertEqual(schema.version, "1.0")
 
@@ -522,6 +523,7 @@ class TestPreDefinedSchemas(unittest.TestCase):
         schema = registry.get_schema("anthropic_api")
 
         self.assertIsNotNone(schema)
+        assert schema is not None  # Type narrowing
         self.assertEqual(schema.name, "anthropic_api")
         self.assertEqual(schema.version, "1.0")
 

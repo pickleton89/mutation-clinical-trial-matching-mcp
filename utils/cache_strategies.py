@@ -463,8 +463,10 @@ def get_cache_warmer() -> CacheWarmer:
     global _cache_warmer
     if _cache_warmer is None:
         _cache_warmer = CacheWarmer()
-    assert _cache_warmer is not None  # Type narrowing
-    return _cache_warmer
+    # Type narrowing by creating local variable
+    warmer = _cache_warmer
+    assert warmer is not None
+    return warmer
 
 
 def get_smart_invalidator() -> SmartInvalidator:
@@ -472,8 +474,10 @@ def get_smart_invalidator() -> SmartInvalidator:
     global _smart_invalidator
     if _smart_invalidator is None:
         _smart_invalidator = SmartInvalidator()
-    assert _smart_invalidator is not None  # Type narrowing
-    return _smart_invalidator
+    # Type narrowing by creating local variable
+    invalidator = _smart_invalidator
+    assert invalidator is not None
+    return invalidator
 
 
 def get_cache_analytics() -> CacheAnalytics:
@@ -481,5 +485,7 @@ def get_cache_analytics() -> CacheAnalytics:
     global _cache_analytics
     if _cache_analytics is None:
         _cache_analytics = CacheAnalytics()
-    assert _cache_analytics is not None  # Type narrowing
-    return _cache_analytics
+    # Type narrowing by creating local variable
+    analytics = _cache_analytics
+    assert analytics is not None
+    return analytics

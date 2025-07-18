@@ -36,7 +36,8 @@ async def close_executor():
     """Close the global thread pool executor."""
     global _executor
     if _executor is not None:
-        _executor.shutdown(wait=True)
+        executor = _executor  # Type narrowing
+        executor.shutdown(wait=True)
         _executor = None
 
 

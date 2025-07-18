@@ -373,8 +373,10 @@ def get_metrics_collector() -> MetricsCollector:
     with _collector_lock:
         if _metrics_collector is None:
             _metrics_collector = MetricsCollector()
-        assert _metrics_collector is not None  # Type narrowing
-        return _metrics_collector
+        # Type narrowing by creating local variable
+        collector = _metrics_collector
+        assert collector is not None
+        return collector
 
 
 def reset_metrics_collector():
@@ -382,7 +384,8 @@ def reset_metrics_collector():
     global _metrics_collector
     with _collector_lock:
         if _metrics_collector is not None:
-            _metrics_collector.reset()
+            collector = _metrics_collector  # Type narrowing
+            collector.reset()
         _metrics_collector = None
 
 

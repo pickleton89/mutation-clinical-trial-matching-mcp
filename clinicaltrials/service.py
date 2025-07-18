@@ -632,11 +632,13 @@ async def cleanup_services():
     global _sync_service, _async_service
     
     if _sync_service:
-        _sync_service.close()
+        sync_service = _sync_service  # Type narrowing
+        sync_service.close()
         _sync_service = None
     
     if _async_service:
-        await _async_service.aclose()
+        async_service = _async_service  # Type narrowing
+        await async_service.aclose()
         _async_service = None
     
     # Clear the caches

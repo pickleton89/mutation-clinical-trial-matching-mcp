@@ -433,8 +433,10 @@ def get_cache() -> DistributedCache:
             default_ttl = 3600
 
         _cache_instance = DistributedCache(redis_url=redis_url, default_ttl=default_ttl)
-    assert _cache_instance is not None  # Type narrowing
-    return _cache_instance
+    # Type narrowing by creating local variable
+    cache = _cache_instance
+    assert cache is not None
+    return cache
 
 
 def cached(ttl: int | None = None, key_func: Callable | None = None):

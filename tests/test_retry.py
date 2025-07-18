@@ -25,7 +25,7 @@ class TestExponentialBackoffRetry(unittest.TestCase):
 
     def test_retry_on_exception(self):
         """Test retry behavior on retriable exceptions."""
-        call_count = 0
+        call_count: int = 0
 
         @exponential_backoff_retry(max_retries=2, initial_delay=0.01)
         def failing_function():
@@ -41,7 +41,7 @@ class TestExponentialBackoffRetry(unittest.TestCase):
 
     def test_retry_exhausted(self):
         """Test that function fails after exhausting retries."""
-        call_count = 0
+        call_count: int = 0
 
         @exponential_backoff_retry(max_retries=2, initial_delay=0.01)
         def always_failing_function():
@@ -56,7 +56,7 @@ class TestExponentialBackoffRetry(unittest.TestCase):
 
     def test_non_retriable_exception(self):
         """Test that non-retriable exceptions are not retried."""
-        call_count = 0
+        call_count: int = 0
 
         @exponential_backoff_retry(max_retries=3, initial_delay=0.01)
         def non_retriable_function():
@@ -71,7 +71,7 @@ class TestExponentialBackoffRetry(unittest.TestCase):
 
     def test_retry_on_status_codes(self):
         """Test retry behavior on specific HTTP status codes."""
-        call_count = 0
+        call_count: int = 0
 
         @exponential_backoff_retry(
             max_retries=2, initial_delay=0.01, retry_on_status_codes=(500, 502)
@@ -93,7 +93,7 @@ class TestExponentialBackoffRetry(unittest.TestCase):
 
     def test_custom_retriable_exceptions(self):
         """Test custom retriable exceptions."""
-        call_count = 0
+        call_count: int = 0
 
         @exponential_backoff_retry(
             max_retries=2, initial_delay=0.01, retriable_exceptions=(ValueError,)
@@ -139,7 +139,7 @@ class TestExponentialBackoffRetry(unittest.TestCase):
     @patch("time.sleep")
     def test_retry_timing(self, mock_sleep):
         """Test that retry timing works correctly."""
-        call_count = 0
+        call_count: int = 0
 
         @exponential_backoff_retry(
             max_retries=2, initial_delay=1.0, backoff_factor=2.0, jitter=False

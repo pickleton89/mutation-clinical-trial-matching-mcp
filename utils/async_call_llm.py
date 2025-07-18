@@ -42,15 +42,18 @@ async def get_anthropic_async_client() -> httpx.AsyncClient:
                 max_keepalive_connections=config.http_max_keepalive_connections,
             ),
         )
-    assert _anthropic_async_client is not None  # Type narrowing
-    return _anthropic_async_client
+    # Type narrowing by creating local variable
+    client = _anthropic_async_client
+    assert client is not None
+    return client
 
 
 async def close_anthropic_async_client():
     """Close the global async HTTP client for Anthropic API."""
     global _anthropic_async_client
     if _anthropic_async_client:
-        await _anthropic_async_client.aclose()
+        client = _anthropic_async_client  # Type narrowing
+        await client.aclose()
         _anthropic_async_client = None
 
 
