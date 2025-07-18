@@ -456,30 +456,6 @@ This project evolved through multiple phases of AI-collaborative development:
 
 **Current Version (v0.2.1)**: Production-ready unified server with enterprise features, automatic mode selection, and comprehensive backward compatibility. Developed through collaboration with Claude Code, leveraging 20+ years of cancer research domain expertise to guide AI implementation and architectural transformation.
 
-## Handling the `.windsurfrules` Character Limit
-
-The PocketFlow `.windsurfrules` file from the template repository contains comprehensive project rules, but Windsurf enforces a 6,000 character limit on rules files. This means you cannot include the entire set of guidelines directly in your project, and important rules may be omitted or truncated.
-
-To address this, there are two recommended solutions:
-
-### 1. Using Windsurf 🪁 Memory to Store Rules
-
-You can leverage Windsurf’s memory feature to store the full set of PocketFlow rules, even if they exceed the `.windsurfrules` file limit. This approach allows you to reference all project conventions and best practices in conversation with Windsurf, ensuring nothing is lost due to truncation. For step-by-step instructions and a detailed comparison of memory vs. rules files, see [docs/memory_vs_windsurfrules.md](docs/memory_vs_windsurfrules.md).
-
-### 2. Using Context7 to Access Guidelines
-
-**Important Note**: This project is based on the [PocketFlow-Template-Python](https://github.com/The-Pocket/PocketFlow-Template-Python) repository, which includes a comprehensive `.windsurfrules` file. However, Windsurf has a 6,000 character limit for rules files, meaning the complete PocketFlow guidelines cannot be fully loaded into Windsurf's memory.
-
-To address this limitation, we've created detailed instructions on using the Context7 MCP server to access PocketFlow guidelines during development. This approach allows you to leverage the full power of PocketFlow's design patterns and best practices without being constrained by the character limit.
-
-For comprehensive instructions on using Context7 with PocketFlow, please refer to our [Context7 Guide](docs/context7_guide.md). This guide includes:
-
-- Step-by-step instructions for configuring Context7 MCP in Windsurf
-- Natural language prompts for accessing PocketFlow documentation
-- Examples of retrieving specific implementation patterns
-- How to save important patterns as memories for future reference
-
-By following this guide, you can maintain alignment with PocketFlow's Agentic Coding principles while developing and extending this project.
 
 ## Contributing
 
