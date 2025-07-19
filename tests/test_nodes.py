@@ -5,8 +5,8 @@ Tests for the Node implementation.
 import unittest
 from unittest.mock import MagicMock, patch
 
-from clinicaltrials.nodes import QueryTrialsNode, SummarizeTrialsNode
-from utils.node import Flow
+from clinicaltrials.unified_nodes import QueryTrialsNode, SummarizeTrialsNode
+from utils.unified_node import UnifiedFlow as Flow
 
 
 class TestQueryTrialsNode(unittest.TestCase):

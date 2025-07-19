@@ -37,7 +37,8 @@
       "Bash(uv sync:*)",
       "Bash(timeout:*)",
       "Bash(git push:*)",
-      "Bash(uvx ty:*)"
+      "Bash(uvx ty:*)",
+      "Bash(tree:*)"
     ],
     "deny": []
   }

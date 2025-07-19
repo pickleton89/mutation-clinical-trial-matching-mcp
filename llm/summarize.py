@@ -2,14 +2,15 @@
 Functions to summarize clinical trial results using Claude via MCP.
 """
 
-from utils.call_llm import call_llm
+from utils.llm_service import get_sync_llm_service
 
 
 def call_claude_via_mcp(prompt: str) -> str:
     """
     Send the prompt to Claude via MCP (call_llm utility) and return the summary.
     """
-    return call_llm(prompt)
+    llm_service = get_sync_llm_service()
+    return llm_service.call_llm(prompt)
 
 
 def summarize_trials(trials: list[dict]) -> str:

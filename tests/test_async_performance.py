@@ -7,10 +7,10 @@ import time
 import unittest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from clinicaltrials.async_nodes import AsyncQueryTrialsNode
-from clinicaltrials.async_query import query_clinical_trials_async, query_multiple_mutations_async
-from utils.async_call_llm import call_llm_async, call_llm_batch_async
-from utils.node import AsyncFlow
+from clinicaltrials.unified_nodes import QueryTrialsNode, BatchQueryTrialsNode
+from clinicaltrials.service import get_async_trials_service
+from utils.llm_service import get_async_llm_service
+from utils.unified_node import UnifiedFlow
 
 
 class TestAsyncPerformance(unittest.TestCase):
@@ -183,8 +183,10 @@ class TestAsyncPerformance(unittest.TestCase):
         # Both functions should have similar signatures
         import inspect
 
-        from clinicaltrials.async_query import query_clinical_trials_async
-        from clinicaltrials.query import query_clinical_trials
+        from clinicaltrials.service import get_async_trials_service, get_sync_trials_service
+        
+        async_service = get_async_trials_service()
+        sync_service = get_sync_trials_service()
 
         sync_sig = inspect.signature(query_clinical_trials)
         async_sig = inspect.signature(query_clinical_trials_async)
