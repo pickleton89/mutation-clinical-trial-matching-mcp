@@ -1,3 +1,5 @@
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/pickleton89-mutation-clinical-trial-matching-mcp-badge.png)](https://mseep.ai/app/pickleton89-mutation-clinical-trial-matching-mcp)
+
 # Mutation Clinical Trial Matching MCP
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
