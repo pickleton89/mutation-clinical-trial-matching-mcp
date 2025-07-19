@@ -251,15 +251,17 @@ class TestSummarizeTrials(unittest.TestCase):
 class TestCallClaudeViaMcp(unittest.TestCase):
     """Test the call_claude_via_mcp function."""
 
-    @patch("llm.summarize.call_llm")
-    def test_call_claude_via_mcp(self, mock_call_llm):
+    @patch("llm.summarize.get_sync_llm_service")
+    def test_call_claude_via_mcp(self, mock_get_service):
         """Test that call_claude_via_mcp calls the call_llm function."""
-        mock_call_llm.return_value = "Test response"
+        # Mock the service and its call_llm method
+        mock_service = mock_get_service.return_value
+        mock_service.call_llm.return_value = "Test response"
 
         result = call_claude_via_mcp("Test prompt")
 
         self.assertEqual(result, "Test response")
-        mock_call_llm.assert_called_once_with("Test prompt")
+        mock_service.call_llm.assert_called_once_with("Test prompt")
 
 
 if __name__ == "__main__":
