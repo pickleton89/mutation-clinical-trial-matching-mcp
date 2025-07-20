@@ -6,16 +6,15 @@ unified LLM service, ensuring existing code continues to work during migration.
 """
 
 import warnings
-from typing import List, Union
 
-from utils.llm_service import get_sync_llm_service, get_async_llm_service, cleanup_services
+from utils.llm_service import cleanup_services, get_async_llm_service, get_sync_llm_service
 
 
 # Sync compatibility functions (replacing utils/call_llm.py)
 def call_llm(prompt: str) -> str:
     """
     DEPRECATED: Use LLMService.call_llm() instead.
-    
+
     Backward compatibility wrapper for sync LLM calls.
     """
     warnings.warn(
@@ -31,7 +30,7 @@ def call_llm(prompt: str) -> str:
 async def call_llm_async(prompt: str) -> str:
     """
     DEPRECATED: Use LLMService.acall_llm() instead.
-    
+
     Backward compatibility wrapper for async LLM calls.
     """
     warnings.warn(
@@ -43,10 +42,10 @@ async def call_llm_async(prompt: str) -> str:
     return await service.acall_llm(prompt)
 
 
-async def call_llm_batch_async(prompts: List[str]) -> List[Union[str, Exception]]:
+async def call_llm_batch_async(prompts: list[str]) -> list[str | Exception]:
     """
     DEPRECATED: Use LLMService.acall_llm_batch() instead.
-    
+
     Backward compatibility wrapper for batch async LLM calls.
     """
     warnings.warn(
@@ -61,7 +60,7 @@ async def call_llm_batch_async(prompts: List[str]) -> List[Union[str, Exception]
 async def cleanup_async_clients():
     """
     DEPRECATED: Use cleanup_services() instead.
-    
+
     Backward compatibility wrapper for client cleanup.
     """
     warnings.warn(
@@ -75,7 +74,7 @@ async def cleanup_async_clients():
 # Module-level exports for drop-in compatibility
 __all__ = [
     'call_llm',
-    'call_llm_async', 
+    'call_llm_async',
     'call_llm_batch_async',
     'cleanup_async_clients'
 ]

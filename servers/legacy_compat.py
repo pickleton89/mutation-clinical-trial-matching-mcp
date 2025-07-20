@@ -8,13 +8,10 @@ to the new unified server implementation.
 This ensures zero breaking changes for existing deployments and configurations.
 """
 
-import asyncio
 import logging
 import warnings
-from typing import Optional
 
 from servers.main import UnifiedMCPServer
-
 
 logger = logging.getLogger(__name__)
 
@@ -32,44 +29,44 @@ def _emit_deprecation_warning(old_module: str, replacement: str):
 class AsyncServerCompat:
     """
     Backward compatibility wrapper for servers/primary.py (async server).
-    
+
     This class provides the same interface as the original async server
     while using the new unified implementation underneath.
     """
-    
+
     def __init__(self):
         """Initialize the async compatibility wrapper."""
         _emit_deprecation_warning("servers.primary", "servers.main.UnifiedMCPServer(async_mode=True)")
-        
+
         # Force async mode for compatibility
         self.server = UnifiedMCPServer(async_mode=True)
-        
+
         # Expose the FastMCP app for backward compatibility
         self.mcp = self.server.app
-        
+
         logger.info("AsyncServerCompat initialized (redirecting to UnifiedMCPServer)")
-    
+
     def initialize_async_flow(self):
         """Initialize async flow (compatibility method)."""
         logger.info("initialize_async_flow() called on compatibility wrapper")
         self.server.initialize_flows()
-    
+
     def initialize_async_batch_flow(self):
         """Initialize async batch flow (compatibility method)."""
         logger.info("initialize_async_batch_flow() called on compatibility wrapper")
         # Flows are initialized together in the unified server
         self.server.initialize_flows()
-    
+
     async def startup_tasks(self):
         """Perform startup tasks (compatibility method)."""
         logger.info("startup_tasks() called on compatibility wrapper")
         await self.server.startup_tasks()
-    
+
     async def cleanup(self):
         """Clean up resources (compatibility method)."""
         logger.info("cleanup() called on compatibility wrapper")
         await self.server.cleanup()
-    
+
     def main(self):
         """Main entry point (compatibility method)."""
         logger.info("main() called on compatibility wrapper")
@@ -79,23 +76,23 @@ class AsyncServerCompat:
 class SyncServerCompat:
     """
     Backward compatibility wrapper for servers/legacy/sync_server.py.
-    
+
     This class provides the same interface as the original sync server
     while using the new unified implementation underneath.
     """
-    
+
     def __init__(self):
         """Initialize the sync compatibility wrapper."""
         _emit_deprecation_warning("servers.legacy.sync_server", "servers.main.UnifiedMCPServer(async_mode=False)")
-        
+
         # Force sync mode for compatibility
         self.server = UnifiedMCPServer(async_mode=False)
-        
+
         # Expose the FastMCP app for backward compatibility
         self.mcp = self.server.app
-        
+
         logger.info("SyncServerCompat initialized (redirecting to UnifiedMCPServer)")
-    
+
     def main(self):
         """Main entry point (compatibility method)."""
         logger.info("main() called on sync compatibility wrapper")
@@ -107,7 +104,7 @@ class SyncServerCompat:
 def create_async_server() -> AsyncServerCompat:
     """
     Create an async server instance (legacy compatibility function).
-    
+
     Returns:
         AsyncServerCompat instance
     """
@@ -118,7 +115,7 @@ def create_async_server() -> AsyncServerCompat:
 def create_sync_server() -> SyncServerCompat:
     """
     Create a sync server instance (legacy compatibility function).
-    
+
     Returns:
         SyncServerCompat instance
     """
@@ -209,36 +206,36 @@ def get_health_status_sync_compat() -> str:
 def migrate_from_primary_server():
     """
     Utility function to help migrate from servers/primary.py.
-    
+
     This function provides guidance on migrating from the old async server
     to the new unified server.
     """
     migration_guide = """
     # Migration Guide: servers/primary.py → servers/main.py
-    
+
     ## Quick Migration
-    
+
     **Old:**
     ```python
     from servers.primary import main
     main()
     ```
-    
+
     **New:**
     ```python
     from servers.main import UnifiedMCPServer
     server = UnifiedMCPServer(async_mode=True)
     server.run()
     ```
-    
+
     ## Environment Variable Migration
-    
+
     All existing environment variables continue to work:
     - `MCP_ASYNC_MODE=true` (explicitly enable async mode)
     - Configuration variables remain the same
-    
+
     ## Feature Compatibility
-    
+
     All async features are preserved:
     - ✅ Async/await support
     - ✅ Batch processing
@@ -248,9 +245,9 @@ def migrate_from_primary_server():
     - ✅ Circuit breakers
     - ✅ Metrics and monitoring
     - ✅ Health checks
-    
+
     ## API Compatibility
-    
+
     All existing MCP tools maintain the same signatures:
     - `summarize_trials(mutation: str)`
     - `summarize_multiple_trials(mutations: str)`
@@ -258,63 +255,62 @@ def migrate_from_primary_server():
     - `get_cache_analytics()`
     - `warm_cache()`
     - `invalidate_cache(pattern: str)`
-    
+
     ## Breaking Changes
-    
+
     **None!** The unified server maintains 100% backward compatibility.
     """
-    
-    print(migration_guide)
+
     return migration_guide
 
 
 def migrate_from_sync_server():
     """
     Utility function to help migrate from servers/legacy/sync_server.py.
-    
+
     This function provides guidance on migrating from the old sync server
     to the new unified server.
     """
     migration_guide = """
     # Migration Guide: servers/legacy/sync_server.py → servers/main.py
-    
+
     ## Quick Migration
-    
+
     **Old:**
     ```python
     from servers.legacy.sync_server import main
     main()
     ```
-    
+
     **New:**
     ```python
     from servers.main import UnifiedMCPServer
     server = UnifiedMCPServer(async_mode=False)
     server.run()
     ```
-    
+
     ## Environment Variable Migration
-    
+
     - `MCP_ASYNC_MODE=false` (explicitly enable sync mode)
     - All other configuration variables remain the same
-    
+
     ## Feature Compatibility
-    
+
     All sync features are preserved:
     - ✅ Synchronous operation
     - ✅ Batch processing (with lower limits)
     - ✅ Circuit breakers
     - ✅ Metrics and monitoring
     - ✅ Health checks
-    
+
     Note: Some async-only features are not available in sync mode:
     - ❌ Distributed caching
     - ❌ Cache warming
     - ❌ Smart invalidation
     - ❌ Cache analytics
-    
+
     ## API Compatibility
-    
+
     All existing MCP tools maintain the same signatures:
     - `summarize_trials(mutation: str)`
     - `summarize_multiple_trials(mutations: str)` (lower batch limit)
@@ -322,19 +318,18 @@ def migrate_from_sync_server():
     - `get_metrics_json()`
     - `get_metrics_prometheus()`
     - `get_circuit_breaker_status()`
-    
+
     ## Breaking Changes
-    
+
     **None!** The unified server maintains 100% backward compatibility.
-    
+
     ## Performance Considerations
-    
+
     - Sync mode has lower batch limits (5 vs 10 mutations)
     - Sync mode has shorter timeouts (10s vs 15s)
     - Consider upgrading to async mode for better performance
     """
-    
-    print(migration_guide)
+
     return migration_guide
 
 
@@ -344,63 +339,53 @@ def show_unified_benefits():
     """
     benefits = """
     # Benefits of the Unified Server Architecture
-    
+
     ## Code Quality Improvements
-    
+
     - ✅ **60% Code Reduction**: Eliminated ~1,000 lines of duplicated code
     - ✅ **Single Point of Truth**: Unified business logic across sync/async
     - ✅ **Reduced Maintenance**: One codebase instead of multiple implementations
     - ✅ **Improved Testing**: Unified test suites covering both modes
     - ✅ **Better Documentation**: Single set of docs to maintain
-    
+
     ## Feature Improvements
-    
+
     - ✅ **Runtime Mode Selection**: Switch between sync/async via configuration
     - ✅ **Auto-Detection**: Automatically detect optimal execution mode
     - ✅ **Unified API**: Same tool signatures across both modes
     - ✅ **Enhanced Monitoring**: Better metrics and health checks
     - ✅ **Configuration Management**: Centralized configuration system
-    
+
     ## Performance Improvements
-    
+
     - ✅ **Memory Usage**: 30-40% reduction due to code deduplication
     - ✅ **Startup Time**: 20-30% faster due to reduced module loading
     - ✅ **Maintenance Overhead**: 60% reduction in code to maintain
     - ✅ **Testing Time**: 50% reduction in test execution
-    
+
     ## Developer Experience
-    
+
     - ✅ **Easier Feature Development**: Add features once, get both modes
     - ✅ **Reduced Bug Risk**: No sync/async inconsistencies
     - ✅ **Simpler Codebase**: Easier to understand and maintain
     - ✅ **Future-Proofing**: Easy to add new execution patterns
-    
+
     ## Migration Path
-    
+
     - ✅ **Zero Breaking Changes**: Complete backward compatibility
     - ✅ **Gradual Migration**: Can migrate at your own pace
     - ✅ **Deprecation Warnings**: Clear guidance on what to update
     - ✅ **Migration Utilities**: Tools to help with the transition
     """
-    
-    print(benefits)
+
     return benefits
 
 
 if __name__ == "__main__":
     # If run directly, show migration information
-    print("=== Unified MCP Server - Backward Compatibility ===\n")
-    
-    print("This module provides backward compatibility for legacy server implementations.")
-    print("For migration guidance, use the following functions:\n")
-    
-    print("- migrate_from_primary_server()  # For servers/primary.py migration")
-    print("- migrate_from_sync_server()     # For servers/legacy/sync_server.py migration")
-    print("- show_unified_benefits()        # Benefits of the unified architecture")
-    
-    print("\nExample usage:")
-    print(">>> from servers.legacy_compat import migrate_from_primary_server")
-    print(">>> migrate_from_primary_server()")
-    
+
+
+
+
     # Show a quick summary
     show_unified_benefits()

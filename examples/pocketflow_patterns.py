@@ -27,7 +27,7 @@ class ExampleQueryNode(Node):
         self, shared: dict[str, Any], prep_result: str, exec_result: dict[str, Any]
     ) -> str | None:
         shared["query_results"] = exec_result
-        return self.get_next_node_id()
+        return self.get_next_node_id(exec_result)
 
 
 class ExampleProcessNode(Node):
@@ -49,7 +49,7 @@ class ExampleProcessNode(Node):
         self, shared: dict[str, Any], prep_result: dict[str, Any], exec_result: dict[str, Any]
     ) -> str | None:
         shared["processed_data"] = exec_result
-        return self.get_next_node_id()
+        return self.get_next_node_id(exec_result)
 
 
 class ExampleReviewNode(Node):
@@ -94,7 +94,7 @@ class ExampleApprovalNode(Node):
         self, shared: dict[str, Any], prep_result: dict[str, Any], exec_result: str
     ) -> str | None:
         shared["final_result"] = exec_result
-        return self.get_next_node_id()
+        return self.get_next_node_id(exec_result)
 
 
 class ExampleRevisionNode(Node):
@@ -113,7 +113,7 @@ class ExampleRevisionNode(Node):
         self, shared: dict[str, Any], prep_result: dict[str, Any], exec_result: str
     ) -> str | None:
         shared["revision_result"] = exec_result
-        return self.get_next_node_id()
+        return self.get_next_node_id(exec_result)
 
 
 class ExampleRejectionNode(Node):
@@ -132,7 +132,7 @@ class ExampleRejectionNode(Node):
         self, shared: dict[str, Any], prep_result: dict[str, Any], exec_result: str
     ) -> str | None:
         shared["final_result"] = exec_result
-        return self.get_next_node_id()
+        return self.get_next_node_id(exec_result)
 
 
 def example_simple_chaining():
@@ -151,8 +151,9 @@ def example_simple_chaining():
     # Use new chaining syntax following PocketFlow documentation
     query_node >> process_node
 
-    # Create flow with automatic node registration
-    flow = Flow(start=query_node)
+    # Create flow and add all nodes
+    flow = Flow(start_node=query_node)
+    flow.add_node(process_node)
 
     # Run the flow
     shared = {"query": "example query"}
@@ -191,8 +192,13 @@ def example_branching_pattern():
     # Revision loops back to review
     revision_node >> review_node
 
-    # Create flow with automatic node registration
-    flow = Flow(start=query_node)
+    # Create flow and add all nodes
+    flow = Flow(start_node=query_node)
+    flow.add_node(process_node)
+    flow.add_node(review_node)
+    flow.add_node(approval_node)
+    flow.add_node(revision_node)
+    flow.add_node(rejection_node)
 
     # Test different scenarios
     scenarios = [
@@ -232,7 +238,7 @@ def example_complex_workflow():
             self, shared: dict[str, Any], prep_result: str, exec_result: dict[str, Any]
         ) -> str | None:
             shared["document"] = exec_result
-            return self.get_next_node_id()
+            return self.get_next_node_id(exec_result)
 
     class ValidateDocumentNode(Node):
         def __init__(self):
@@ -270,7 +276,7 @@ def example_complex_workflow():
             self, shared: dict[str, Any], prep_result: dict[str, Any], exec_result: str
         ) -> str | None:
             shared["processing_result"] = exec_result
-            return self.get_next_node_id()
+            return self.get_next_node_id(exec_result)
 
     class ProcessMediumDocumentNode(Node):
         def __init__(self):
@@ -286,7 +292,7 @@ def example_complex_workflow():
             self, shared: dict[str, Any], prep_result: dict[str, Any], exec_result: str
         ) -> str | None:
             shared["processing_result"] = exec_result
-            return self.get_next_node_id()
+            return self.get_next_node_id(exec_result)
 
     class ProcessSmallDocumentNode(Node):
         def __init__(self):
@@ -302,7 +308,7 @@ def example_complex_workflow():
             self, shared: dict[str, Any], prep_result: dict[str, Any], exec_result: str
         ) -> str | None:
             shared["processing_result"] = exec_result
-            return self.get_next_node_id()
+            return self.get_next_node_id(exec_result)
 
     # Create nodes
     load_node = LoadDocumentNode()
@@ -319,8 +325,12 @@ def example_complex_workflow():
     validate_node - "medium_document" >> process_medium_node
     validate_node - "small_document" >> process_small_node
 
-    # Create flow
-    flow = Flow(start=load_node)
+    # Create flow and add all nodes
+    flow = Flow(start_node=load_node)
+    flow.add_node(validate_node)
+    flow.add_node(process_large_node)
+    flow.add_node(process_medium_node)
+    flow.add_node(process_small_node)
 
     # Test with different document types
     test_cases = [

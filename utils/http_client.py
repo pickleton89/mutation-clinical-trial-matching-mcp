@@ -9,64 +9,64 @@ code duplication between sync and async implementations.
 import asyncio
 import logging
 import time
-from typing import Any, Dict, Optional, Union, Callable
 import warnings
+from collections.abc import Callable
+from typing import Any
 
 import httpx
 import requests
 
 from clinicaltrials.config import get_global_config
-from utils.metrics import increment, gauge, histogram, timer
-from utils.retry import exponential_backoff_retry, async_exponential_backoff_retry
-from utils.circuit_breaker import circuit_breaker, async_circuit_breaker
-
+from utils.circuit_breaker import async_circuit_breaker, circuit_breaker
+from utils.metrics import gauge, histogram, increment
+from utils.retry import async_exponential_backoff_retry, exponential_backoff_retry
 
 logger = logging.getLogger(__name__)
 
 
 class HttpResponse:
     """Unified response wrapper for both requests and httpx responses."""
-    
-    def __init__(self, response: Union[requests.Response, httpx.Response]):
+
+    def __init__(self, response: requests.Response | httpx.Response):
         self._response = response
         self._is_async = isinstance(response, httpx.Response)
-    
+
     @property
     def status_code(self) -> int:
         return self._response.status_code
-    
+
     @property
-    def headers(self) -> Dict[str, str]:
+    def headers(self) -> dict[str, str]:
         return dict(self._response.headers)
-    
+
     @property
     def text(self) -> str:
         return self._response.text
-    
-    def json(self) -> Dict[str, Any]:
+
+    def json(self) -> dict[str, Any]:
         return self._response.json()
-    
+
     def raise_for_status(self) -> None:
         self._response.raise_for_status()
 
 
 class UnifiedHttpClient:
     """HTTP client supporting both sync and async execution."""
-    
+
     def __init__(
         self,
         async_mode: bool = False,
         service_name: str = "generic",
-        base_url: Optional[str] = None,
-        headers: Optional[Dict[str, str]] = None,
-        timeout_config: Optional[Dict[str, Union[int, float]]] = None,
-        retry_config: Optional[Dict[str, Any]] = None,
-        circuit_breaker_config: Optional[Dict[str, Any]] = None,
+        base_url: str | None = None,
+        headers: dict[str, str] | None = None,
+        timeout_config: dict[str, int | float] | None = None,
+        retry_config: dict[str, Any] | None = None,
+        circuit_breaker_config: dict[str, Any] | None = None,
         **kwargs
     ):
         """
         Initialize unified HTTP client.
-        
+
         Args:
             async_mode: Whether to use async (httpx) or sync (requests) mode
             service_name: Name for metrics and circuit breaker identification
@@ -80,48 +80,48 @@ class UnifiedHttpClient:
         self.async_mode = async_mode
         self.service_name = service_name
         self.base_url = base_url
-        
+
         # Load global configuration
         try:
             self.config = get_global_config()
         except ValueError as e:
             logger.warning(f"Failed to load global config: {e}. Using defaults.")
             self.config = None
-        
+
         # Set up headers
         self.default_headers = self._setup_headers(headers)
-        
+
         # Set up timeout configuration
         self.timeout_config = self._setup_timeout_config(timeout_config)
-        
+
         # Set up retry configuration
         self.retry_config = self._setup_retry_config(retry_config)
-        
+
         # Set up circuit breaker configuration
         self.circuit_breaker_config = self._setup_circuit_breaker_config(circuit_breaker_config)
-        
+
         # Initialize the underlying client
         self._client = None
         self._session = None
         self._setup_client(**kwargs)
-    
-    def _setup_headers(self, headers: Optional[Dict[str, str]]) -> Dict[str, str]:
+
+    def _setup_headers(self, headers: dict[str, str] | None) -> dict[str, str]:
         """Set up default headers with config-based fallbacks."""
         default_headers = {
             "Accept": "application/json",
             "User-Agent": getattr(self.config, 'user_agent', 'UnifiedHttpClient/1.0')
         }
-        
+
         if headers:
             default_headers.update(headers)
-        
+
         return default_headers
-    
-    def _setup_timeout_config(self, timeout_config: Optional[Dict[str, Union[int, float]]]) -> Dict[str, Union[int, float]]:
+
+    def _setup_timeout_config(self, timeout_config: dict[str, int | float] | None) -> dict[str, int | float]:
         """Set up timeout configuration with config-based defaults."""
         if timeout_config:
             return timeout_config
-        
+
         if self.async_mode:
             return {
                 'connect': getattr(self.config, 'http_connect_timeout', 5.0),
@@ -133,12 +133,12 @@ class UnifiedHttpClient:
             return {
                 'timeout': getattr(self.config, 'clinicaltrials_timeout', 10.0)
             }
-    
-    def _setup_retry_config(self, retry_config: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+
+    def _setup_retry_config(self, retry_config: dict[str, Any] | None) -> dict[str, Any]:
         """Set up retry configuration with config-based defaults."""
         if retry_config:
             return retry_config
-        
+
         return {
             'max_retries': getattr(self.config, 'max_retries', 3),
             'initial_delay': getattr(self.config, 'retry_initial_delay', 1.0),
@@ -147,25 +147,25 @@ class UnifiedHttpClient:
             'jitter': getattr(self.config, 'retry_jitter', True),
             'retry_on_status_codes': (429, 500, 502, 503, 504),
         }
-    
-    def _setup_circuit_breaker_config(self, circuit_breaker_config: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+
+    def _setup_circuit_breaker_config(self, circuit_breaker_config: dict[str, Any] | None) -> dict[str, Any]:
         """Set up circuit breaker configuration with config-based defaults."""
         if circuit_breaker_config:
             return circuit_breaker_config
-        
+
         return {
             'name': f"{self.service_name}_http_client",
             'failure_threshold': getattr(self.config, 'circuit_breaker_failure_threshold', 5),
             'recovery_timeout': getattr(self.config, 'circuit_breaker_recovery_timeout', 60.0),
         }
-    
+
     def _setup_client(self, **kwargs):
         """Initialize the underlying HTTP client based on mode."""
         if self.async_mode:
             self._setup_async_client(**kwargs)
         else:
             self._setup_sync_client(**kwargs)
-    
+
     def _setup_async_client(self, **kwargs):
         """Set up async httpx client."""
         # Create timeout object
@@ -175,14 +175,14 @@ class UnifiedHttpClient:
             write=self.timeout_config['write'],
             pool=self.timeout_config['pool'],
         )
-        
+
         # Create limits object
         limits = httpx.Limits(
             max_connections=getattr(self.config, 'http_max_connections', 100),
             max_keepalive_connections=getattr(self.config, 'http_max_keepalive_connections', 20),
             keepalive_expiry=getattr(self.config, 'http_keepalive_expiry', 60.0),
         )
-        
+
         # Set up client configuration
         client_config = {
             'base_url': self.base_url,
@@ -191,29 +191,29 @@ class UnifiedHttpClient:
             'limits': limits,
             **kwargs
         }
-        
+
         self._client = httpx.AsyncClient(**client_config)
-    
+
     def _setup_sync_client(self, **kwargs):
         """Set up sync requests session."""
         self._session = requests.Session()
         self._session.headers.update(self.default_headers)
-        
+
         # Store timeout for use in requests
         self._sync_timeout = self.timeout_config['timeout']
-    
+
     @property
     def is_async(self) -> bool:
         """Check if client is in async mode."""
         return self.async_mode
-    
+
     def _apply_retry_decorator(self, func: Callable) -> Callable:
         """Apply appropriate retry decorator based on mode."""
         if self.async_mode:
             return async_exponential_backoff_retry(**self.retry_config)(func)
         else:
             return exponential_backoff_retry(**self.retry_config)(func)
-    
+
     def _apply_circuit_breaker_decorator(self, func: Callable) -> Callable:
         """Apply appropriate circuit breaker decorator based on mode."""
         config = self.circuit_breaker_config
@@ -229,20 +229,20 @@ class UnifiedHttpClient:
                 failure_threshold=config.get('failure_threshold', 5),
                 recovery_timeout=config.get('recovery_timeout', 60)
             )(func)
-    
+
     def request(
         self,
         method: str,
         url: str,
-        headers: Optional[Dict[str, str]] = None,
-        params: Optional[Dict[str, Any]] = None,
-        json: Optional[Dict[str, Any]] = None,
-        data: Optional[Any] = None,
+        headers: dict[str, str] | None = None,
+        params: dict[str, Any] | None = None,
+        json: dict[str, Any] | None = None,
+        data: Any | None = None,
         **kwargs
     ) -> HttpResponse:
         """
         Unified request method - sync or async based on mode.
-        
+
         This method automatically detects the execution context and routes
         to the appropriate implementation.
         """
@@ -254,51 +254,51 @@ class UnifiedHttpClient:
                 warnings.warn(
                     "Using sync request() method in async context. "
                     "Consider using arequest() for better performance.",
-                    RuntimeWarning
+                    RuntimeWarning, stacklevel=2
                 )
                 # Run the async version in the current loop
                 return loop.run_until_complete(
-                    self.arequest(method, url, headers=headers, params=params, 
+                    self.arequest(method, url, headers=headers, params=params,
                                 json=json, data=data, **kwargs)
                 )
             except RuntimeError:
                 # No event loop running, use sync fallback
-                return self._sync_request_fallback(method, url, headers=headers, 
-                                                 params=params, json=json, 
+                return self._sync_request_fallback(method, url, headers=headers,
+                                                 params=params, json=json,
                                                  data=data, **kwargs)
         else:
             return self._sync_request(method, url, headers=headers, params=params,
                                     json=json, data=data, **kwargs)
-    
+
     async def arequest(
         self,
         method: str,
         url: str,
-        headers: Optional[Dict[str, str]] = None,
-        params: Optional[Dict[str, Any]] = None,
-        json: Optional[Dict[str, Any]] = None,
-        data: Optional[Any] = None,
+        headers: dict[str, str] | None = None,
+        params: dict[str, Any] | None = None,
+        json: dict[str, Any] | None = None,
+        data: Any | None = None,
         **kwargs
     ) -> HttpResponse:
         """Explicit async request method."""
         if not self.async_mode:
             raise RuntimeError("Cannot use arequest() when async_mode=False")
-        
-        return await self._async_request(method, url, headers=headers, 
+
+        return await self._async_request(method, url, headers=headers,
                                        params=params, json=json, data=data, **kwargs)
-    
+
     def _sync_request(
         self,
         method: str,
         url: str,
-        headers: Optional[Dict[str, str]] = None,
-        params: Optional[Dict[str, Any]] = None,
-        json: Optional[Dict[str, Any]] = None,
-        data: Optional[Any] = None,
+        headers: dict[str, str] | None = None,
+        params: dict[str, Any] | None = None,
+        json: dict[str, Any] | None = None,
+        data: Any | None = None,
         **kwargs
     ) -> HttpResponse:
         """Internal sync request implementation."""
-        
+
         @self._apply_circuit_breaker_decorator
         @self._apply_retry_decorator
         def _make_request():
@@ -306,10 +306,10 @@ class UnifiedHttpClient:
             request_headers = self.default_headers.copy()
             if headers:
                 request_headers.update(headers)
-            
+
             # Start timing
             start_time = time.time()
-            
+
             try:
                 # Make the request
                 response = self._session.request(
@@ -322,7 +322,7 @@ class UnifiedHttpClient:
                     timeout=self._sync_timeout,
                     **kwargs
                 )
-                
+
                 # Record metrics
                 request_duration = time.time() - start_time
                 increment("http_requests_total", tags={
@@ -337,7 +337,7 @@ class UnifiedHttpClient:
                 gauge("http_last_request_duration", request_duration, tags={
                     "service": self.service_name
                 })
-                
+
                 logger.info(
                     f"HTTP {method} request completed",
                     extra={
@@ -349,9 +349,9 @@ class UnifiedHttpClient:
                         "duration": request_duration
                     }
                 )
-                
+
                 return HttpResponse(response)
-                
+
             except Exception as e:
                 request_duration = time.time() - start_time
                 increment("http_errors_total", tags={
@@ -364,7 +364,7 @@ class UnifiedHttpClient:
                     "method": method,
                     "error": "true"
                 })
-                
+
                 logger.error(
                     f"HTTP {method} request failed",
                     extra={
@@ -378,21 +378,21 @@ class UnifiedHttpClient:
                     }
                 )
                 raise
-        
+
         return _make_request()
-    
+
     async def _async_request(
         self,
         method: str,
         url: str,
-        headers: Optional[Dict[str, str]] = None,
-        params: Optional[Dict[str, Any]] = None,
-        json: Optional[Dict[str, Any]] = None,
-        data: Optional[Any] = None,
+        headers: dict[str, str] | None = None,
+        params: dict[str, Any] | None = None,
+        json: dict[str, Any] | None = None,
+        data: Any | None = None,
         **kwargs
     ) -> HttpResponse:
         """Internal async request implementation."""
-        
+
         @self._apply_circuit_breaker_decorator
         @self._apply_retry_decorator
         async def _make_request():
@@ -400,10 +400,10 @@ class UnifiedHttpClient:
             request_headers = self.default_headers.copy()
             if headers:
                 request_headers.update(headers)
-            
+
             # Start timing
             start_time = time.time()
-            
+
             try:
                 # Make the request
                 response = await self._client.request(
@@ -415,7 +415,7 @@ class UnifiedHttpClient:
                     data=data,
                     **kwargs
                 )
-                
+
                 # Record metrics
                 request_duration = time.time() - start_time
                 increment("http_requests_total", tags={
@@ -430,7 +430,7 @@ class UnifiedHttpClient:
                 gauge("http_last_request_duration", request_duration, tags={
                     "service": self.service_name
                 })
-                
+
                 logger.info(
                     f"HTTP {method} request completed",
                     extra={
@@ -442,9 +442,9 @@ class UnifiedHttpClient:
                         "duration": request_duration
                     }
                 )
-                
+
                 return HttpResponse(response)
-                
+
             except Exception as e:
                 request_duration = time.time() - start_time
                 increment("http_errors_total", tags={
@@ -457,7 +457,7 @@ class UnifiedHttpClient:
                     "method": method,
                     "error": "true"
                 })
-                
+
                 logger.error(
                     f"HTTP {method} request failed",
                     extra={
@@ -471,17 +471,17 @@ class UnifiedHttpClient:
                     }
                 )
                 raise
-        
+
         return await _make_request()
-    
+
     def _sync_request_fallback(
         self,
         method: str,
         url: str,
-        headers: Optional[Dict[str, str]] = None,
-        params: Optional[Dict[str, Any]] = None,
-        json: Optional[Dict[str, Any]] = None,
-        data: Optional[Any] = None,
+        headers: dict[str, str] | None = None,
+        params: dict[str, Any] | None = None,
+        json: dict[str, Any] | None = None,
+        data: Any | None = None,
         **kwargs
     ) -> HttpResponse:
         """Fallback sync request when async client is configured but no event loop exists."""
@@ -494,13 +494,13 @@ class UnifiedHttpClient:
                 "url": url
             }
         )
-        
+
         # Temporarily create a sync session for this request
         with requests.Session() as session:
             session.headers.update(self.default_headers)
-            
+
             start_time = time.time()
-            
+
             try:
                 response = session.request(
                     method=method,
@@ -512,57 +512,57 @@ class UnifiedHttpClient:
                     timeout=self.timeout_config.get('read', 30.0),
                     **kwargs
                 )
-                
-                request_duration = time.time() - start_time
+
+                time.time() - start_time
                 increment("http_fallback_requests_total", tags={
                     "service": self.service_name,
                     "method": method
                 })
-                
+
                 return HttpResponse(response)
-                
+
             except Exception as e:
-                request_duration = time.time() - start_time
+                time.time() - start_time
                 increment("http_fallback_errors_total", tags={
                     "service": self.service_name,
                     "method": method,
                     "error_type": type(e).__name__
                 })
                 raise
-    
+
     # Convenience methods for common HTTP verbs
     def get(self, url: str, **kwargs) -> HttpResponse:
         """Convenience method for GET requests."""
         return self.request("GET", url, **kwargs)
-    
+
     def post(self, url: str, **kwargs) -> HttpResponse:
         """Convenience method for POST requests."""
         return self.request("POST", url, **kwargs)
-    
+
     def put(self, url: str, **kwargs) -> HttpResponse:
         """Convenience method for PUT requests."""
         return self.request("PUT", url, **kwargs)
-    
+
     def delete(self, url: str, **kwargs) -> HttpResponse:
         """Convenience method for DELETE requests."""
         return self.request("DELETE", url, **kwargs)
-    
+
     async def aget(self, url: str, **kwargs) -> HttpResponse:
         """Convenience method for async GET requests."""
         return await self.arequest("GET", url, **kwargs)
-    
+
     async def apost(self, url: str, **kwargs) -> HttpResponse:
         """Convenience method for async POST requests."""
         return await self.arequest("POST", url, **kwargs)
-    
+
     async def aput(self, url: str, **kwargs) -> HttpResponse:
         """Convenience method for async PUT requests."""
         return await self.arequest("PUT", url, **kwargs)
-    
+
     async def adelete(self, url: str, **kwargs) -> HttpResponse:
         """Convenience method for async DELETE requests."""
         return await self.arequest("DELETE", url, **kwargs)
-    
+
     def close(self):
         """Close the underlying client/session."""
         if self.async_mode and self._client:
@@ -570,26 +570,26 @@ class UnifiedHttpClient:
             asyncio.create_task(self._client.aclose())
         elif self._session:
             self._session.close()
-    
+
     async def aclose(self):
         """Async close method."""
         if self.async_mode and self._client:
             await self._client.aclose()
         elif self._session:
             self._session.close()
-    
+
     def __enter__(self):
         """Context manager support for sync mode."""
         return self
-    
+
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Context manager cleanup for sync mode."""
         self.close()
-    
+
     async def __aenter__(self):
         """Async context manager support."""
         return self
-    
+
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         """Async context manager cleanup."""
         await self.aclose()
@@ -608,16 +608,16 @@ def create_clinicaltrials_client(async_mode: bool = False) -> UnifiedHttpClient:
     )
 
 
-def create_anthropic_client(async_mode: bool = False, api_key: Optional[str] = None) -> UnifiedHttpClient:
+def create_anthropic_client(async_mode: bool = False, api_key: str | None = None) -> UnifiedHttpClient:
     """Create a pre-configured client for Anthropic API."""
     headers = {
         "content-type": "application/json",
         "anthropic-version": "2023-06-01"
     }
-    
+
     if api_key:
         headers["x-api-key"] = api_key
-    
+
     return UnifiedHttpClient(
         async_mode=async_mode,
         service_name="anthropic",

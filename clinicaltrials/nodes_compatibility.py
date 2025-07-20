@@ -6,13 +6,10 @@ unified nodes, ensuring existing code continues to work during migration.
 """
 
 import warnings
-from typing import Any, Dict, List, Optional
 
-from clinicaltrials.unified_nodes import (
-    QueryTrialsNode as UnifiedQueryTrialsNode,
-    SummarizeTrialsNode as UnifiedSummarizeTrialsNode,
-    BatchQueryTrialsNode as UnifiedBatchQueryTrialsNode
-)
+from clinicaltrials.unified_nodes import BatchQueryTrialsNode as UnifiedBatchQueryTrialsNode
+from clinicaltrials.unified_nodes import QueryTrialsNode as UnifiedQueryTrialsNode
+from clinicaltrials.unified_nodes import SummarizeTrialsNode as UnifiedSummarizeTrialsNode
 from utils.unified_node import UnifiedFlow
 
 
@@ -20,11 +17,11 @@ from utils.unified_node import UnifiedFlow
 class QueryTrialsNode(UnifiedQueryTrialsNode):
     """
     DEPRECATED: Use unified QueryTrialsNode instead.
-    
+
     Backward compatibility wrapper for sync QueryTrialsNode.
     """
-    
-    def __init__(self, min_rank: int = 1, max_rank: int = 10, timeout: Optional[float] = None):
+
+    def __init__(self, min_rank: int = 1, max_rank: int = 10, timeout: float | None = None):
         warnings.warn(
             "clinicaltrials.nodes.QueryTrialsNode is deprecated. "
             "Use clinicaltrials.unified_nodes.QueryTrialsNode instead.",
@@ -42,11 +39,11 @@ class QueryTrialsNode(UnifiedQueryTrialsNode):
 class SummarizeTrialsNode(UnifiedSummarizeTrialsNode):
     """
     DEPRECATED: Use unified SummarizeTrialsNode instead.
-    
+
     Backward compatibility wrapper for sync SummarizeTrialsNode.
     """
-    
-    def __init__(self, model: Optional[str] = None, max_tokens: Optional[int] = None):
+
+    def __init__(self, model: str | None = None, max_tokens: int | None = None):
         warnings.warn(
             "clinicaltrials.nodes.SummarizeTrialsNode is deprecated. "
             "Use clinicaltrials.unified_nodes.SummarizeTrialsNode instead.",
@@ -64,10 +61,10 @@ class SummarizeTrialsNode(UnifiedSummarizeTrialsNode):
 class AsyncQueryTrialsNode(UnifiedQueryTrialsNode):
     """
     DEPRECATED: Use unified QueryTrialsNode instead.
-    
+
     Backward compatibility wrapper for async QueryTrialsNode.
     """
-    
+
     def __init__(self, min_rank: int = 1, max_rank: int = 10):
         warnings.warn(
             "clinicaltrials.async_nodes.AsyncQueryTrialsNode is deprecated. "
@@ -85,11 +82,11 @@ class AsyncQueryTrialsNode(UnifiedQueryTrialsNode):
 class AsyncSummarizeTrialsNode(UnifiedSummarizeTrialsNode):
     """
     DEPRECATED: Use unified SummarizeTrialsNode instead.
-    
+
     Backward compatibility wrapper for async SummarizeTrialsNode.
     """
-    
-    def __init__(self, model: Optional[str] = None, max_tokens: Optional[int] = None):
+
+    def __init__(self, model: str | None = None, max_tokens: int | None = None):
         warnings.warn(
             "clinicaltrials.async_nodes.AsyncSummarizeTrialsNode is deprecated. "
             "Use clinicaltrials.unified_nodes.SummarizeTrialsNode instead.",
@@ -106,10 +103,10 @@ class AsyncSummarizeTrialsNode(UnifiedSummarizeTrialsNode):
 class AsyncBatchQueryTrialsNode(UnifiedBatchQueryTrialsNode):
     """
     DEPRECATED: Use unified BatchQueryTrialsNode instead.
-    
+
     Backward compatibility wrapper for async batch QueryTrialsNode.
     """
-    
+
     def __init__(
         self,
         min_rank: int = 1,
@@ -134,10 +131,10 @@ class AsyncBatchQueryTrialsNode(UnifiedBatchQueryTrialsNode):
 class Flow(UnifiedFlow):
     """
     DEPRECATED: Use UnifiedFlow instead.
-    
+
     Backward compatibility wrapper for sync Flow.
     """
-    
+
     def __init__(self, start_node=None):
         warnings.warn(
             "utils.node.Flow is deprecated. "
@@ -151,10 +148,10 @@ class Flow(UnifiedFlow):
 class AsyncFlow(UnifiedFlow):
     """
     DEPRECATED: Use UnifiedFlow instead.
-    
+
     Backward compatibility wrapper for async Flow.
     """
-    
+
     def __init__(self, start_node=None):
         warnings.warn(
             "utils.node.AsyncFlow is deprecated. "
@@ -170,12 +167,12 @@ __all__ = [
     # Sync node classes
     'QueryTrialsNode',
     'SummarizeTrialsNode',
-    
-    # Async node classes  
+
+    # Async node classes
     'AsyncQueryTrialsNode',
     'AsyncSummarizeTrialsNode',
     'AsyncBatchQueryTrialsNode',
-    
+
     # Flow classes
     'Flow',
     'AsyncFlow'

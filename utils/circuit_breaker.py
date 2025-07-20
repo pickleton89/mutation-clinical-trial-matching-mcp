@@ -14,7 +14,7 @@ from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from enum import Enum
 from threading import Lock
-from typing import TypeVar
+from typing import Generic, TypeVar
 
 logger = logging.getLogger(__name__)
 
@@ -68,7 +68,7 @@ class CircuitBreakerError(Exception):
             super().__init__(f"Circuit breaker '{name}' is OPEN. Failure count: {failure_count}")
 
 
-class CircuitBreaker[T]:
+class CircuitBreaker(Generic[T]):
     """
     Circuit Breaker implementation for API resilience.
 

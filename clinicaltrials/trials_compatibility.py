@@ -6,10 +6,9 @@ unified Clinical Trials service, ensuring existing code continues to work during
 """
 
 import warnings
-from typing import Any, Dict, List, Optional
-from functools import lru_cache
+from typing import Any
 
-from clinicaltrials.service import get_sync_trials_service, get_async_trials_service
+from clinicaltrials.service import get_async_trials_service, get_sync_trials_service
 
 
 # Sync compatibility functions (replacing clinicaltrials/query.py)
@@ -17,11 +16,11 @@ def query_trials_for_mutation(
     mutation: str,
     min_rank: int = 1,
     max_rank: int = 10,
-    custom_timeout: Optional[float] = None
-) -> Dict[str, Any]:
+    custom_timeout: float | None = None
+) -> dict[str, Any]:
     """
     DEPRECATED: Use ClinicalTrialsService.query_trials() instead.
-    
+
     Backward compatibility wrapper for sync trial queries.
     """
     warnings.warn(
@@ -38,10 +37,10 @@ async def query_trials_async(
     mutation: str,
     min_rank: int = 1,
     max_rank: int = 10
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     DEPRECATED: Use ClinicalTrialsService.aquery_trials() instead.
-    
+
     Backward compatibility wrapper for async trial queries.
     """
     warnings.warn(
@@ -54,13 +53,13 @@ async def query_trials_async(
 
 
 async def query_multiple_mutations_async(
-    mutations: List[str],
+    mutations: list[str],
     min_rank: int = 1,
     max_rank: int = 10
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """
     DEPRECATED: Use ClinicalTrialsService.aquery_trials_batch() instead.
-    
+
     Backward compatibility wrapper for batch async trial queries.
     """
     warnings.warn(
@@ -73,10 +72,10 @@ async def query_multiple_mutations_async(
 
 
 # Cache management compatibility (from sync query.py)
-def get_cache_stats() -> Dict[str, Any]:
+def get_cache_stats() -> dict[str, Any]:
     """
     DEPRECATED: Use ClinicalTrialsService.get_cache_info() instead.
-    
+
     Backward compatibility wrapper for cache statistics.
     """
     warnings.warn(
@@ -86,7 +85,7 @@ def get_cache_stats() -> Dict[str, Any]:
     )
     service = get_sync_trials_service()
     cache_info = service.get_cache_info()
-    
+
     if cache_info:
         # Convert to old format
         return {
@@ -109,7 +108,7 @@ def get_cache_stats() -> Dict[str, Any]:
 def clear_cache():
     """
     DEPRECATED: Use ClinicalTrialsService.clear_cache() instead.
-    
+
     Backward compatibility wrapper for cache clearing.
     """
     warnings.warn(

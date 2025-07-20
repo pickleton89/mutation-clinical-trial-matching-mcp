@@ -85,17 +85,17 @@ class TestFlow(unittest.TestCase):
         # This test now just verifies basic flow creation since the old
         # Flow interface with add_node() and process() methods no longer exists
         # in the unified architecture
-        
+
         # Create a simple mock node for flow creation
         query_node = MagicMock()
-        
+
         # Create flow - this tests the new UnifiedFlow constructor
         flow = Flow(start_node=query_node)
-        
+
         # Verify flow was created with the start node
         self.assertEqual(flow.start_node, query_node)
         self.assertIsInstance(flow, Flow)
-        
+
         # Note: The old add_node() and run() methods don't exist in UnifiedFlow
         # The unified architecture uses execute() and a different node chaining approach
 

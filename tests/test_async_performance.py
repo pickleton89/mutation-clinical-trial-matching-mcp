@@ -3,15 +3,14 @@ Performance tests for async implementation.
 """
 
 import asyncio
+import inspect
 import time
 import unittest
-import inspect
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
-from clinicaltrials.unified_nodes import QueryTrialsNode, BatchQueryTrialsNode
 from clinicaltrials.service import get_async_trials_service, get_sync_trials_service
-from clinicaltrials.trials_compatibility import query_trials_async, query_multiple_mutations_async
-from utils.llm_service import get_async_llm_service
+from clinicaltrials.trials_compatibility import query_multiple_mutations_async, query_trials_async
+from clinicaltrials.unified_nodes import QueryTrialsNode
 from utils.unified_node import UnifiedFlow
 
 
@@ -160,12 +159,12 @@ class TestAsyncPerformance(unittest.IsolatedAsyncioTestCase):
         # Test with high concurrency
         start_time = time.time()
         result_high = await query_multiple_mutations_async(mutations)
-        high_duration = time.time() - start_time
+        time.time() - start_time
 
         # Test with low concurrency
         start_time = time.time()
         result_low = await query_multiple_mutations_async(mutations)
-        low_duration = time.time() - start_time
+        time.time() - start_time
 
         # Both should complete successfully
         self.assertEqual(len(result_high), len(mutations))
@@ -179,7 +178,7 @@ class TestAsyncPerformance(unittest.IsolatedAsyncioTestCase):
         # This would be a more complex test involving actual sync/async comparison
         # For now, just verify the interfaces exist
         # Both functions should have similar signatures
-        
+
         async_service = get_async_trials_service()
         sync_service = get_sync_trials_service()
 
