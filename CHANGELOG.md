@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **MCP Server Connection Issue**: Resolved server startup failure in Claude Desktop due to missing `requests` dependency
+  - **Root Cause**: `ModuleNotFoundError: No module named 'requests'` preventing server initialization
+  - **Solution**: Added missing `requests==2.31.0` dependency to `pyproject.toml` using `uv add requests==2.31.0`
+  - **Impact**: MCP server now starts successfully in Claude Desktop without connection failures
+  - **Dependencies**: Properly configured requests alongside urllib3 and charset-normalizer for HTTP operations
+
 ### Changed
 - **README.md Documentation Update**: Comprehensive update to reflect current codebase state and recent achievements
   - **Badges Updated**: Python version badge updated from 3.13+ to 3.11+ for broader compatibility, test count updated to current 114 tests
