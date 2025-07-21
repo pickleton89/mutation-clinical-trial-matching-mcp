@@ -14,7 +14,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Testing
 - **Run All Tests**: `uv run python -m unittest discover tests/`
 - **Run Specific Test**: `uv run python -m unittest tests.test_nodes.TestQueryTrialsNode.test_query_trials_node`
+- **Run with Pytest**: `uv run pytest` (alternative test runner)
+- **Test with Coverage**: `uv run pytest --cov`
 - **Test Files**: Located in `tests/` directory, following `test_*.py` pattern
+
+### Code Quality
+- **Linting**: `uv run ruff check` (check for issues), `uv run ruff format` (auto-format code)
+- **Type Checking**: Install mypy with `uv add --group dev mypy`, then run `uv run mypy .`
 
 ### MCP Server
 - **Start Server**: `uv run python servers/main.py` (recommended unified server)
@@ -157,20 +163,23 @@ shared = {
 ## Development Guidelines
 
 ### Adding New Nodes
-1. Inherit from `Node` or `BatchNode` in `utils/node.py`
-2. Implement `prep()`, `exec()`, and `post()` methods
-3. Add to flow in `clinicaltrials_mcp_server.py`
+1. Inherit from `UnifiedNode` or `UnifiedBatchNode` in `utils/unified_node.py` (preferred) or legacy base classes in `utils/node.py`
+2. Implement `prep()`, `exec()`/`aexec()`, and `post()` methods
+3. Add to flow in the unified server `servers/main.py`
 4. Add corresponding tests in `tests/`
 
 ### Error Handling
-- API errors handled in `clinicaltrials/query.py`
+- API errors handled in `clinicaltrials/service.py` (unified service layer)
 - Node validation in `prep()` methods
-- Flow errors handled in `utils/node.py`
+- Flow errors handled in `utils/unified_node.py` and legacy `utils/node.py`
 
 ### Testing Strategy
-- Unit tests for individual nodes in `tests/test_nodes.py`
-- API integration tests in `tests/test_query.py`
-- Summarization tests in `tests/test_summarize.py`
+- Unit tests for unified nodes in `tests/test_unified_nodes.py`
+- Legacy node tests in `tests/test_nodes.py`
+- API integration tests in `tests/test_query.py` and `tests/test_unified_integration.py`
+- HTTP client tests in `tests/test_unified_http_client.py`
+- Shared utilities tests in `tests/test_shared_utilities.py`
+- Server tests in `tests/test_unified_server.py`
 
 ## Claude Desktop Integration
 
