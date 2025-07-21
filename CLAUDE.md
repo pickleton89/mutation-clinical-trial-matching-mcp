@@ -17,6 +17,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Run with Pytest**: `uv run pytest` (alternative test runner)
 - **Test with Coverage**: `uv run pytest --cov`
 - **Test Files**: Located in `tests/` directory, following `test_*.py` pattern
+- **Test Specific Components**: 
+  - Unified nodes: `uv run python -m unittest tests.test_unified_nodes`
+  - Legacy nodes: `uv run python -m unittest tests.test_nodes`
+  - Server integration: `uv run python -m unittest tests.test_unified_server`
 
 ### Code Quality
 - **Linting**: `uv run ruff check` (check for issues), `uv run ruff format` (auto-format code)
@@ -156,8 +160,11 @@ shared = {
 ## Key Dependencies
 
 - **pocketflow>=0.0.1**: PocketFlow framework for Node pattern
-- **mcp[cli]>=1.0.0**: Official MCP SDK for Claude Desktop integration
-- **requests==2.31.0**: HTTP requests for API calls
+- **mcp[cli]>=1.0.0**: Official MCP SDK for Claude Desktop integration  
+- **fastmcp>=2.10.2**: High-performance async MCP framework
+- **httpx>=0.28.1**: Async HTTP client for unified HTTP abstraction
+- **requests==2.31.0**: HTTP requests for API calls (legacy compatibility)
+- **redis>=6.2.0**: Optional distributed caching backend
 - **python-dotenv==1.1.0**: Environment variable management
 
 ## Development Guidelines
@@ -186,10 +193,21 @@ shared = {
 Configure in `~/Library/Application Support/Claude/claude_desktop_config.json`:
 ```json
 "mutation-clinical-trials-mcp": {
-  "command": "/path/to/venv/bin/python",
-  "args": ["/path/to/project/clinicaltrials_mcp_server.py"]
+  "command": "uv",
+  "args": ["run", "python", "/path/to/project/servers/main.py"],
+  "env": {
+    "MCP_ASYNC_MODE": "true"
+  }
 }
 ```
+
+**Environment Variables for Configuration**:
+- `MCP_ASYNC_MODE`: Force async (`true`) or sync (`false`) mode, or omit for auto-detection
+- `MCP_SERVICE_NAME`: Override default service name
+- `MCP_MAX_RANK`: Override max results returned
+- `MCP_TIMEOUT`: Override request timeout
+- `MCP_MAX_CONCURRENT`: Override max concurrent requests (async mode)
+- `MCP_ENABLE_*`: Toggle features like cache warming, metrics, etc.
 
 ## Common Query Patterns
 
